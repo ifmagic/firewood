@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Input, Button, Space, Row, Col, Typography, Tag } from 'antd';
 import * as Diff from 'diff';
 import ToolLayout from '../../components/ToolLayout';
+import FontSizeControl from '../../components/FontSizeControl';
+import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import styles from './TextDiff.module.css';
 
 const { TextArea } = Input;
@@ -11,6 +13,7 @@ export default function TextDiff() {
   const [right, setRight] = useState('');
   const [diffs, setDiffs] = useState<Diff.Change[]>([]);
   const [compared, setCompared] = useState(false);
+  const { fontSize, increase, decrease } = useEditorFontSize();
 
   const compare = () => {
     const result = Diff.diffLines(left, right);
@@ -26,7 +29,7 @@ export default function TextDiff() {
   };
 
   const renderDiff = () => (
-    <div className={styles.diffResult}>
+    <div className={styles.diffResult} style={{ fontSize }}>
       {diffs.map((part, i) => (
         <span
           key={i}
@@ -60,32 +63,35 @@ export default function TextDiff() {
         )}
       </Space>
 
-      {!compared ? (
-        <Row gutter={16}>
-          <Col span={12}>
-            <Typography.Text strong>原文</Typography.Text>
-            <TextArea
-              rows={20}
-              value={left}
-              onChange={(e) => setLeft(e.target.value)}
-              placeholder="请输入原始文本..."
-              style={{ marginTop: 8, fontFamily: 'monospace' }}
-            />
-          </Col>
-          <Col span={12}>
-            <Typography.Text strong>修改后</Typography.Text>
-            <TextArea
-              rows={20}
-              value={right}
-              onChange={(e) => setRight(e.target.value)}
-              placeholder="请输入修改后文本..."
-              style={{ marginTop: 8, fontFamily: 'monospace' }}
-            />
-          </Col>
-        </Row>
-      ) : (
-        renderDiff()
-      )}
+      <div style={{ position: 'relative' }}>
+        {!compared ? (
+          <Row gutter={16}>
+            <Col span={12}>
+              <Typography.Text strong>原文</Typography.Text>
+              <TextArea
+                rows={20}
+                value={left}
+                onChange={(e) => setLeft(e.target.value)}
+                placeholder="请输入原始文本..."
+                style={{ marginTop: 8, fontFamily: 'monospace', fontSize }}
+              />
+            </Col>
+            <Col span={12}>
+              <Typography.Text strong>修改后</Typography.Text>
+              <TextArea
+                rows={20}
+                value={right}
+                onChange={(e) => setRight(e.target.value)}
+                placeholder="请输入修改后文本..."
+                style={{ marginTop: 8, fontFamily: 'monospace', fontSize }}
+              />
+            </Col>
+          </Row>
+        ) : (
+          renderDiff()
+        )}
+        <FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />
+      </div>
     </ToolLayout>
   );
 }
