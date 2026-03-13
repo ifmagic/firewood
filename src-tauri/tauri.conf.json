@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
-    "beforeBuildCommand": "npm run buildnpm run build",
-    "beforeDevCommand": "npm run devnpm run dev",
-    "devPath": "http://localhost:3000http://localhost:5173",
-    "distDir": "../build../dist"
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:5173",
+    "distDir": "../dist"
   },
   "package": {
-    "productName": "firewoodfirewood",
+    "productName": "firewood",
     "version": "0.1.0"
   },
   "tauri": {
