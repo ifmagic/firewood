@@ -2,8 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{
-    CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu,
-    SystemTrayMenuItem,
+    CustomMenuItem, Manager, Menu, MenuItem, RunEvent, Submenu, SystemTray, SystemTrayEvent,
+    SystemTrayMenu, SystemTrayMenuItem,
 };
 
 fn show_window(app: &tauri::AppHandle) {
@@ -26,7 +26,33 @@ fn main() {
 
     let system_tray = SystemTray::new().with_menu(tray_menu);
 
-    let app = tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+
+    #[cfg(target_os = "macos")]
+    {
+        let about_firewood = CustomMenuItem::new("about_firewood".to_string(), "About Firewood");
+        let check_for_updates =
+            CustomMenuItem::new("check_for_updates".to_string(), "Check for Updates…");
+        let app_menu = Menu::new().add_submenu(Submenu::new(
+            "Firewood",
+            Menu::new()
+                .add_item(about_firewood)
+                .add_native_item(MenuItem::Separator)
+                .add_item(check_for_updates)
+                .add_native_item(MenuItem::Separator)
+                .add_native_item(MenuItem::Quit),
+        ));
+
+        builder = builder.menu(app_menu).on_menu_event(|event| {
+            if event.menu_item_id() == "about_firewood" {
+                let _ = event.window().app_handle().emit_all("app://about-firewood", ());
+            } else if event.menu_item_id() == "check_for_updates" {
+                let _ = event.window().app_handle().emit_all("app://check-for-updates", ());
+            }
+        });
+    }
+
+    let app = builder
         .system_tray(system_tray)
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::LeftClick { .. } => {

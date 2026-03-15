@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { checkUpdate, installUpdate } from '@tauri-apps/api/updater';
 import { relaunch } from '@tauri-apps/api/process';
 import { notification, Button, Progress, Space } from 'antd';
@@ -63,20 +64,41 @@ export default function Updater() {
     const timer = setTimeout(() => checkForUpdate(), 3000);
     // 之后每 5 小时检查一次
     const interval = setInterval(() => checkForUpdate(), 5 * 60 * 60 * 1000);
+
+    let unlisten: (() => void) | undefined;
+    listen('app://check-for-updates', async () => {
+      await checkForUpdate(true);
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
+      unlisten?.();
     };
   }, []);
 
-  const checkForUpdate = async () => {
+  const checkForUpdate = async (manual = false) => {
     try {
       const { shouldUpdate, manifest } = await checkUpdate();
       if (shouldUpdate && manifest) {
         showUpdateNotification({ version: manifest.version, body: manifest.body ?? null });
+      } else if (manual) {
+        notification.success({
+          message: '当前已是最新版本',
+          placement: 'bottomRight',
+        });
       }
     } catch {
       // 网络不可达时静默忽略
+      if (manual) {
+        notification.error({
+          message: '检查更新失败',
+          description: '请稍后重试或检查网络连接。',
+          placement: 'bottomRight',
+        });
+      }
     }
   };
 
