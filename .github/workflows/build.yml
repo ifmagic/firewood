@@ -59,3 +59,17 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Ad-hoc sign macOS app
+        if: matrix.platform == 'macos-latest'
+        run: |
+          APP=$(find src-tauri/target/universal-apple-darwin/release/bundle/macos -name "*.app" | head -1)
+          DMG=$(find src-tauri/target/universal-apple-darwin/release/bundle/dmg -name "*.dmg" | head -1)
+          if [ -n "$APP" ]; then
+            codesign --force --deep --sign - "$APP"
+            echo "Signed: $APP"
+          fi
+          if [ -n "$DMG" ]; then
+            codesign --force --sign - "$DMG"
+            echo "Signed: $DMG"
+          fi
