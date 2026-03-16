@@ -56,21 +56,17 @@ jobs:
           releaseBody: |
             ## ✨ 新功能
 
-            - Firewood 菜单新增 About Firewood 入口，并改为应用内自定义 About 弹窗
-            - 新增手动触发更新检查入口（菜单触发）
+            - 各工具页面现在会记住上一次输入、输出和处理结果，切换工具或重启应用后仍可恢复
+            - 时间戳转换工具新增“当前日期”快捷按钮，并支持按秒或毫秒输出时间戳
 
             ## 🐛 修复
 
-            - 补回 Firewood 菜单中缺失的 About Firewood 子项
+            - 修复 macOS 自定义菜单导致的复制、粘贴、全选等系统快捷键失效问题
 
             ## 🔧 优化
 
-            - About 面板视觉与排版优化，补充项目简介与版本信息展示
-            - Updater 支持手动检查时的成功/失败反馈提示
-
-            ## 📦 其他
-
-            - CI 构建环境升级到 Node 24
+            - macOS 菜单改为基于 Tauri 原生默认菜单增量扩展，保留系统原生编辑与窗口行为
+            - GitHub Actions 构建环境升级到 Node 24，并同步更新 checkout / setup-node action 版本
 
             ---
 
