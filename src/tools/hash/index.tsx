@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Input, Button, Space, Table } from 'antd';
 import SparkMD5 from 'spark-md5';
 import { sha1 } from 'js-sha1';
 import { sha256 } from 'js-sha256';
 import ToolLayout from '../../components/ToolLayout';
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 const { TextArea } = Input;
 
@@ -13,8 +13,8 @@ interface HashRow {
 }
 
 export default function HashCalculator() {
-  const [input, setInput] = useState('');
-  const [rows, setRows] = useState<HashRow[]>([]);
+  const [input, setInput] = usePersistentState('tool:hash:input', '');
+  const [rows, setRows] = usePersistentState<HashRow[]>('tool:hash:rows', []);
 
   const calculate = () => {
     setRows([

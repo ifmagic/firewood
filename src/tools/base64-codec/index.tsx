@@ -1,14 +1,14 @@
-import { useState } from 'react';
 import { Input, Button, Space, Radio } from 'antd';
 import { fromBase64, toBase64 } from 'js-base64';
 import ToolLayout from '../../components/ToolLayout';
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 const { TextArea } = Input;
 
 export default function Base64Codec() {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [mode, setMode] = useState<'encode' | 'decode'>('encode');
+  const [input, setInput] = usePersistentState('tool:base64-codec:input', '');
+  const [output, setOutput] = usePersistentState('tool:base64-codec:output', '');
+  const [mode, setMode] = usePersistentState<'encode' | 'decode'>('tool:base64-codec:mode', 'encode');
 
   const convert = () => {
     try {

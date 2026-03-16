@@ -1,19 +1,19 @@
-import { useState } from 'react';
 import { Input, Button, Space, Typography, Tag } from 'antd';
 import * as Diff from 'diff';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
+import { usePersistentState } from '../../hooks/usePersistentState';
 import { useResizablePanels } from '../../hooks/useResizablePanels';
 import styles from './TextDiff.module.css';
 
 const { TextArea } = Input;
 
 export default function TextDiff() {
-  const [left, setLeft] = useState('');
-  const [right, setRight] = useState('');
-  const [diffs, setDiffs] = useState<Diff.Change[]>([]);
-  const [compared, setCompared] = useState(false);
+  const [left, setLeft] = usePersistentState('tool:text-diff:left', '');
+  const [right, setRight] = usePersistentState('tool:text-diff:right', '');
+  const [diffs, setDiffs] = usePersistentState<Diff.Change[]>('tool:text-diff:diffs', []);
+  const [compared, setCompared] = usePersistentState('tool:text-diff:compared', false);
   const { fontSize, increase, decrease } = useEditorFontSize();
   const { leftPercent, containerRef, onDividerMouseDown } = useResizablePanels();
 

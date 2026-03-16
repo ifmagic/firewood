@@ -1,13 +1,13 @@
-import { useState } from 'react';
 import { Input, Button, Space, Radio } from 'antd';
 import ToolLayout from '../../components/ToolLayout';
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 const { TextArea } = Input;
 
 export default function UrlCodec() {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [mode, setMode] = useState<'encode' | 'decode'>('encode');
+  const [input, setInput] = usePersistentState('tool:url-codec:input', '');
+  const [output, setOutput] = usePersistentState('tool:url-codec:output', '');
+  const [mode, setMode] = usePersistentState<'encode' | 'decode'>('tool:url-codec:mode', 'encode');
 
   const convert = () => {
     try {

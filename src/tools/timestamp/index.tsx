@@ -1,13 +1,14 @@
-import { useState } from 'react';
 import { Input, Button, Space, Descriptions, DatePicker } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import ToolLayout from '../../components/ToolLayout';
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 export default function Timestamp() {
-  const [ts, setTs] = useState('');
-  const [date, setDate] = useState<Dayjs | null>(null);
-  const [tsResult, setTsResult] = useState('');
-  const [dateResult, setDateResult] = useState('');
+  const [ts, setTs] = usePersistentState('tool:timestamp:ts', '');
+  const [dateValue, setDateValue] = usePersistentState<string | null>('tool:timestamp:date', null);
+  const [tsResult, setTsResult] = usePersistentState('tool:timestamp:ts-result', '');
+  const [dateResult, setDateResult] = usePersistentState('tool:timestamp:date-result', '');
+  const date: Dayjs | null = dateValue ? dayjs(dateValue) : null;
 
   const tsToDate = () => {
     const num = Number(ts);
@@ -54,7 +55,7 @@ export default function Timestamp() {
               <DatePicker
                 showTime
                 value={date}
-                onChange={(d) => setDate(d)}
+                onChange={(d) => setDateValue(d ? d.toISOString() : null)}
               />
               <Button type="primary" onClick={dateToTs}>转换</Button>
             </Space>

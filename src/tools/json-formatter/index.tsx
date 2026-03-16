@@ -1,15 +1,15 @@
-import { useState } from 'react';
 import { Button, Space, Alert } from 'antd';
 import Editor from '@monaco-editor/react';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
+import { usePersistentState } from '../../hooks/usePersistentState';
 import { useResizablePanels } from '../../hooks/useResizablePanels';
 
 export default function JsonFormatter() {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
+  const [input, setInput] = usePersistentState('tool:json-formatter:input', '');
+  const [output, setOutput] = usePersistentState('tool:json-formatter:output', '');
+  const [error, setError] = usePersistentState('tool:json-formatter:error', '');
   const { fontSize, increase, decrease } = useEditorFontSize();
   const { leftPercent, containerRef, onDividerMouseDown } = useResizablePanels();
 
