@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import {
   CodeOutlined,
   DiffOutlined,
+  FileTextOutlined,
   LockOutlined,
   LinkOutlined,
   FieldTimeOutlined,
@@ -30,6 +31,13 @@ const tools: ToolMeta[] = [
     icon: <DiffOutlined />,
     description: '文本差异对比（左右双栏）',
     component: lazy(() => import('../tools/text-diff/index.tsx')),
+  },
+  {
+    id: 'notepad',
+    name: '记事本',
+    icon: <FileTextOutlined />,
+    description: '本地多标签记事（支持新建与关闭标签）',
+    component: lazy(() => import('../tools/notepad/index.tsx')),
   },
   {
     id: 'base64-codec',
