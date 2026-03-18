@@ -1,26 +1,92 @@
 .diffResult {
-  font-family: 'Courier New', Courier, monospace;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  padding: 16px;
-  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  line-height: 1.5;
+  background: #0f1115;
+  color: #e6edf3;
+  padding: 14px;
+  border-radius: 10px;
   min-height: 400px;
   overflow: auto;
+  border: 1px solid #1f2937;
 }
 
-.added {
-  background-color: rgba(70, 149, 74, 0.3);
-  color: #89d185;
+.chunk {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  overflow: hidden;
+  margin-bottom: 10px;
 }
 
-.removed {
-  background-color: rgba(200, 71, 71, 0.3);
-  color: #f14c4c;
+.diffLine {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+}
+
+.lineMarker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b949e;
+  user-select: none;
+  font-weight: 600;
+}
+
+.lineContent {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 1px 10px 1px 0;
+}
+
+.addedChunk {
+  background-color: rgba(46, 160, 67, 0.16);
+  border-color: rgba(46, 160, 67, 0.38);
+}
+
+.addedChunk .lineContent {
+  color: #7ee787;
+}
+
+.removedChunk {
+  background-color: rgba(248, 81, 73, 0.14);
+  border-color: rgba(248, 81, 73, 0.35);
+}
+
+.removedChunk .lineContent {
+  color: #ffb1ad;
   text-decoration: line-through;
 }
 
-.unchanged {
-  color: #d4d4d4;
+.unchangedContainer {
+  margin-bottom: 10px;
+}
+
+.unchangedChunk {
+  background-color: rgba(139, 148, 158, 0.08);
+  border-color: rgba(139, 148, 158, 0.2);
+}
+
+.unchangedChunk .lineContent {
+  color: #9ba6b2;
+}
+
+.foldButton {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px dashed #334155;
+  color: #9fb0c4;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.foldButton:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+  color: #c8daef;
 }

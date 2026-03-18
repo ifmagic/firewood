@@ -1,5 +1,6 @@
 import { Input, Button, Space, Typography, Tag } from 'antd';
 import * as Diff from 'diff';
+import { useState } from 'react';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
@@ -14,6 +15,7 @@ export default function TextDiff() {
   const [right, setRight] = usePersistentState('tool:text-diff:right', '');
   const [diffs, setDiffs] = usePersistentState<Diff.Change[]>('tool:text-diff:diffs', []);
   const [compared, setCompared] = usePersistentState('tool:text-diff:compared', false);
+  const [expandedUnchangedChunks, setExpandedUnchangedChunks] = useState<number[]>([]);
   const { fontSize, increase, decrease } = useEditorFontSize();
   const { leftPercent, containerRef, onDividerMouseDown } = useResizablePanels();
 
@@ -21,6 +23,11 @@ export default function TextDiff() {
     const result = Diff.diffLines(left, right);
     setDiffs(result);
     setCompared(true);
+    setExpandedUnchangedChunks([]);
+  };
+
+  const restore = () => {
+    setCompared(false);
   };
 
   const clear = () => {
@@ -28,34 +35,75 @@ export default function TextDiff() {
     setRight('');
     setDiffs([]);
     setCompared(false);
+    setExpandedUnchangedChunks([]);
+  };
+
+  const getLines = (value: string) => {
+    const lines = value.split('\n');
+    if (lines.length > 1 && lines[lines.length - 1] === '') {
+      lines.pop();
+    }
+    return lines.length > 0 ? lines : [''];
+  };
+
+  const countLines = (value: string) => getLines(value).length;
+
+  const toggleUnchangedChunk = (index: number) => {
+    setExpandedUnchangedChunks((prev) =>
+      prev.includes(index) ? prev.filter((item) => item !== index) : [...prev, index]
+    );
+  };
+
+  const renderChunkLines = (value: string, marker: string) => {
+    const lines = getLines(value);
+
+    return lines.map((line, lineIndex) => (
+      <div key={`${marker}-${lineIndex}`} className={styles.diffLine}>
+        <span className={styles.lineMarker}>{marker}</span>
+        <span className={styles.lineContent}>{line || ' '}</span>
+      </div>
+    ));
   };
 
   const renderDiff = () => (
     <div className={styles.diffResult} style={{ fontSize }}>
       {diffs.map((part, i) => (
-        <span
-          key={i}
-          className={
-            part.added
-              ? styles.added
-              : part.removed
-              ? styles.removed
-              : styles.unchanged
-          }
-        >
-          {part.value}
-        </span>
+        part.added ? (
+          <div key={i} className={`${styles.chunk} ${styles.addedChunk}`}>
+            {renderChunkLines(part.value, '+')}
+          </div>
+        ) : part.removed ? (
+          <div key={i} className={`${styles.chunk} ${styles.removedChunk}`}>
+            {renderChunkLines(part.value, '-')}
+          </div>
+        ) : (
+          <div key={i} className={styles.unchangedContainer}>
+            {expandedUnchangedChunks.includes(i) ? (
+              <div className={`${styles.chunk} ${styles.unchangedChunk}`}>
+                <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(i)}>
+                  收起 {countLines(part.value)} 行未变化内容
+                </button>
+                {renderChunkLines(part.value, ' ')}
+              </div>
+            ) : (
+              <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(i)}>
+                显示 {countLines(part.value)} 行未变化内容
+              </button>
+            )}
+          </div>
+        )
       ))}
     </div>
   );
 
-  const addedLines = diffs.filter((d) => d.added).length;
-  const removedLines = diffs.filter((d) => d.removed).length;
+  const addedLines = diffs.filter((d) => d.added).reduce((sum, d) => sum + countLines(d.value), 0);
+  const removedLines = diffs.filter((d) => d.removed).reduce((sum, d) => sum + countLines(d.value), 0);
 
   return (
     <ToolLayout title="文本 Diff" description="对比两段文本的差异">
       <Space style={{ marginBottom: 12 }}>
         <Button type="primary" onClick={compare}>对比</Button>
+        <Button onClick={restore} disabled={!compared}>恢复编辑视图</Button>
         <Button danger onClick={clear}>清空</Button>
         {compared && (
           <>
