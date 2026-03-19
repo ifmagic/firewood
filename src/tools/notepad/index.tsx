@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Editor, { type OnMount, type BeforeMount } from '@monaco-editor/react';
 import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
+import type { InputRef } from 'antd';
 import { open as openExternal } from '@tauri-apps/api/shell';
 import FontSizeControl from '../../components/FontSizeControl';
 import ToolLayout from '../../components/ToolLayout';
@@ -51,7 +52,9 @@ export default function Notepad() {
   const [content, setContent] = useState('');
   const [dialogMode, setDialogMode] = useState<'create' | 'rename' | null>(null);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [submittingDialog, setSubmittingDialog] = useState(false);
   const [form] = Form.useForm<{ name: string }>();
+  const nameInputRef = useRef<InputRef>(null);
   const { fontSize, increase, decrease } = useEditorFontSize();
   const isMac = navigator.platform.toLowerCase().includes('mac');
 
@@ -106,37 +109,47 @@ export default function Notepad() {
     [form, tabs],
   );
 
-  const handleSubmit = async () => {
-    const values = await form.validateFields();
-    const name = values.name.trim();
+  const handleSubmit = useCallback(async () => {
+    if (submittingDialog) {
+      return;
+    }
 
-    if (dialogMode === 'rename' && editingTabId) {
-      setTabs(
-        tabs.map((tab) => (tab.id === editingTabId ? { ...tab, name } : tab)),
-      );
+    setSubmittingDialog(true);
+
+    try {
+      const values = await form.validateFields();
+      const name = values.name.trim();
+
+      if (dialogMode === 'rename' && editingTabId) {
+        setTabs(
+          tabs.map((tab) => (tab.id === editingTabId ? { ...tab, name } : tab)),
+        );
+        form.resetFields();
+        setEditingTabId(null);
+        setDialogMode(null);
+        return;
+      }
+
+      if (tabs.length >= MAX_TABS) {
+        message.warning(`最多只能创建 ${MAX_TABS} 个标签页`);
+        return;
+      }
+
+      const id = createTabId();
+
+      const nextTabs = [...tabs, { id, name }];
+      setTabs(nextTabs);
+      setActiveTabId(id);
+      localStorage.setItem(getContentKey(id), '');
+      setContent('');
+
       form.resetFields();
       setEditingTabId(null);
       setDialogMode(null);
-      return;
+    } finally {
+      setSubmittingDialog(false);
     }
-
-    if (tabs.length >= MAX_TABS) {
-      message.warning(`最多只能创建 ${MAX_TABS} 个标签页`);
-      return;
-    }
-
-    const id = createTabId();
-
-    const nextTabs = [...tabs, { id, name }];
-    setTabs(nextTabs);
-    setActiveTabId(id);
-    localStorage.setItem(getContentKey(id), '');
-    setContent('');
-
-    form.resetFields();
-    setEditingTabId(null);
-    setDialogMode(null);
-  };
+  }, [dialogMode, editingTabId, form, setActiveTabId, setTabs, submittingDialog, tabs]);
 
   const handleRemoveTab = (targetKey: string) => {
     const currentIndex = tabs.findIndex((tab) => tab.id === targetKey);
@@ -180,6 +193,23 @@ export default function Notepad() {
   const effectiveActive = activeExists ? activeTabId : undefined;
   const modalTitle = dialogMode === 'rename' ? '重命名标签页' : '新建标签页';
   const modalOkText = dialogMode === 'rename' ? '保存' : '创建';
+
+  const focusNameInput = useCallback(() => {
+    requestAnimationFrame(() => {
+      const input = nameInputRef.current?.input;
+      if (!input) {
+        return;
+      }
+
+      input.focus();
+
+      if (dialogMode === 'rename') {
+        const extensionIndex = input.value.lastIndexOf('.');
+        const selectionEnd = extensionIndex > 0 ? extensionIndex : input.value.length;
+        input.setSelectionRange(0, selectionEnd);
+      }
+    });
+  }, [dialogMode]);
 
   const handleEditorBeforeMount = useCallback<BeforeMount>((monaco) => {
     monaco.editor.defineTheme('firewood-one-dark', {
@@ -295,6 +325,11 @@ export default function Notepad() {
       <Modal
         title={modalTitle}
         open={dialogMode !== null}
+        afterOpenChange={(open) => {
+          if (open) {
+            focusNameInput();
+          }
+        }}
         onCancel={() => {
           setDialogMode(null);
           setEditingTabId(null);
@@ -303,6 +338,7 @@ export default function Notepad() {
         onOk={() => void handleSubmit()}
         okText={modalOkText}
         cancelText="取消"
+        confirmLoading={submittingDialog}
         destroyOnHidden
       >
         <Form form={form} layout="vertical" requiredMark={false}>
@@ -314,7 +350,15 @@ export default function Notepad() {
               { max: 60, message: '文件名最多 60 个字符' },
             ]}
           >
-            <Input placeholder="例如：需求记录.md" maxLength={60} />
+            <Input
+              ref={nameInputRef}
+              placeholder="例如：需求记录.md"
+              maxLength={60}
+              onPressEnter={(event) => {
+                event.preventDefault();
+                void handleSubmit();
+              }}
+            />
           </Form.Item>
         </Form>
       </Modal>
