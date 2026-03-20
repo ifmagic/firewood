@@ -1,0 +1,267 @@
+/* ── 主布局：左控制 + 右预览 ── */
+.mainLayout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ── 左侧控制面板 ── */
+.controlPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 上传区 */
+.uploadArea {
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.uploadArea :global(.ant-upload.ant-upload-drag) {
+  min-height: 96px;
+  max-height: 96px;
+  border-radius: 10px;
+  border-style: dashed;
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.012);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.uploadArea :global(.ant-upload.ant-upload-drag:hover) {
+  border-color: #1677ff;
+  background: rgba(22, 119, 255, 0.02);
+}
+
+.uploadArea :global(.ant-upload-btn) {
+  padding: 0 !important;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.uploadIcon {
+  font-size: 22px;
+  color: rgba(0, 0, 0, 0.25);
+  margin-bottom: 2px;
+}
+
+.uploadText {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.uploadSubText {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* 缩略图区 */
+.thumbSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thumbHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.thumbGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.thumbCard {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fafafa;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease;
+}
+
+.thumbCard:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.thumbCard:hover .thumbRemove {
+  opacity: 1;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbIdx {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10px;
+  color: #fff;
+  line-height: 16px;
+  user-select: none;
+}
+
+.thumbRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+/* 设置区 */
+.settingsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settingLabel {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  flex-shrink: 0;
+}
+
+/* 导出按钮 */
+.exportBtn {
+  flex-shrink: 0;
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+}
+
+/* ── 右侧预览面板 ── */
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.previewEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.previewEmptyIcon {
+  font-size: 48px;
+  color: rgba(0, 0, 0, 0.08);
+}
+
+.previewPaper {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 210 / 297;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 6%;
+}
+
+.previewCanvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.previewCell {
+  position: absolute;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.previewPager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 680px) {
+  .mainLayout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .previewPanel {
+    max-height: 50vh;
+  }
+
+  .thumbGrid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

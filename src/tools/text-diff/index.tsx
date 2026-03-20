@@ -100,7 +100,7 @@ export default function TextDiff() {
   const removedLines = diffs.filter((d) => d.removed).reduce((sum, d) => sum + countLines(d.value), 0);
 
   return (
-    <ToolLayout title="文本 Diff" description="对比两段文本的差异">
+    <ToolLayout title="文本对比" description="对比两段文本的差异">
       <Space style={{ marginBottom: 12 }}>
         <Button type="primary" onClick={compare}>对比</Button>
         <Button onClick={restore} disabled={!compared}>恢复编辑视图</Button>

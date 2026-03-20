@@ -7,6 +7,7 @@ import {
   LinkOutlined,
   FieldTimeOutlined,
   KeyOutlined,
+  FilePdfOutlined,
 } from '@ant-design/icons';
 import type { ToolMeta } from '../types/tool';
 
@@ -27,9 +28,9 @@ const tools: ToolMeta[] = [
   },
   {
     id: 'text-diff',
-    name: '文本 Diff',
+    name: '文本对比',
     icon: <DiffOutlined />,
-    description: '文本差异对比（左右双栏）',
+    description: '逐行比较两段文本的差异',
     component: lazy(() => import('../tools/text-diff/index.tsx')),
   },
   {
@@ -59,6 +60,13 @@ const tools: ToolMeta[] = [
     icon: <KeyOutlined />,
     description: 'MD5 / SHA1 / SHA256 计算',
     component: lazy(() => import('../tools/hash/index.tsx')),
+  },
+  {
+    id: 'img-to-pdf',
+    name: '图片排版',
+    icon: <FilePdfOutlined />,
+    description: '多图排版，导出为 A4 尺寸 PDF',
+    component: lazy(() => import('../tools/img-to-pdf/index.tsx')),
   },
 ];
 

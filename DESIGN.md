@@ -16,13 +16,14 @@
 
 | 工具 | 说明 |
 |------|------|
-| JSON 格式化 | 格式化、压缩、语法校验，Monaco Editor 提供语法高亮 |
+| JSON 格式化 | 格式化、压缩、语法校验，Monaco Editor 提供语法高亮；支持折叠原始输入面板 |
 | 时间戳转换 | Unix timestamp 与人类可读日期互转 |
-| 文本 Diff | 左右双栏逐行差异对比，支持面板宽度拖拽调整 |
+| 文本对比 | 左右双栏逐行差异对比，支持面板宽度拖拽调整 |
 | 记事本 | 多标签页编辑，标签支持新建、重命名、关闭；内容持久化到 localStorage；Monaco Editor；Cmd/Ctrl+Click 或 URL 识别后直接在浏览器打开链接 |
 | Base64 编解码 | Base64 编码与解码 |
 | URL 编解码 | URLEncode / URLDecode |
 | Hash 计算 | MD5 / SHA-1 / SHA-256 |
+| 图片排版 | 多张图片合并为 A4 PDF；支持每页 1–4 张、上下/左右排列；缩略图拖拽排序；实时预览；通过 Tauri 原生对话框保存文件 |
 
 ---
 
@@ -56,6 +57,7 @@
 | `dayjs` | 时间戳格式化 |
 | `spark-md5` | MD5 计算 |
 | `js-sha1` / `js-sha256` | SHA-1 / SHA-256 计算 |
+| `jspdf` | 客户端 PDF 生成（图片排版工具）|
 | `react-markdown` | 更新日志 Markdown 渲染 |
 
 ### 3.4 工程规范
@@ -88,7 +90,8 @@ firewood/
 │   │   ├── notepad/
 │   │   ├── base64-codec/
 │   │   ├── url-codec/
-│   │   └── hash/
+│   │   ├── hash/
+│   │   └── img-to-pdf/
 │   ├── components/
 │   │   ├── Sidebar/            # 左侧导航栏
 │   │   ├── ToolLayout/         # 工具统一布局容器
@@ -98,7 +101,8 @@ firewood/
 │   ├── hooks/
 │   │   ├── usePersistentState.ts   # localStorage 持久化状态
 │   │   ├── useResizablePanels.ts   # 双栏拖拽分隔逻辑
-│   │   └── useEditorFontSize.ts    # 编辑器字号状态
+│   │   ├── useEditorFontSize.ts    # 编辑器字号状态
+│   │   └── useToolVisibility.ts    # 工具显示/隐藏管理
 │   └── styles/                 # 全局样式
 ├── public/
 ├── DESIGN.md

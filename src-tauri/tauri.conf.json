@@ -18,6 +18,13 @@
       },
       "shell": {
         "open": true
+      },
+      "dialog": {
+        "save": true
+      },
+      "fs": {
+        "writeFile": true,
+        "scope": ["$HOME/**", "$DOWNLOAD/**", "$DESKTOP/**", "$DOCUMENT/**"]
       }
     },
     "bundle": {
