@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Radio, Upload, message, Typography } from 'antd';
+import { Button, Radio, Upload, message, Typography, Slider, Switch } from 'antd';
 import { FilePdfOutlined, PlusOutlined, LeftOutlined, RightOutlined, DeleteOutlined } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
+import type { UploadFile, UploadProps } from 'antd';
 import jsPDF from 'jspdf';
 import { save } from '@tauri-apps/api/dialog';
 import { writeBinaryFile } from '@tauri-apps/api/fs';
@@ -14,7 +14,6 @@ const { Text } = Typography;
 /** A4 尺寸 (mm) */
 const A4_W = 210;
 const A4_H = 297;
-const MARGIN = 12;
 const GAP = 6;
 
 interface ImageItem {
@@ -37,7 +36,35 @@ function fitInCell(iw: number, ih: number, cw: number, ch: number) {
   const s = Math.min(cw / iw, ch / ih);
   const w = iw * s;
   const h = ih * s;
-  return { w, h, dx: (cw - w) / 2, dy: (ch - h) / 2 };
+  return { w, h, dx: (cw - w) / 2, dy: (ch - h) / 2, s };
+}
+
+function calcPagePlacements(
+  items: ImageItem[],
+  cellW: number,
+  cellH: number,
+  imageScaleRatio: number,
+  lockUniform: boolean,
+) {
+  const fitted = items.map((item) => fitInCell(item.naturalW, item.naturalH, cellW, cellH));
+
+  if (!lockUniform || items.length <= 1) {
+    return fitted.map((f) => {
+      const w = f.w * imageScaleRatio;
+      const h = f.h * imageScaleRatio;
+      return { w, h, dx: (cellW - w) / 2, dy: (cellH - h) / 2 };
+    });
+  }
+
+  // 双图同倍率时，先把图片归一化到同一视觉长边，再应用用户缩放。
+  const targetLongEdge = Math.min(...fitted.map((f) => Math.max(f.w, f.h)));
+  return fitted.map((f) => {
+    const currentLongEdge = Math.max(f.w, f.h) || 1;
+    const normalizeRatio = targetLongEdge / currentLongEdge;
+    const w = f.w * normalizeRatio * imageScaleRatio;
+    const h = f.h * normalizeRatio * imageScaleRatio;
+    return { w, h, dx: (cellW - w) / 2, dy: (cellH - h) / 2 };
+  });
 }
 
 function readImageFile(file: File): Promise<ImageItem> {
@@ -63,10 +90,17 @@ function readImageFile(file: File): Promise<ImageItem> {
   });
 }
 
-async function buildPDF(items: ImageItem[], perPage: number, dir: LayoutDir): Promise<Uint8Array> {
+async function buildPDF(
+  items: ImageItem[],
+  perPage: number,
+  dir: LayoutDir,
+  imageScaleRatio: number,
+  pageMargin: number,
+  lockUniformWhenTwo: boolean,
+): Promise<Uint8Array> {
   const { cols, rows } = getGrid(perPage, dir);
-  const usableW = A4_W - 2 * MARGIN;
-  const usableH = A4_H - 2 * MARGIN;
+  const usableW = A4_W - 2 * pageMargin;
+  const usableH = A4_H - 2 * pageMargin;
   const cellW = (usableW - (cols - 1) * GAP) / cols;
   const cellH = (usableH - (rows - 1) * GAP) / rows;
 
@@ -74,14 +108,22 @@ async function buildPDF(items: ImageItem[], perPage: number, dir: LayoutDir): Pr
 
   for (let p = 0; p < items.length; p += perPage) {
     if (p > 0) doc.addPage();
+    const pageItems = items.slice(p, p + perPage);
+    const pagePlacements = calcPagePlacements(
+      pageItems,
+      cellW,
+      cellH,
+      imageScaleRatio,
+      lockUniformWhenTwo && perPage === 2,
+    );
     for (let k = 0; k < perPage; k++) {
       const item = items[p + k];
       if (!item) break;
       const col = k % cols;
       const row = Math.floor(k / cols);
-      const ox = MARGIN + col * (cellW + GAP);
-      const oy = MARGIN + row * (cellH + GAP);
-      const { w, h, dx, dy } = fitInCell(item.naturalW, item.naturalH, cellW, cellH);
+      const ox = pageMargin + col * (cellW + GAP);
+      const oy = pageMargin + row * (cellH + GAP);
+      const { w, h, dx, dy } = pagePlacements[k];
       const fmt = item.file.type === 'image/png' ? 'PNG' : 'JPEG';
       doc.addImage(item.dataUrl, fmt, ox + dx, oy + dy, w, h);
     }
@@ -94,12 +136,34 @@ export default function ImgToPdf() {
   const [items, setItems] = useState<ImageItem[]>([]);
   const [perPage, setPerPage] = useState<number>(2);
   const [layoutDir, setLayoutDir] = useState<LayoutDir>('col');
+  const [imageScalePct, setImageScalePct] = useState<number>(82);
+  const [pageMargin, setPageMargin] = useState<number>(20);
+  const [lockUniformWhenTwo, setLockUniformWhenTwo] = useState<boolean>(true);
   const [generating, setGenerating] = useState(false);
   const [previewPage, setPreviewPage] = useState(1);
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
+  const [uploadFileList, setUploadFileList] = useState<UploadFile[]>([]);
   const pointerOrigin = useRef<{ idx: number; x: number; y: number } | null>(null);
   const processedUploadUidsRef = useRef<Set<string>>(new Set());
+
+  const applyPhonePreset = () => {
+    setImageScalePct(78);
+    setPageMargin(24);
+    setLockUniformWhenTwo(true);
+  };
+
+  const applyReceiptPreset = () => {
+    setImageScalePct(68);
+    setPageMargin(28);
+    setLockUniformWhenTwo(true);
+  };
+
+  const resetLayoutPreset = () => {
+    setImageScalePct(82);
+    setPageMargin(20);
+    setLockUniformWhenTwo(true);
+  };
 
   const handlePointerDown = useCallback((e: React.PointerEvent, idx: number) => {
     if (e.button !== 0) return;
@@ -138,8 +202,9 @@ export default function ImgToPdf() {
   }, [draggingIdx, overIdx]);
 
   const handleUploadChange: UploadProps['onChange'] = ({ fileList }) => {
+    setUploadFileList(fileList);
     const pendingFiles = fileList.filter(
-      (f) => f.originFileObj && !processedUploadUidsRef.current.has(f.uid),
+      (f) => f.status !== 'removed' && f.originFileObj && !processedUploadUidsRef.current.has(f.uid),
     );
     if (pendingFiles.length === 0) return;
     pendingFiles.forEach((f) => processedUploadUidsRef.current.add(f.uid));
@@ -161,6 +226,7 @@ export default function ImgToPdf() {
 
   const handleClearAll = () => {
     setItems([]);
+    setUploadFileList([]);
     processedUploadUidsRef.current.clear();
   };
 
@@ -178,7 +244,14 @@ export default function ImgToPdf() {
 
     setGenerating(true);
     try {
-      const pdfBytes = await buildPDF(items, perPage, layoutDir);
+      const pdfBytes = await buildPDF(
+        items,
+        perPage,
+        layoutDir,
+        imageScalePct / 100,
+        pageMargin,
+        lockUniformWhenTwo,
+      );
       await writeBinaryFile(savePath, pdfBytes);
       message.success('PDF 已保存');
     } catch (e) {
@@ -193,6 +266,17 @@ export default function ImgToPdf() {
   const { cols: previewCols, rows: previewRows } = getGrid(perPage, layoutDir);
   const previewStart = (previewPage - 1) * perPage;
   const previewItems = items.slice(previewStart, previewStart + perPage);
+  const previewUsableW = A4_W - 2 * pageMargin;
+  const previewUsableH = A4_H - 2 * pageMargin;
+  const previewCellW = (previewUsableW - (previewCols - 1) * GAP) / previewCols;
+  const previewCellH = (previewUsableH - (previewRows - 1) * GAP) / previewRows;
+  const previewPlacements = calcPagePlacements(
+    previewItems,
+    previewCellW,
+    previewCellH,
+    imageScalePct / 100,
+    lockUniformWhenTwo && perPage === 2,
+  );
 
   useEffect(() => {
     if (pageCount === 0) { setPreviewPage(1); return; }
@@ -212,6 +296,7 @@ export default function ImgToPdf() {
             accept="image/jpeg,image/png,image/webp,image/gif,image/bmp"
             multiple
             showUploadList={false}
+            fileList={uploadFileList}
             beforeUpload={() => false}
             onChange={handleUploadChange}
           >
@@ -299,6 +384,54 @@ export default function ImgToPdf() {
                   />
                 </div>
               )}
+              <div className={styles.settingCol}>
+                <div className={styles.settingRow}>
+                  <Text className={styles.settingLabel}>图片缩放</Text>
+                  <Text className={styles.settingValue}>{imageScalePct}%</Text>
+                </div>
+                <Slider
+                  min={55}
+                  max={100}
+                  step={1}
+                  value={imageScalePct}
+                  onChange={setImageScalePct}
+                  tooltip={{ formatter: (value) => `${value}%` }}
+                />
+              </div>
+              <div className={styles.settingCol}>
+                <div className={styles.settingRow}>
+                  <Text className={styles.settingLabel}>页面留白</Text>
+                  <Text className={styles.settingValue}>{pageMargin}mm</Text>
+                </div>
+                <Slider
+                  min={12}
+                  max={32}
+                  step={1}
+                  value={pageMargin}
+                  onChange={setPageMargin}
+                  tooltip={{ formatter: (value) => `${value}mm` }}
+                />
+              </div>
+              {perPage === 2 && (
+                <div className={styles.settingRow}>
+                  <Text className={styles.settingLabel}>双图同倍率</Text>
+                  <Switch size="small" checked={lockUniformWhenTwo} onChange={setLockUniformWhenTwo} />
+                </div>
+              )}
+              <div className={styles.settingActions}>
+                <Button size="small" onClick={applyPhonePreset}>
+                  手机照片推荐
+                </Button>
+                <Button size="small" onClick={applyReceiptPreset}>
+                  证件/票据模式
+                </Button>
+                <Button size="small" type="text" onClick={resetLayoutPreset}>
+                  恢复默认
+                </Button>
+              </div>
+              <Text type="secondary" className={styles.settingTip}>
+                预览与导出使用同一套缩放与留白参数
+              </Text>
             </div>
           )}
 
@@ -332,20 +465,35 @@ export default function ImgToPdf() {
                   {previewItems.map((item, idx) => {
                     const col = idx % previewCols;
                     const row = Math.floor(idx / previewCols);
-                    const cellW = `(100% - ${(previewCols - 1) * 2}%) / ${previewCols}`;
-                    const cellH = `(100% - ${(previewRows - 1) * 2}%) / ${previewRows}`;
+                    const ox = pageMargin + col * (previewCellW + GAP);
+                    const oy = pageMargin + row * (previewCellH + GAP);
+                    const placement = previewPlacements[idx];
+                    const imgW = placement.w;
+                    const imgH = placement.h;
+                    const dx = (previewCellW - imgW) / 2;
+                    const dy = (previewCellH - imgH) / 2;
                     return (
                       <div
                         key={item.id}
                         className={styles.previewCell}
                         style={{
-                          width: `calc(${cellW})`,
-                          height: `calc(${cellH})`,
-                          left: `calc(${col} * ((${cellW}) + 2%))`,
-                          top: `calc(${row} * ((${cellH}) + 2%))`,
+                          width: `${(previewCellW / A4_W) * 100}%`,
+                          height: `${(previewCellH / A4_H) * 100}%`,
+                          left: `${(ox / A4_W) * 100}%`,
+                          top: `${(oy / A4_H) * 100}%`,
                         }}
                       >
-                        <img src={item.dataUrl} alt={`preview-${idx + 1}`} className={styles.previewImage} />
+                        <img
+                          src={item.dataUrl}
+                          alt={`preview-${idx + 1}`}
+                          className={styles.previewImage}
+                          style={{
+                            width: `${(imgW / previewCellW) * 100}%`,
+                            height: `${(imgH / previewCellH) * 100}%`,
+                            left: `${(dx / previewCellW) * 100}%`,
+                            top: `${(dy / previewCellH) * 100}%`,
+                          }}
+                        />
                       </div>
                     );
                   })}
