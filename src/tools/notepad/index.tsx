@@ -44,6 +44,14 @@ function normalizeUrl(raw: string) {
   return trimmed.startsWith('www.') ? `https://${trimmed}` : trimmed;
 }
 
+function getCharacterCount(text: string) {
+  return Array.from(text).length;
+}
+
+function getCharacterCountWithoutLineBreaks(text: string) {
+  return getCharacterCount(text.replace(/\r?\n/g, ''));
+}
+
 export default function Notepad() {
   const [tabs, setTabs] = usePersistentState<NoteTab[]>(STORAGE_TABS_KEY, [
     { id: 'default', name: '未命名' },
@@ -57,6 +65,8 @@ export default function Notepad() {
   const nameInputRef = useRef<InputRef>(null);
   const { fontSize, increase, decrease } = useEditorFontSize();
   const isMac = navigator.platform.toLowerCase().includes('mac');
+  const [currentLineCharCount, setCurrentLineCharCount] = useState(0);
+  const [selectedCharCount, setSelectedCharCount] = useState(0);
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -212,31 +222,65 @@ export default function Notepad() {
   }, [dialogMode]);
 
   const handleEditorBeforeMount = useCallback<BeforeMount>((monaco) => {
-    monaco.editor.defineTheme('firewood-one-dark', {
-      base: 'vs-dark',
+    monaco.editor.defineTheme('firewood-contrast-light', {
+      base: 'vs',
       inherit: true,
       rules: [
-        { token: 'comment', foreground: '5C6370', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'C678DD' },
-        { token: 'number', foreground: 'D19A66' },
-        { token: 'string', foreground: '98C379' },
-        { token: 'regexp', foreground: '56B6C2' },
-        { token: 'type.identifier', foreground: 'E5C07B' },
+        { token: 'comment', foreground: '6B7280', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '7C3AED' },
+        { token: 'number', foreground: 'B45309' },
+        { token: 'string', foreground: '047857' },
+        { token: 'regexp', foreground: '0369A1' },
+        { token: 'type.identifier', foreground: '1D4ED8' },
       ],
       colors: {
-        'editor.background': '#1E222A',
-        'editor.foreground': '#ABB2BF',
-        'editorCursor.foreground': '#61AFEF',
-        'editorLineNumber.foreground': '#3F4451',
-        'editor.selectionBackground': '#3E4451',
-        'editor.inactiveSelectionBackground': '#2C313C',
-        'editorIndentGuide.background1': '#2C313C',
+        'editor.background': '#F8FAFC',
+        'editor.foreground': '#0F172A',
+        'editorCursor.foreground': '#EF4444',
+        'editorCursor.background': '#FFFFFF',
+        'editorMultiCursor.primary.foreground': '#EF4444',
+        'editorMultiCursor.secondary.foreground': '#DC2626',
+        'editorLineNumber.foreground': '#94A3B8',
+        'editorLineNumber.activeForeground': '#334155',
+        'editor.selectionBackground': '#CBD5E199',
+        'editor.inactiveSelectionBackground': '#E2E8F099',
+        'editor.selectionHighlightBackground': '#E2E8F055',
+        'editor.selectionHighlightBorder': '#94A3B8',
+        'editor.lineHighlightBackground': '#F1F5F9',
+        'editorIndentGuide.background1': '#E2E8F0',
       },
     });
   }, []);
 
   const handleEditorMount = useCallback<OnMount>((editor, monaco) => {
-    monaco.editor.setTheme('firewood-one-dark');
+    monaco.editor.setTheme('firewood-contrast-light');
+
+    const updateCursorStats = () => {
+      const model = editor.getModel();
+      const position = editor.getPosition();
+      if (!model || !position) {
+        setCurrentLineCharCount(0);
+        setSelectedCharCount(0);
+        return;
+      }
+
+      const currentLineText = model.getLineContent(position.lineNumber);
+      setCurrentLineCharCount(getCharacterCount(currentLineText));
+
+      const selections = editor.getSelections() ?? [];
+      const selectedLength = selections.reduce((total, selection) => {
+        if (selection.isEmpty()) {
+          return total;
+        }
+        return total + getCharacterCountWithoutLineBreaks(model.getValueInRange(selection));
+      }, 0);
+      setSelectedCharCount(selectedLength);
+    };
+
+    updateCursorStats();
+    const cursorPositionDisposable = editor.onDidChangeCursorPosition(updateCursorStats);
+    const cursorSelectionDisposable = editor.onDidChangeCursorSelection(updateCursorStats);
+    const contentDisposable = editor.onDidChangeModelContent(updateCursorStats);
 
     editor.onMouseDown(async (event) => {
       const isModifierPressed = isMac ? event.event.metaKey : event.event.ctrlKey;
@@ -256,16 +300,25 @@ export default function Notepad() {
         message.error(`链接打开失败：${String(error)}`);
       }
     });
+
+    editor.onDidDispose(() => {
+      cursorPositionDisposable.dispose();
+      cursorSelectionDisposable.dispose();
+      contentDisposable.dispose();
+    });
   }, [isMac]);
 
   const editorOptions = {
     minimap: { enabled: false },
     fontSize,
-    lineNumbers: 'off' as const,
+    cursorStyle: 'line' as const,
+    cursorWidth: 3,
+    cursorBlinking: 'solid' as const,
+    lineNumbers: 'on' as const,
     glyphMargin: false,
     folding: false,
-    lineDecorationsWidth: 0,
-    lineNumbersMinChars: 0,
+    lineDecorationsWidth: 8,
+    lineNumbersMinChars: 3,
     wordWrap: 'on' as const,
     links: true,
     smoothScrolling: true,
@@ -302,16 +355,35 @@ export default function Notepad() {
 
       <div style={{ position: 'relative', height: 'calc(100% - 110px)' }}>
         {activeTabId ? (
-          <Editor
-            height="100%"
-            language="markdown"
-            value={content}
-            onChange={(value) => onContentChange(value ?? '')}
-            beforeMount={handleEditorBeforeMount}
-            onMount={handleEditorMount}
-            theme="firewood-one-dark"
-            options={editorOptions}
-          />
+          <>
+            <Editor
+              height="calc(100% - 34px)"
+              language="markdown"
+              value={content}
+              onChange={(value) => onContentChange(value ?? '')}
+              beforeMount={handleEditorBeforeMount}
+              onMount={handleEditorMount}
+              theme="firewood-contrast-light"
+              options={editorOptions}
+            />
+            <div
+              style={{
+                height: 34,
+                borderTop: '1px solid #e2e8f0',
+                background: '#f1f5f9',
+                color: '#334155',
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                padding: '0 140px 0 12px',
+              }}
+            >
+              <span>
+                当前行字符数：{currentLineCharCount} ｜ 已选中字符数：{selectedCharCount}
+              </span>
+            </div>
+          </>
         ) : (
           <Empty
             description="当前没有标签页，请点击右侧 + 新建"
