@@ -25,6 +25,18 @@ function createTabId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const DEFAULT_NAME_POOL = [
+  '草稿', '笔记', '备忘', '随记', '摘录',
+  '待办', '想法', '灵感', '片段', '临时',
+  '剑来', '雪中悍刀行', '庆余年', '诡秘之主',
+];
+
+function randomDefaultName() {
+  const base = DEFAULT_NAME_POOL[Math.floor(Math.random() * DEFAULT_NAME_POOL.length)];
+  const suffix = Math.random().toString(36).slice(2, 5);
+  return `${base}-${suffix}`;
+}
+
 function getUrlAtColumn(line: string, column: number) {
   const urlRegex = /(https?:\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+)/g;
   let match = urlRegex.exec(line);
@@ -42,6 +54,76 @@ function getUrlAtColumn(line: string, column: number) {
 function normalizeUrl(raw: string) {
   const trimmed = raw.trim().replace(/[),.;:!?\]\}]+$/g, '');
   return trimmed.startsWith('www.') ? `https://${trimmed}` : trimmed;
+}
+
+/**
+ * Best-effort JSON formatter: tries strict parse first, falls back to a
+ * character-level pretty-printer that tolerates invalid / partial JSON.
+ */
+function bestEffortFormatJson(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return text;
+
+  // Fast path: valid JSON
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch {
+    // fall through
+  }
+
+  // Slow path: character-level scanner
+  let result = '';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  const indent = () => '  '.repeat(depth);
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+
+    if (escaped) {
+      result += ch;
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\' && inString) {
+      result += ch;
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      result += ch;
+      continue;
+    }
+
+    if (inString) {
+      result += ch;
+      continue;
+    }
+
+    // Skip existing whitespace outside strings
+    if (/\s/.test(ch)) continue;
+
+    if (ch === '{' || ch === '[') {
+      result += ch;
+      depth++;
+      result += '\n' + indent();
+    } else if (ch === '}' || ch === ']') {
+      depth = Math.max(0, depth - 1);
+      result += '\n' + indent() + ch;
+    } else if (ch === ',') {
+      result += ',\n' + indent();
+    } else if (ch === ':') {
+      result += ': ';
+    } else {
+      result += ch;
+    }
+  }
+
+  return result;
 }
 
 function getCharacterCount(text: string) {
@@ -183,13 +265,21 @@ export default function Notepad() {
         return;
       }
       setEditingTabId(null);
-      form.resetFields();
+      form.setFieldsValue({ name: randomDefaultName() });
       setDialogMode('create');
       return;
     }
 
     if (typeof targetKey === 'string') {
-      handleRemoveTab(targetKey);
+      const tab = tabs.find((t) => t.id === targetKey);
+      Modal.confirm({
+        title: '删除标签页',
+        content: `确定要删除「${tab?.name ?? '未命名'}」吗？删除后内容无法恢复。`,
+        okText: '删除',
+        okButtonProps: { danger: true },
+        cancelText: '取消',
+        onOk: () => handleRemoveTab(targetKey),
+      });
     }
   };
 
@@ -306,6 +396,25 @@ export default function Notepad() {
       cursorSelectionDisposable.dispose();
       contentDisposable.dispose();
     });
+
+    editor.addAction({
+      id: 'firewood.formatJson',
+      label: 'Format JSON',
+      contextMenuGroupId: 'modification',
+      contextMenuOrder: 1,
+      run: (ed) => {
+        const model = ed.getModel();
+        if (!model) return;
+        const fullRange = model.getFullModelRange();
+        const text = model.getValue();
+        const formatted = bestEffortFormatJson(text);
+        if (formatted !== text) {
+          ed.executeEdits('firewood.formatJson', [
+            { range: fullRange, text: formatted },
+          ]);
+        }
+      },
+    });
   }, [isMac]);
 
   const editorOptions = {
@@ -316,7 +425,7 @@ export default function Notepad() {
     cursorBlinking: 'solid' as const,
     lineNumbers: 'on' as const,
     glyphMargin: false,
-    folding: false,
+    folding: true,
     lineDecorationsWidth: 8,
     lineNumbersMinChars: 3,
     wordWrap: 'on' as const,

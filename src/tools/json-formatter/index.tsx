@@ -23,6 +23,7 @@ export default function JsonFormatter() {
       const parsed = JSON.parse(input);
       setOutput(JSON.stringify(parsed, null, 2));
       setError('');
+      setIsInputCollapsed(true);
     } catch (e) {
       setError((e as Error).message);
       setOutput('');
@@ -35,6 +36,7 @@ export default function JsonFormatter() {
       const parsed = JSON.parse(input);
       setOutput(JSON.stringify(parsed));
       setError('');
+      setIsInputCollapsed(true);
     } catch (e) {
       setError((e as Error).message);
       setOutput('');
@@ -59,6 +61,7 @@ export default function JsonFormatter() {
       }
       setOutput(text);
       setError('');
+      setIsInputCollapsed(true);
     } catch (e) {
       setError((e as Error).message);
       setOutput('');
