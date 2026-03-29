@@ -8,6 +8,7 @@ import {
   FieldTimeOutlined,
   KeyOutlined,
   FilePdfOutlined,
+  TranslationOutlined,
 } from '@ant-design/icons';
 import type { ToolMeta } from '../types/tool';
 
@@ -67,6 +68,13 @@ const tools: ToolMeta[] = [
     icon: <FilePdfOutlined />,
     description: '多图排版，导出为 A4 尺寸 PDF',
     component: lazy(() => import('../tools/img-to-pdf/index.tsx')),
+  },
+  {
+    id: 'translate',
+    name: '文本翻译',
+    icon: <TranslationOutlined />,
+    description: '支持腾讯云 / 百度翻译 API',
+    component: lazy(() => import('../tools/translate/index.tsx')),
   },
 ];
 
