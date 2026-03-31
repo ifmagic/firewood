@@ -32,7 +32,10 @@ fn main() {
 
     let system_tray = SystemTray::new().with_menu(tray_menu);
 
-    let mut builder = tauri::Builder::default();
+    let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            show_window(app);
+        }));
 
     #[cfg(target_os = "macos")]
     {
