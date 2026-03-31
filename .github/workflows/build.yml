@@ -54,15 +54,9 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'Firewood ${{ github.ref_name }}'
           releaseBody: |
-            ## ✨ 新功能
+            ## 🐛 修复
 
-            - 文本翻译：新增翻译工具，支持腾讯云 / 百度翻译 API，13 种语言互译，Rust 后端实现 API 签名
-            - 侧边栏拖拽排序：工具列表支持拖拽自定义顺序，排序结果自动持久化
-            - 翻译工具：原文/译文区域支持鼠标滚轮调节字体大小（默认 20px）
-
-            ## 📦 其他
-
-            - 更新项目文档（README / DESIGN），补充翻译工具、文件哈希、侧边栏排序等新功能说明
+            - 修复 Windows 下可重复打开多个 Firewood 进程的问题，现在只允许单实例运行，重复启动时自动聚焦已有窗口
 
             ---
 
