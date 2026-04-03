@@ -2,16 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppstoreOutlined, CodeOutlined, RocketOutlined } from '@ant-design/icons';
 import { listen } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
-import { Modal, Tag, Typography, Spin } from 'antd';
+import { Modal, Tag, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
-import { fetchReleaseNotesByVersionCached } from '../../utils/updateNotes';
+import { getLocalReleaseNotes } from '../../utils/updateNotes';
+import buildYmlRaw from '../../../.github/workflows/build.yml?raw';
 import styles from './AboutDialog.module.css';
 
 export default function AboutDialog() {
   const [open, setOpen] = useState(false);
   const [version, setVersion] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
-  const [notesLoading, setNotesLoading] = useState(false);
   const [notesVersion, setNotesVersion] = useState('');
   const [notesBody, setNotesBody] = useState('');
 
@@ -39,20 +39,11 @@ export default function AboutDialog() {
   }, []);
 
   const openVersionNotes = async () => {
+    const currentVersion = version || (await getVersion());
+    const releaseNotes = getLocalReleaseNotes(buildYmlRaw, currentVersion);
+    setNotesVersion(releaseNotes.version);
+    setNotesBody(releaseNotes.body);
     setNotesOpen(true);
-    setNotesLoading(true);
-
-    try {
-      const currentVersion = version || (await getVersion());
-      const releaseNotes = await fetchReleaseNotesByVersionCached(currentVersion);
-      setNotesVersion(releaseNotes.version);
-      setNotesBody(releaseNotes.body);
-    } catch {
-      setNotesVersion(version || '0.0.0');
-      setNotesBody('当前版本的发布说明加载失败，请稍后重试。');
-    } finally {
-      setNotesLoading(false);
-    }
   };
 
   return (
@@ -112,16 +103,9 @@ export default function AboutDialog() {
         centered
         onCancel={() => setNotesOpen(false)}
       >
-        {notesLoading ? (
-          <div className={styles.notesLoading}>
-            <Spin size="small" />
-            <Typography.Text type="secondary">正在加载更新说明...</Typography.Text>
-          </div>
-        ) : (
-          <div className={styles.notesBody}>
-            <ReactMarkdown>{notesBody}</ReactMarkdown>
-          </div>
-        )}
+        <div className={styles.notesBody}>
+          <ReactMarkdown>{notesBody}</ReactMarkdown>
+        </div>
       </Modal>
     </>
   );

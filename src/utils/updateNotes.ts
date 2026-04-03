@@ -5,16 +5,11 @@ export interface UpdateNotesCache {
 }
 
 const UPDATE_NOTES_CACHE_KEY = 'firewood.updateNotesCache';
-const RELEASE_NOTES_CACHE_PREFIX = 'firewood.releaseNotesCache.';
-const RELEASE_NOTES_TTL_MS = 2 * 60 * 1000;
 
 interface ReleaseNotesResult {
   version: string;
   body: string;
 }
-
-const memoryReleaseNotesCache = new Map<string, { expiresAt: number; data: ReleaseNotesResult }>();
-const inFlightReleaseNotes = new Map<string, Promise<ReleaseNotesResult>>();
 
 /** 只保留 release notes 中变更说明部分，去掉下载/安装说明 */
 export function extractChangelog(body: string | null): string {
@@ -44,84 +39,56 @@ export function readUpdateNotesCache(): UpdateNotesCache | null {
   }
 }
 
-function normalizeVersion(version: string) {
-  return version.replace(/^v/, '').trim();
-}
+/**
+ * 从 build.yml 原始内容中解析 releaseBody 字段。
+ * 利用 YAML block scalar（`|`）的缩进规则提取多行文本。
+ */
+export function parseReleaseBodyFromBuildYml(raw: string): string {
+  const marker = 'releaseBody: |';
+  const idx = raw.indexOf(marker);
+  if (idx === -1) return '';
 
-function readReleaseNotesCache(version: string): UpdateNotesCache | null {
-  try {
-    const key = `${RELEASE_NOTES_CACHE_PREFIX}${normalizeVersion(version)}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as UpdateNotesCache;
-    if (!parsed.version || !parsed.body || !parsed.checkedAt) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
+  const afterMarker = raw.slice(idx + marker.length);
+  const lines = afterMarker.split('\n');
 
-function writeReleaseNotesCache(version: string, body: string) {
-  const normalized = normalizeVersion(version);
-  const cache: UpdateNotesCache = {
-    version: normalized,
-    body,
-    checkedAt: Date.now(),
-  };
-  try {
-    localStorage.setItem(`${RELEASE_NOTES_CACHE_PREFIX}${normalized}`, JSON.stringify(cache));
-  } catch {
-    // ignore storage errors
-  }
-}
-
-export async function fetchReleaseNotesByVersionCached(version: string): Promise<ReleaseNotesResult> {
-  const normalized = normalizeVersion(version);
-  const now = Date.now();
-
-  const memoryHit = memoryReleaseNotesCache.get(normalized);
-  if (memoryHit && memoryHit.expiresAt > now) {
-    return memoryHit.data;
+  // 找到 block scalar 的缩进级别（第一个非空行的缩进）
+  let blockIndent = 0;
+  for (const line of lines) {
+    if (line.trim() === '') continue;
+    blockIndent = line.length - line.trimStart().length;
+    break;
   }
 
-  const storageHit = readReleaseNotesCache(normalized);
-  if (storageHit && storageHit.checkedAt + RELEASE_NOTES_TTL_MS > now) {
-    const data: ReleaseNotesResult = { version: storageHit.version, body: storageHit.body };
-    memoryReleaseNotesCache.set(normalized, { data, expiresAt: storageHit.checkedAt + RELEASE_NOTES_TTL_MS });
-    return data;
-  }
+  if (blockIndent === 0) return '';
 
-  const inflight = inFlightReleaseNotes.get(normalized);
-  if (inflight) {
-    return inflight;
-  }
-
-  const request = (async () => {
-    const tag = `v${normalized}`;
-    const resp = await fetch(`https://api.github.com/repos/ifmagic/firewood/releases/tags/${tag}`);
-    if (!resp.ok) {
-      throw new Error(`release ${tag} not found`);
+  const bodyLines: string[] = [];
+  for (const line of lines) {
+    // 空行保留
+    if (line.trim() === '') {
+      bodyLines.push('');
+      continue;
     }
-    const data = (await resp.json()) as { body?: string; tag_name?: string };
-    const resolvedVersion = (data.tag_name || tag).replace(/^v/, '');
-    const changelog = extractChangelog(data.body ?? null);
-    const result: ReleaseNotesResult = {
-      version: resolvedVersion,
-      body: changelog,
-    };
-
-    memoryReleaseNotesCache.set(normalized, {
-      data: result,
-      expiresAt: Date.now() + RELEASE_NOTES_TTL_MS,
-    });
-    writeReleaseNotesCache(normalized, changelog);
-    return result;
-  })();
-
-  inFlightReleaseNotes.set(normalized, request);
-  try {
-    return await request;
-  } finally {
-    inFlightReleaseNotes.delete(normalized);
+    const lineIndent = line.length - line.trimStart().length;
+    // 缩进不足说明 block scalar 结束
+    if (lineIndent < blockIndent) break;
+    bodyLines.push(line.slice(blockIndent));
   }
+
+  // 去掉首尾空行
+  while (bodyLines.length > 0 && bodyLines[0].trim() === '') bodyLines.shift();
+  while (bodyLines.length > 0 && bodyLines[bodyLines.length - 1].trim() === '') bodyLines.pop();
+
+  return bodyLines.join('\n');
+}
+
+/**
+ * 从本地 build.yml（构建时内联）获取当前版本的发布说明。
+ */
+export function getLocalReleaseNotes(buildYmlRaw: string, version: string): ReleaseNotesResult {
+  const fullBody = parseReleaseBodyFromBuildYml(buildYmlRaw);
+  const changelog = extractChangelog(fullBody);
+  return {
+    version: version.replace(/^v/, ''),
+    body: changelog || '包含最新功能与问题修复。',
+  };
 }
