@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react';
-import { Input, Button, Select, message, Tooltip, Space } from 'antd';
+import { Input, Button, Select, message, Tooltip, Space, Tag, Empty } from 'antd';
 import {
   SwapOutlined,
   CopyOutlined,
   SettingOutlined,
+  DeleteOutlined,
+  SwapRightOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { invoke } from '@tauri-apps/api/tauri';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
@@ -21,6 +24,18 @@ interface LangOption {
   tencentCode: string;
   baiduCode: string;
 }
+
+interface TranslateHistoryRecord {
+  id: string;
+  provider: Provider;
+  sourceLang: string;
+  targetLang: string;
+  input: string;
+  output: string;
+  convertedAt: number;
+}
+
+const MAX_HISTORY = 50;
 
 const LANGUAGES: LangOption[] = [
   { value: 'zh', label: '中文', tencentCode: 'zh', baiduCode: 'zh' },
@@ -50,6 +65,18 @@ function getLangCode(value: string, provider: Provider): string {
   return provider === 'tencent' ? lang.tencentCode : lang.baiduCode;
 }
 
+function getLangLabel(value: string): string {
+  if (value === 'auto') return '自动';
+  return LANGUAGES.find((l) => l.value === value)?.label ?? value;
+}
+
+function formatHistoryForCopy(record: TranslateHistoryRecord) {
+  const engine = record.provider === 'tencent' ? '腾讯翻译' : '百度翻译';
+  const from = getLangLabel(record.sourceLang);
+  const to = getLangLabel(record.targetLang);
+  return `${engine}（${from} → ${to}）\n原文: ${record.input}\n译文: ${record.output}`;
+}
+
 export default function Translate() {
   const [provider, setProvider] = usePersistentState<Provider>('tool:translate:provider', 'tencent');
   const [sourceLang, setSourceLang] = usePersistentState('tool:translate:source', 'auto');
@@ -58,6 +85,7 @@ export default function Translate() {
   const [output, setOutput] = usePersistentState('tool:translate:output', '');
   const [loading, setLoading] = useState(false);
   const [showConfig, setShowConfig] = usePersistentState('tool:translate:showConfig', true);
+  const [history, setHistory] = usePersistentState<TranslateHistoryRecord[]>('tool:translate:history', []);
 
   // Tencent config
   const [tencentSecretId, setTencentSecretId] = usePersistentState('tool:translate:tencent:secretId', '');
@@ -76,6 +104,17 @@ export default function Translate() {
     ? tencentSecretId && tencentSecretKey
     : baiduAppId && baiduSecret;
 
+  const addHistory = (record: Omit<TranslateHistoryRecord, 'id' | 'convertedAt'>) => {
+    const newRecord: TranslateHistoryRecord = {
+      ...record,
+      id: crypto.randomUUID(),
+      convertedAt: Date.now(),
+    };
+    setHistory((prev) => [newRecord, ...prev].slice(0, MAX_HISTORY));
+  };
+
+  const clearHistory = () => setHistory([]);
+
   const handleTranslate = async () => {
     if (!input.trim()) return;
     if (!isConfigured) {
@@ -89,6 +128,7 @@ export default function Translate() {
       const from = getLangCode(sourceLang, provider);
       const to = getLangCode(targetLang, provider);
 
+      let resultText = '';
       if (provider === 'tencent') {
         const result = await invoke<{ text: string }>('tencent_translate', {
           text: input,
@@ -98,7 +138,7 @@ export default function Translate() {
           secretKey: tencentSecretKey,
           region: tencentRegion,
         });
-        setOutput(result.text);
+        resultText = result.text;
       } else {
         const result = await invoke<{ text: string }>('baidu_translate', {
           text: input,
@@ -107,8 +147,16 @@ export default function Translate() {
           appid: baiduAppId,
           secret: baiduSecret,
         });
-        setOutput(result.text);
+        resultText = result.text;
       }
+      setOutput(resultText);
+      addHistory({
+        provider,
+        sourceLang,
+        targetLang,
+        input: input.trim(),
+        output: resultText,
+      });
     } catch (e) {
       message.error(String(e));
     } finally {
@@ -265,7 +313,7 @@ export default function Translate() {
                   loading={loading}
                   disabled={!input.trim()}
                 >
-                  翻译
+                  翻 译
                 </Button>
                 <Button
                   size="small"
@@ -307,6 +355,75 @@ export default function Translate() {
             <TextArea value={output} readOnly placeholder="翻译结果" style={{ fontSize }} />
           </div>
           <FontSizeControl fontSize={fontSize} onIncrease={increaseFontSize} onDecrease={decreaseFontSize} />
+        </div>
+
+        {/* 翻译历史 */}
+        <div className={styles.historySection}>
+          <div className={styles.historyHeader}>
+            <h4 className={styles.historyTitle}>
+              翻译历史
+              {history.length > 0 && <span className={styles.historyCount}>{history.length}</span>}
+            </h4>
+            {history.length > 0 && (
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={clearHistory}
+                className={styles.clearBtn}
+              >
+                清空
+              </Button>
+            )}
+          </div>
+          {history.length === 0 ? (
+            <div className={styles.historyEmpty}>
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无翻译记录" />
+            </div>
+          ) : (
+            <div className={styles.historyList}>
+              {history.map((record) => (
+                <div key={record.id} className={styles.historyItem}>
+                  <div className={styles.historyItemMain}>
+                    <Tag
+                      color={record.provider === 'tencent' ? 'blue' : 'orange'}
+                      className={styles.historyTag}
+                    >
+                      {record.provider === 'tencent' ? '腾讯' : '百度'}
+                    </Tag>
+                    <span className={styles.historyLang}>
+                      {getLangLabel(record.sourceLang)}
+                      <SwapRightOutlined className={styles.historyArrow} />
+                      {getLangLabel(record.targetLang)}
+                    </span>
+                    <span className={styles.historyText} title={record.input}>
+                      {record.input}
+                    </span>
+                    <SwapRightOutlined className={styles.historyArrow} />
+                    <span className={styles.historyText} title={record.output}>
+                      {record.output}
+                    </span>
+                    <span className={styles.historyTime}>
+                      {dayjs(record.convertedAt).format('HH:mm:ss')}
+                    </span>
+                  </div>
+                  <Tooltip title="复制翻译详情">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CopyOutlined />}
+                      className={styles.historyCopyBtn}
+                      onClick={() => {
+                        navigator.clipboard.writeText(formatHistoryForCopy(record));
+                        message.success('已复制');
+                      }}
+                    />
+                  </Tooltip>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </ToolLayout>
