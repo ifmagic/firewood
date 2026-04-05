@@ -136,43 +136,43 @@ export default function TextDiff() {
 
   const renderDiff = () => {
     const elements: React.ReactNode[] = [];
-    let i = 0;
-    while (i < diffs.length) {
+    for (let i = 0; i < diffs.length; ) {
+      const ci = i; // 在 i 被修改前捕获，供闭包使用
       const part = diffs[i];
       // 检测 removed + added 配对
       if (part.removed && i + 1 < diffs.length && diffs[i + 1].added) {
         elements.push(
-          <div key={i} className={`${styles.chunk} ${styles.modifiedChunk}`}>
-            {renderModifiedPair(part, diffs[i + 1], `mod-${i}`)}
+          <div key={ci} className={`${styles.chunk} ${styles.modifiedChunk}`}>
+            {renderModifiedPair(part, diffs[i + 1], `mod-${ci}`)}
           </div>,
         );
-        i += 2;
+        i += 2; 
       } else if (part.added) {
         elements.push(
-          <div key={i} className={`${styles.chunk} ${styles.addedChunk}`}>
+          <div key={ci} className={`${styles.chunk} ${styles.addedChunk}`}>
             {renderChunkLines(part.value, '+')}
           </div>,
         );
         i++;
       } else if (part.removed) {
         elements.push(
-          <div key={i} className={`${styles.chunk} ${styles.removedChunk}`}>
+          <div key={ci} className={`${styles.chunk} ${styles.removedChunk}`}>
             {renderChunkLines(part.value, '-')}
           </div>,
         );
         i++;
       } else {
         elements.push(
-          <div key={i} className={styles.unchangedContainer}>
-            {expandedUnchangedChunks.includes(i) ? (
+          <div key={ci} className={styles.unchangedContainer}>
+            {expandedUnchangedChunks.includes(ci) ? (
               <div className={`${styles.chunk} ${styles.unchangedChunk}`}>
-                <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(i)}>
+                <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(ci)}>
                   收起 {countLines(part.value)} 行未变化内容
                 </button>
                 {renderChunkLines(part.value, ' ')}
               </div>
             ) : (
-              <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(i)}>
+              <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(ci)}>
                 显示 {countLines(part.value)} 行未变化内容
               </button>
             )}
