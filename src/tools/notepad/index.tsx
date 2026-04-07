@@ -294,6 +294,14 @@ export default function Notepad() {
   const modalTitle = dialogMode === 'rename' ? '重命名标签页' : '新建标签页';
   const modalOkText = dialogMode === 'rename' ? '保存' : '创建';
 
+  const detectedLanguage = useMemo(() => {
+    const trimmed = content.trimStart();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
+    if (/^<(!doctype|html|div|span|head|body|p\b|ul|ol|li|table|form|a\b|img|section|article|nav|header|footer)/i.test(trimmed)) return 'html';
+    if (/^(import |export |const |let |var |function |class |=>|\/\/)/.test(trimmed)) return 'javascript';
+    return 'plaintext';
+  }, [content]);
+
   const focusNameInput = useCallback(() => {
     requestAnimationFrame(() => {
       const input = nameInputRef.current?.input;
@@ -467,7 +475,7 @@ export default function Notepad() {
           <>
             <Editor
               height="calc(100% - 34px)"
-              language="markdown"
+              language={detectedLanguage}
               value={content}
               onChange={(value) => onContentChange(value ?? '')}
               beforeMount={handleEditorBeforeMount}
@@ -489,6 +497,9 @@ export default function Notepad() {
               }}
             >
               <span>
+                {detectedLanguage !== 'plaintext' && (
+                  <span style={{ color: '#6366f1', marginRight: 8 }}>{detectedLanguage.toUpperCase()}</span>
+                )}
                 当前行字符数：{currentLineCharCount} ｜ 已选中字符数：{selectedCharCount}
               </span>
             </div>
