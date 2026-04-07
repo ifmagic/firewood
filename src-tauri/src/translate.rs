@@ -1,6 +1,6 @@
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use md5::{Digest as Md5Digest, Md5};
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 
@@ -39,29 +39,31 @@ pub async fn baidu_translate(
     secret: String,
 ) -> Result<TranslateResult, String> {
     // Build sign: md5(appid + q + salt + secret)
-    let salt: u32 = rand::thread_rng().gen();
+    let salt: u32 = rand::rng().random();
     let sign_str = format!("{}{}{}{}", appid, text, salt, secret);
     let mut hasher = Md5::new();
     hasher.update(sign_str.as_bytes());
-    let sign = format!("{:x}", hasher.finalize());
+    let sign_result = hasher.finalize();
+    let sign = hex::encode(sign_result);
 
-    let client = reqwest::Client::new();
-    let resp = client
-        .post("https://fanyi-api.baidu.com/api/trans/vip/translate")
-        .form(&[
+    let url = reqwest::Url::parse_with_params(
+        "https://fanyi-api.baidu.com/api/trans/vip/translate",
+        &[
             ("q", text.as_str()),
             ("from", from.as_str()),
             ("to", to.as_str()),
             ("appid", appid.as_str()),
-            ("salt", &salt.to_string()),
-            ("sign", &sign),
-        ])
+            ("salt", salt.to_string().as_str()),
+            ("sign", sign.as_str()),
+        ],
+    )
+    .map_err(|e| format!("URL 构造失败: {}", e))?;
+    let resp = reqwest::Client::new()
+        .get(url)
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
-
     let body: BaiduResponse = resp.json().await.map_err(|e| format!("解析失败: {}", e))?;
-
     if let Some(code) = &body.error_code {
         if code != "52000" {
             return Err(format!(
@@ -78,7 +80,6 @@ pub async fn baidu_translate(
         .map(|r| r.dst.clone())
         .collect::<Vec<_>>()
         .join("\n");
-
     Ok(TranslateResult {
         text: translated,
         from: from.clone(),
@@ -180,10 +181,7 @@ pub async fn tencent_translate(
     );
 
     // Step 3: Signature
-    let secret_date = hmac_sha256(
-        format!("TC3{}", secret_key).as_bytes(),
-        date.as_bytes(),
-    );
+    let secret_date = hmac_sha256(format!("TC3{}", secret_key).as_bytes(), date.as_bytes());
     let secret_service = hmac_sha256(&secret_date, service.as_bytes());
     let secret_signing = hmac_sha256(&secret_service, b"tc3_request");
     let signature = hex::encode(hmac_sha256(&secret_signing, string_to_sign.as_bytes()));

@@ -2,7 +2,7 @@
 name = "firewood"
 version = "0.5.2"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["ifmagic"]
 license = ""
 repository = ""
 default-run = "firewood"
@@ -24,13 +24,13 @@ tauri-plugin-opener = "2"
 tauri-plugin-process = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-single-instance = "2"
-reqwest = { version = "0.12", features = ["json"] }
-hmac = "0.12"
-sha2 = "0.10"
+reqwest = { version = "0.13", features = ["json"] }
+hmac = "0.13"
+sha2 = "0.11"
 hex = "0.4"
 chrono = "0.4"
-md-5 = "0.10"
-rand = "0.8"
+md-5 = "0.11"
+rand = "0.10"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
