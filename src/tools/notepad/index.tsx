@@ -7,6 +7,7 @@ import FontSizeControl from '../../components/FontSizeControl';
 import ToolLayout from '../../components/ToolLayout';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import './notepad.css';
 
 interface NoteTab {
   id: string;
@@ -149,6 +150,14 @@ export default function Notepad() {
   const isMac = navigator.platform.toLowerCase().includes('mac');
   const [currentLineCharCount, setCurrentLineCharCount] = useState(0);
   const [selectedCharCount, setSelectedCharCount] = useState(0);
+
+  useEffect(() => {
+    document.body.classList.add('firewood-notepad-active');
+
+    return () => {
+      document.body.classList.remove('firewood-notepad-active');
+    };
+  }, []);
 
   useEffect(() => {
     if (tabs.length === 0) {
