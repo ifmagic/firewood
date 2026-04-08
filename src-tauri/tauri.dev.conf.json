@@ -1,0 +1,12 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Firewood Dev",
+  "identifier": "com.ifmagic.firewood.dev",
+  "app": {
+    "windows": [
+      {
+        "title": "Firewood Dev"
+      }
+    ]
+  }
+}
