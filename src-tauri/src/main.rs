@@ -55,6 +55,7 @@ fn main() {
                 .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png"))?)
                 .icon_as_template(false)
                 .menu(&tray_menu)
+                .show_menu_on_left_click(false)
                 .on_menu_event(move |app, event| match event.id().as_ref() {
                     "show" => {
                         show_window(app);

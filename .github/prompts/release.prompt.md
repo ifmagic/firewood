@@ -1,11 +1,22 @@
 ---
-description: "准备新版本发布：总结变更、更新 releaseBody、递增版本号、打 tag 并推送触发 CI 构建"
+description: "准备新版本发布：总结变更、更新 release body、递增版本号、打 tag 并推送触发 CI 构建"
 name: "Release"
 argument-hint: "可选：指定目标版本号，如 v0.3.0；留空则自动判断"
 agent: "agent"
 ---
 
 你是 Firewood 项目的发布助手。请按以下步骤完成一次版本发布。
+
+## 0. 网络代理
+
+本任务涉及 `git push` 等可能发起 HTTP/HTTPS 请求的操作。在第一次联网前，必须在终端中设置代理：
+
+```bash
+export http_proxy=http://127.0.0.1:7890
+export https_proxy=http://127.0.0.1:7890
+```
+
+后续所有终端命令执行前均需确保代理变量已设置。
 
 ## 1. 确定上一个发布 tag
 
@@ -17,9 +28,10 @@ agent: "agent"
 - 运行 `git diff --stat <上一个tag>..HEAD` 了解变更范围。
 - 将提交按类别归纳为中文发布说明，分为：✨ 新功能、🐛 修复、🔧 优化、📦 其他 等分类（没有内容的分类直接省略）。
 
-## 3. 更新 releaseBody
+## 3. 更新 release body
 
-读取 [.github/workflows/build.yml] 文件，将 `releaseBody: |` 下的内容替换为：
+读取 [.github/workflows/build.yml] 文件，找到 `create-release` step 中 `actions/github-script@v7` 的 `script` 块，将 `body: \`...\`` 模板字面量中的内容替换为：
+
 1. 上一步生成的变更说明。
 2. 固定的下载与安装说明模板（**必须原样保留**，仅追加在变更说明之后）：
 
@@ -28,9 +40,9 @@ agent: "agent"
 
 ## 下载
 
-- **macOS (Apple Silicon)**: 下载 `firewood_x.x.x_aarch64.dmg`
-- **macOS (Intel)**: 下载 `firewood_x.x.x_x64.dmg`
-- **Windows**: 下载 `.exe` 安装包
+- **macOS (Apple Silicon)**: 下载 \`firewood_x.x.x_aarch64.dmg\`
+- **macOS (Intel)**: 下载 \`firewood_x.x.x_x64.dmg\`
+- **Windows**: 下载 \`.exe\` 安装包
 
 ## macOS 安装说明
 
@@ -43,6 +55,8 @@ xattr -cr /Applications/Firewood.app
 
 **方式二**：点击打开提示风险之后, 前往系统设置 -> 隐私与安全性 -> 找到 Firewood, 点击"仍要打开"按钮
 ```
+
+> 注意：模板字面量中反引号需转义为 `\\\``，版本号占位符 `x.x.x` 替换为实际新版本号。同时更新 `name` 字段中的版本号。
 
 ## 4. 决定新版本号
 
@@ -64,9 +78,10 @@ xattr -cr /Applications/Firewood.app
 > `Cargo.lock` 中第三方 crate 的版本不要碰，只更新 `name = "firewood"` 的那一项。
 
 ## 6. 提交、打 tag、推送
-通过执行以下这些命令来提交版本更新、打 tag 并推送到远程仓库：
 
-```
+通过执行以下命令来提交版本更新、打 tag 并推送到远程仓库（确保代理已设置）：
+
+```bash
 npm install --package-lock-only
 git add -A
 git commit -m "chore: release v<新版本号>"

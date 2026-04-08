@@ -40,41 +40,44 @@ export function readUpdateNotesCache(): UpdateNotesCache | null {
 }
 
 /**
- * 从 build.yml 原始内容中解析 releaseBody 字段。
- * 利用 YAML block scalar（`|`）的缩进规则提取多行文本。
+ * 从 build.yml 原始内容中解析 release body。
+ * 解析 github-script 中 `body: \`...\`` 模板字面量的内容。
  */
 export function parseReleaseBodyFromBuildYml(raw: string): string {
-  const marker = 'releaseBody: |';
-  const idx = raw.indexOf(marker);
-  if (idx === -1) return '';
+  const jsMarker = 'body: `';
+  const jsIdx = raw.indexOf(jsMarker);
+  if (jsIdx === -1) return '';
 
-  const afterMarker = raw.slice(idx + marker.length);
-  const lines = afterMarker.split('\n');
+  const start = jsIdx + jsMarker.length;
+  // 找到闭合的反引号（考虑转义 \`）
+  let i = start;
+  while (i < raw.length) {
+    if (raw[i] === '\\' && i + 1 < raw.length) {
+      i += 2;
+      continue;
+    }
+    if (raw[i] === '`') break;
+    i++;
+  }
+  if (i >= raw.length) return '';
 
-  // 找到 block scalar 的缩进级别（第一个非空行的缩进）
+  const content = raw.slice(start, i)
+    .replace(/\\`/g, '`');
+
+  const lines = content.split('\n');
+
+  // 第一行与 `body: \`` 同行，缩进为 0；用后续非空行计算公共缩进
   let blockIndent = 0;
-  for (const line of lines) {
-    if (line.trim() === '') continue;
-    blockIndent = line.length - line.trimStart().length;
+  for (let idx = 1; idx < lines.length; idx++) {
+    if (lines[idx].trim() === '') continue;
+    blockIndent = lines[idx].length - lines[idx].trimStart().length;
     break;
   }
 
-  if (blockIndent === 0) return '';
+  const bodyLines = lines.map(line =>
+    line.trim() === '' ? '' : (blockIndent > 0 && line.length >= blockIndent ? line.slice(blockIndent) : line.trimStart())
+  );
 
-  const bodyLines: string[] = [];
-  for (const line of lines) {
-    // 空行保留
-    if (line.trim() === '') {
-      bodyLines.push('');
-      continue;
-    }
-    const lineIndent = line.length - line.trimStart().length;
-    // 缩进不足说明 block scalar 结束
-    if (lineIndent < blockIndent) break;
-    bodyLines.push(line.slice(blockIndent));
-  }
-
-  // 去掉首尾空行
   while (bodyLines.length > 0 && bodyLines[0].trim() === '') bodyLines.shift();
   while (bodyLines.length > 0 && bodyLines[bodyLines.length - 1].trim() === '') bodyLines.pop();
 
