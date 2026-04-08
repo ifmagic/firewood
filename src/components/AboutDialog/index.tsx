@@ -2,11 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppstoreOutlined, CodeOutlined, RocketOutlined } from '@ant-design/icons';
 import { listen } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
+import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { Modal, Tag, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import { getLocalReleaseNotes } from '../../utils/updateNotes';
 import buildYmlRaw from '../../../.github/workflows/build.yml?raw';
 import styles from './AboutDialog.module.css';
+
+const GITHUB_HOMEPAGE_URL = 'https://github.com/ifmagic/firewood';
 
 export default function AboutDialog() {
   const [open, setOpen] = useState(false);
@@ -46,6 +49,10 @@ export default function AboutDialog() {
     setNotesOpen(true);
   };
 
+  const openGithubHomepage = async () => {
+    await openExternal(GITHUB_HOMEPAGE_URL);
+  };
+
   return (
     <>
       <Modal
@@ -79,10 +86,15 @@ export default function AboutDialog() {
               <span>Version {version || '0.0.0'}</span>
               <span className={styles.infoHint}>查看修改点</span>
             </button>
-            <div className={styles.infoItem}>
+            <button
+              type="button"
+              className={`${styles.infoItem} ${styles.infoItemButton}`}
+              onClick={openGithubHomepage}
+              aria-label="Open Firewood GitHub homepage"
+            >
               <AppstoreOutlined />
               <span>Desktop Utility Suite</span>
-            </div>
+            </button>
           </div>
 
           <div className={styles.tags}>
