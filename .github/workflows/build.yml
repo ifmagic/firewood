@@ -31,18 +31,24 @@ jobs:
               name: `Firewood ${context.ref.replace('refs/tags/', '')}`,
               body: `## ✨ 新功能
 
-            - 记事本新增 CSS 样式支持与 body 类名管理
+            - 关于弹窗新增「Desktop Utility Suite」入口，可一键跳转项目 GitHub 主页。
+
+            ## 🐛 修复
+
+            - 修复关于弹窗更新说明解析逻辑，正确提取并展示变更内容。
+            - 修复发布流程中 create-release 阶段调用 tauri 命令失败的问题。
 
             ## 🔧 优化
 
-            - 更新 Tauri 配置，添加开发模式独立配置文件
+            - 托盘点击行为优化为左键直接打开应用、右键显示菜单。
+            - 发布提示词与工作流逻辑同步，统一 github-script 的 release body 更新方式。
 
             ---
 
             ## 下载
 
-            - **macOS (Apple Silicon)**: 下载 \`firewood_0.5.6_aarch64.dmg\`
-            - **macOS (Intel)**: 下载 \`firewood_0.5.6_x64.dmg\`
+            - **macOS (Apple Silicon)**: 下载 \`firewood_0.5.7_aarch64.dmg\`
+            - **macOS (Intel)**: 下载 \`firewood_0.5.7_x64.dmg\`
             - **Windows**: 下载 \`.exe\` 安装包
 
             ## macOS 安装说明
