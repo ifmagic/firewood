@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useLayoutEffect, useRef } from 'react';
 import { Input, Button, Select, message, Tooltip, Space, Tag, Empty } from 'antd';
 import {
   SwapOutlined,
@@ -75,6 +75,51 @@ function formatHistoryForCopy(record: TranslateHistoryRecord) {
   const from = getLangLabel(record.sourceLang);
   const to = getLangLabel(record.targetLang);
   return `${engine}（${from} → ${to}）\n原文: ${record.input}\n译文: ${record.output}`;
+}
+
+function HistoryPreviewText({ content }: { content: string }) {
+  const textRef = useRef<HTMLSpanElement | null>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useLayoutEffect(() => {
+    const element = textRef.current;
+    if (!element) return;
+
+    const checkTruncation = () => {
+      setIsTruncated(element.scrollWidth - element.clientWidth > 1);
+    };
+
+    const frameId = window.requestAnimationFrame(checkTruncation);
+
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(checkTruncation)
+      : null;
+
+    observer?.observe(element);
+    window.addEventListener('resize', checkTruncation);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      observer?.disconnect();
+      window.removeEventListener('resize', checkTruncation);
+    };
+  }, [content]);
+
+  return (
+    <Tooltip
+      placement="topLeft"
+      title={isTruncated ? <div className={styles.historyPreview}>{content}</div> : null}
+    >
+      <span className={styles.historyTextWrap}>
+        <span
+          ref={textRef}
+          className={`${styles.historyText} ${isTruncated ? styles.historyTextTruncated : ''}`.trim()}
+        >
+          {content}
+        </span>
+      </span>
+    </Tooltip>
+  );
 }
 
 export default function Translate() {
@@ -397,13 +442,9 @@ export default function Translate() {
                       <SwapRightOutlined className={styles.historyArrow} />
                       {getLangLabel(record.targetLang)}
                     </span>
-                    <span className={styles.historyText} title={record.input}>
-                      {record.input}
-                    </span>
+                    <HistoryPreviewText content={record.input} />
                     <SwapRightOutlined className={styles.historyArrow} />
-                    <span className={styles.historyText} title={record.output}>
-                      {record.output}
-                    </span>
+                    <HistoryPreviewText content={record.output} />
                     <span className={styles.historyTime}>
                       {dayjs(record.convertedAt).format('HH:mm:ss')}
                     </span>

@@ -205,14 +205,31 @@
   white-space: nowrap;
 }
 
-.historyText {
+.historyTextWrap {
   flex: 1;
   min-width: 0;
+  display: block;
+}
+
+.historyText {
+  display: block;
+  width: 100%;
   font-size: 13px;
   color: rgba(0, 0, 0, 0.75);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.historyTextTruncated {
+  cursor: pointer;
+}
+
+.historyPreview {
+  max-width: min(560px, 70vw);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
 }
 
 .historyArrow {
