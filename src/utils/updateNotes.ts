@@ -74,8 +74,8 @@ export function parseReleaseBodyFromBuildYml(raw: string): string {
     break;
   }
 
-  const bodyLines = lines.map(line =>
-    line.trim() === '' ? '' : (blockIndent > 0 && line.length >= blockIndent ? line.slice(blockIndent) : line.trimStart())
+  const bodyLines = lines.map((line, idx) =>
+    line.trim() === '' ? '' : (idx === 0 ? line : (blockIndent > 0 && line.length >= blockIndent ? line.slice(blockIndent) : line.trimStart()))
   );
 
   while (bodyLines.length > 0 && bodyLines[0].trim() === '') bodyLines.shift();

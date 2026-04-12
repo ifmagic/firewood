@@ -64,9 +64,9 @@ export https_proxy=http://127.0.0.1:7890
 Since the app is not yet notarized by Apple, you need to bypass Gatekeeper on the first launch using one of the following methods:
 
 **Method 1 (Recommended)**: Run this single command in your Terminal to remove the quarantine attribute, then open the app normally:
-\`\`\`bash
+```bash
 xattr -cr /Applications/Firewood.app
-\`\`\`
+```
 
 **Method 2**: Open the app, and when you see the security warning, go to **System Settings -> Privacy & Security**, scroll down to find Firewood, and click **"Open Anyway"**.
 ```
