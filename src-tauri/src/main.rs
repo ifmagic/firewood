@@ -84,16 +84,7 @@ fn main() {
             // ── macOS application menu ──
             #[cfg(target_os = "macos")]
             {
-                let about_item =
-                    MenuItemBuilder::with_id("about_firewood", "About Firewood")
-                        .build(app)?;
-                let check_updates_menu =
-                    MenuItemBuilder::with_id("menu_check_for_updates", "Check for Updates…")
-                        .build(app)?;
                 let app_submenu = SubmenuBuilder::new(app, "Firewood")
-                    .item(&about_item)
-                    .item(&check_updates_menu)
-                    .separator()
                     .item(&PredefinedMenuItem::hide(app, None)?)
                     .item(&PredefinedMenuItem::hide_others(app, None)?)
                     .item(&PredefinedMenuItem::show_all(app, None)?)
@@ -122,14 +113,6 @@ fn main() {
                     .item(&window_submenu)
                     .build()?;
                 app.set_menu(menu)?;
-
-                app.on_menu_event(move |app, event| {
-                    if event.id() == about_item.id() {
-                        let _ = app.emit("app://about-firewood", ());
-                    } else if event.id() == check_updates_menu.id() {
-                        let _ = app.emit("app://check-for-updates", ());
-                    }
-                });
             }
 
             Ok(())

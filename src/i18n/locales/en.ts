@@ -260,8 +260,8 @@ const en = {
 
   // About dialog
   about: {
-    subtitle: 'A compact toolbox that keeps everyday dev workflows fast and focused.',
-    viewChanges: 'View changes',
+    subtitle: 'A compact toolbox for efficient dev workflows.',
+    viewChanges: 'View',
     releaseNotesTitle: 'Release Notes · v{{version}}',
     defaultReleaseNote: 'Includes the latest features and bug fixes.',
   },

@@ -1,92 +1,85 @@
 ---
-description: "准备新版本发布：总结变更、更新 release body、递增版本号、打 tag 并推送触发 CI 构建"
+description: "准备新版本发布：决定版本号、全自动更新版本文件、更新 Release Body (英文)、打 tag 并推送触发 CI"
 name: "Release"
-argument-hint: "可选：指定目标版本号，如 v0.3.0；留空则自动判断"
+argument-hint: "可选：指定目标版本号，如 v0.5.7；留空则自动判断"
 agent: "agent"
 ---
 
-你是 Firewood 项目的发布助手。请按以下步骤完成一次版本发布。
+你是 Firewood 项目的发布助手。请严格按照以下步骤完成版本发布。**请直接执行相关命令和文件修改，不要询问我是否执行。**
 
-## 0. 网络代理
+## 0. 环境准备 (网络代理)
 
-本任务涉及 `git push` 等可能发起 HTTP/HTTPS 请求的操作。在第一次联网前，必须在终端中设置代理：
+本任务涉及 `git push` 和依赖更新等操作，必须在第一步就在终端中设置代理（后续所有终端操作默认在此环境中运行）：
 
 ```bash
 export http_proxy=http://127.0.0.1:7890
 export https_proxy=http://127.0.0.1:7890
 ```
 
-后续所有终端命令执行前均需确保代理变量已设置。
+## 1. 确定新版本号
 
-## 1. 确定上一个发布 tag
+1. 运行 `git tag --list 'v*' --sort=version:refname` 找到最新的 `vX.Y.Z` 格式 tag 作为上一个版本。
+2. 运行 `git log --oneline <上一个tag>..HEAD` 分析变更记录。
+3. 决定新版本号（不带 `v` 前缀的纯数字 `X.Y.Z`）：
+   - 如果用户在调用时指定了版本号，请直接使用。
+   - 否则根据变更自动判断：**patch** (仅修复/小优化) 或 **minor** (新功能/大重构)。
+4. 向我简短输出你决定的新版本号及一句话理由。
 
-运行 `git tag --list 'v*' --sort=version:refname` 找到最新的 `vX.Y.Z` 格式 tag（这类 tag 会触发 `.github/workflows/build.yml` 里的 GitHub Actions 构建）。取排序后的最后一条作为上一个发布 tag。
+## 2. 递增版本号与同步依赖 (自动执行)
 
-## 2. 总结变更
+确定新版本号后，直接执行以下命令或操作来更新项目中的版本号：
 
-- 运行 `git log --oneline <上一个tag>..HEAD` 获取提交列表。
-- 运行 `git diff --stat <上一个tag>..HEAD` 了解变更范围。
-- 将提交按类别归纳为中文发布说明，分为：✨ 新功能、🐛 修复、🔧 优化、📦 其他 等分类（没有内容的分类直接省略）。
+1. **更新 package.json**：直接在终端运行以下命令（这会自动更新 package.json 并避免生成 tag）：
+   ```bash
+   npm version <新版本号> --no-git-tag-version
+   ```
+2. **更新 Tauri 配置文件**：通过读取并修改文件：
+   - `src-tauri/tauri.conf.json` → 更新 `package.version` 字段。
+   - `src-tauri/Cargo.toml` → 更新 `[package]` 下的 `version` 字段。
+3. **同步 Lock 文件**：在终端一并执行以下命令同步锁文件：
+   ```bash
+   npm install --package-lock-only
+   cd src-tauri && cargo update -p firewood
+   ```
 
-## 3. 更新 release body
+## 3. 生成英文 Release Body 并更新 build.yml
 
-读取 [.github/workflows/build.yml] 文件，找到 `create-release` step 中 `actions/github-script@v7` 的 `script` 块，将 `body: \`...\`` 模板字面量中的内容替换为：
+分析 `git log <上一个tag>..HEAD`，将提交按类别归纳为**全英文**的发布说明（如 ✨ Features, 🐛 Bug Fixes, 🔧 Chore/Updates 等）。
 
-1. 上一步生成的变更说明。
-2. 固定的下载与安装说明模板（**必须原样保留**，仅追加在变更说明之后）：
+读取 `.github/workflows/build.yml` 文件，找到 `create-release` step 中 `actions/github-script@v7` 的 `script` 块。将其中的 `name` 字段更新为新版本号，并将 `body: \`...\`` 模板字面量的内容替换为：**英文变更说明 + 固定的下载安装模板**。
 
-```
+请原样追加以下英文模板在你的变更说明下方（注意： YAML 文件中模板字面量的反引号需转义为 `\\\``，并将 `x.x.x` 替换为新版本号）：
+
+```markdown
 ---
 
-## 下载
+## Download
 
-- **macOS (Apple Silicon)**: 下载 \`firewood_x.x.x_aarch64.dmg\`
-- **macOS (Intel)**: 下载 \`firewood_x.x.x_x64.dmg\`
-- **Windows**: 下载 \`.exe\` 安装包
+- **macOS (Apple Silicon)**: Download \`firewood_x.x.x_aarch64.dmg\`
+- **macOS (Intel)**: Download \`firewood_x.x.x_x64.dmg\`
+- **Windows**: Download the \`.exe\` installer
 
-## macOS 安装说明
+## macOS Installation Guide
 
-由于应用暂未通过 Apple 公证，首次打开需执行以下任一方式：
+Since the app is not yet notarized by Apple, you need to bypass Gatekeeper on the first launch using one of the following methods:
 
-**方式一（推荐）**：终端运行一行命令移除隔离标记后再打开
+**Method 1 (Recommended)**: Run this single command in your Terminal to remove the quarantine attribute, then open the app normally:
 \`\`\`bash
 xattr -cr /Applications/Firewood.app
 \`\`\`
 
-**方式二**：点击打开提示风险之后, 前往系统设置 -> 隐私与安全性 -> 找到 Firewood, 点击"仍要打开"按钮
+**Method 2**: Open the app, and when you see the security warning, go to **System Settings -> Privacy & Security**, scroll down to find Firewood, and click **"Open Anyway"**.
 ```
 
-> 注意：模板字面量中反引号需转义为 `\\\``，版本号占位符 `x.x.x` 替换为实际新版本号。同时更新 `name` 字段中的版本号。
+## 4. 提交、打 Tag 并推送 (自动执行)
 
-## 4. 决定新版本号
-
-- 如果用户在调用时指定了版本号，使用用户指定的。
-- 否则根据变更规模自动判断：
-  - **patch**（如 0.2.2→0.2.3）：仅 bug 修复、文案调整、小幅优化。
-  - **minor**（如 0.2.3→0.3.0）：新增功能、新增工具页面、较大重构。
-- 给出你的判断理由（一句话）。
-
-## 5. 递增所有版本号
-
-找到项目中所有包含应用版本号的文件并统一更新为新版本号（不带 `v` 前缀）。需要更新的文件：
-- `package.json` → `"version"` 字段
-- `src-tauri/tauri.conf.json` → `package.version` 字段
-- `src-tauri/Cargo.toml` → `[package]` 下的 `version` 字段（从本次起与应用版本保持一致）
-- `src-tauri/Cargo.lock` → `[[package]] name = "firewood"` 段落的 `version`
-
-> 注意：`package-lock.json` 的根版本会在下次 `npm install` 时自动同步，**不要**手动编辑它。
-> `Cargo.lock` 中第三方 crate 的版本不要碰，只更新 `name = "firewood"` 的那一项。
-
-## 6. 提交、打 tag、推送
-
-通过执行以下命令来提交版本更新、打 tag 并推送到远程仓库（确保代理已设置）：
+确认文件修改无误后，直接在终端执行以下命令（确保使用带有 `v` 前缀的 `<新版本号>`，例如 `v0.3.0`）：
 
 ```bash
-npm install --package-lock-only
 git add -A
 git commit -m "chore: release v<新版本号>"
 git tag v<新版本号>
 git push && git push origin v<新版本号>
 ```
 
-确认推送成功后，告知用户新 tag 已推送，GitHub Actions 构建将自动触发。
+执行完毕后，告知我操作已完成，GitHub Actions 将会自动开始构建。
