@@ -5,6 +5,13 @@
   flex-direction: column;
 }
 
+/* Ant Design Sider wraps children in an inner div — propagate flex layout */
+.sider :global(.ant-layout-sider-children) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .logo {
   height: 56px;
   display: flex;
@@ -117,21 +124,6 @@
 }
 
 .siderFooter {
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.settingsButton {
-  width: 100%;
-  color: rgba(255, 255, 255, 0.65) !important;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.settingsButton:hover {
-  color: #fff !important;
-  background-color: rgba(255, 255, 255, 0.08) !important;
 }

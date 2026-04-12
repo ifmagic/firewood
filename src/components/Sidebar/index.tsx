@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { Layout, Button, Dropdown, Checkbox } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FireOutlined, MenuOutlined, HolderOutlined, SettingOutlined } from '@ant-design/icons';
+import { FireOutlined, MenuOutlined, HolderOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { MenuProps } from 'antd';
 import type { ToolMeta } from '../../types/tool';
+import SettingsMenuButton from '../SettingsMenuButton';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -12,12 +13,12 @@ interface SidebarProps {
   visibility: Record<string, boolean>;
   onToggleToolVisibility: (toolId: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
-  onOpenSettings?: () => void;
+  onOpenAbout?: () => void;
 }
 
 const { Sider } = Layout;
 
-export default function Sidebar({ tools, visibility, onToggleToolVisibility, onReorder, onOpenSettings }: SidebarProps) {
+export default function Sidebar({ tools, visibility, onToggleToolVisibility, onReorder, onOpenAbout }: SidebarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -157,18 +158,9 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
           );
         })}
       </div>
-      {onOpenSettings && (
-        <div className={styles.siderFooter}>
-          <Button
-            type="text"
-            icon={<SettingOutlined />}
-            className={styles.settingsButton}
-            onClick={onOpenSettings}
-          >
-            {t('label.settings')}
-          </Button>
-        </div>
-      )}
+      <div className={styles.siderFooter}>
+        <SettingsMenuButton onOpenAbout={onOpenAbout} />
+      </div>
     </Sider>
   );
 }

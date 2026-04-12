@@ -1,0 +1,142 @@
+.settingsButton {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+  z-index: 1402;
+}
+
+.settingsButton:hover {
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.settingsButtonActive {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.settingsButton:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+}
+
+.menuPanel {
+  position: fixed;
+  left: 16px;
+  bottom: 60px;
+  z-index: 1401;
+  min-width: 238px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #24262d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 6px 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.menuItemWrap {
+  position: relative;
+}
+
+.menuItem {
+  width: 100%;
+  height: 36px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(244, 247, 255, 0.94);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.menuIcon {
+  width: 16px;
+  color: rgba(224, 232, 255, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuLabel {
+  flex: 1;
+  font-size: 13px;
+}
+
+.menuArrow {
+  color: rgba(224, 232, 255, 0.6);
+  font-size: 11px;
+  transition: transform 0.15s ease;
+}
+
+.menuArrowOpen {
+  transform: rotate(90deg);
+}
+
+.submenuPanel {
+  position: absolute;
+  left: calc(100% + 8px);
+  bottom: 0;
+  min-width: 164px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #24262d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.submenuItem {
+  width: 100%;
+  height: 34px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(244, 247, 255, 0.94);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submenuItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.checkIcon {
+  width: 14px;
+  color: #7aa2ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
