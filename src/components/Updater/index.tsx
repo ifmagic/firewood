@@ -4,6 +4,7 @@ import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { notification, Button, Progress, Space } from 'antd';
 import ReactMarkdown from 'react-markdown';
+import i18n from '../../i18n';
 import { cacheUpdateNotes, extractChangelog } from '../../utils/updateNotes';
 
 interface UpdateInfo {
@@ -83,15 +84,15 @@ export default function Updater() {
         });
       } else if (manual) {
         notification.success({
-          message: '当前已是最新版本',
+          message: i18n.t('updater.upToDate'),
           placement: 'bottomRight',
         });
       }
     } catch {
       if (manual) {
         notification.error({
-          message: '检查更新失败',
-          description: '请稍后重试或检查网络连接。',
+          message: i18n.t('updater.checkFailed'),
+          description: i18n.t('updater.checkFailedDesc'),
           placement: 'bottomRight',
         });
       }
@@ -103,7 +104,7 @@ export default function Updater() {
     const changelog = extractChangelog(info.body);
     notification.info({
       key,
-      message: `🎉 发现新版本 v${info.version}`,
+      message: i18n.t('updater.newVersion', { version: info.version }),
       description: <MarkdownBody content={changelog} />,
       duration: 0,
       placement: 'bottomRight',
@@ -111,10 +112,10 @@ export default function Updater() {
       btn: (
         <Space>
           <Button size="small" onClick={() => notification.destroy(key)}>
-            稍后更新
+            {i18n.t('updater.laterBtn')}
           </Button>
           <Button type="primary" size="small" onClick={() => startUpdate(key)}>
-            立即更新
+            {i18n.t('updater.updateBtn')}
           </Button>
         </Space>
       ),
@@ -131,7 +132,7 @@ export default function Updater() {
     const showProgress = (pct: number) => {
       notification.open({
         key: downloadKey,
-        message: '正在下载更新…',
+        message: i18n.t('updater.downloading'),
         description: <Progress percent={Math.round(pct)} size="small" />,
         duration: 0,
         placement: 'bottomRight',
@@ -163,8 +164,8 @@ export default function Updater() {
 
       notification.destroy(downloadKey);
       notification.success({
-        message: '更新完成',
-        description: '即将重启应用以完成更新…',
+        message: i18n.t('updater.updateComplete'),
+        description: i18n.t('updater.restarting'),
         duration: 2,
         placement: 'bottomRight',
       });
@@ -173,7 +174,7 @@ export default function Updater() {
     } catch (e) {
       notification.destroy(downloadKey);
       notification.error({
-        message: '更新失败',
+        message: i18n.t('updater.updateFailed'),
         description: String(e),
         placement: 'bottomRight',
       });

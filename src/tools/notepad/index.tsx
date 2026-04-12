@@ -3,10 +3,12 @@ import Editor, { type OnMount, type BeforeMount } from '@monaco-editor/react';
 import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
 import type { InputRef } from 'antd';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
+import { useTranslation } from 'react-i18next';
 import FontSizeControl from '../../components/FontSizeControl';
 import ToolLayout from '../../components/ToolLayout';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import i18n from '../../i18n';
 import './notepad.css';
 
 interface NoteTab {
@@ -27,13 +29,14 @@ function createTabId() {
 }
 
 const DEFAULT_NAME_POOL = [
-  '草稿', '笔记', '备忘', '随记', '摘录',
-  '五行天', '修真世界', '永生', '斗破苍穹', '武动乾坤',
-  '剑来', '雪中悍刀行', '庆余年', '诡秘之主',
+  'Draft', 'Notes', 'Memo', 'Scratch', 'Snippet',
+  'Ideas', 'Tasks', 'Journal', 'Log', 'Quick Note',
+  'Thoughts', 'Review', 'Summary', 'Reference',
 ];
 
 function randomDefaultName() {
-  const base = DEFAULT_NAME_POOL[Math.floor(Math.random() * DEFAULT_NAME_POOL.length)];
+  const pool = (i18n.t('notepadNames', { returnObjects: true }) as string[]) || DEFAULT_NAME_POOL;
+  const base = pool[Math.floor(Math.random() * pool.length)];
   const suffix = Math.random().toString(36).slice(2, 5);
   return `${base}-${suffix}`;
 }
@@ -136,8 +139,9 @@ function getCharacterCountWithoutLineBreaks(text: string) {
 }
 
 export default function Notepad() {
+  const { t } = useTranslation();
   const [tabs, setTabs] = usePersistentState<NoteTab[]>(STORAGE_TABS_KEY, [
-    { id: 'default', name: '未命名' },
+    { id: 'default', name: t('notepad.untitled') },
   ]);
   const [activeTabId, setActiveTabId] = usePersistentState(STORAGE_ACTIVE_KEY, 'default');
   const [content, setContent] = useState('');
@@ -185,7 +189,7 @@ export default function Notepad() {
           <Dropdown
             trigger={["contextMenu"]}
             menu={{
-              items: [{ key: 'rename', label: '重命名' }],
+              items: [{ key: 'rename', label: t('action.rename') }],
               onClick: () => {
                 setEditingTabId(tab.id);
                 form.setFieldsValue({ name: tab.name });
@@ -232,7 +236,7 @@ export default function Notepad() {
       }
 
       if (tabs.length >= MAX_TABS) {
-        message.warning(`最多只能创建 ${MAX_TABS} 个标签页`);
+        message.warning(t('notepad.maxTabs', { count: MAX_TABS }));
         return;
       }
 
@@ -270,7 +274,7 @@ export default function Notepad() {
   const handleEdit = (targetKey: string | React.MouseEvent | React.KeyboardEvent, action: 'add' | 'remove') => {
     if (action === 'add') {
       if (tabs.length >= MAX_TABS) {
-        message.warning(`最多只能创建 ${MAX_TABS} 个标签页`);
+        message.warning(t('notepad.maxTabs', { count: MAX_TABS }));
         return;
       }
       setEditingTabId(null);
@@ -282,11 +286,11 @@ export default function Notepad() {
     if (typeof targetKey === 'string') {
       const tab = tabs.find((t) => t.id === targetKey);
       Modal.confirm({
-        title: '删除标签页',
-        content: `确定要删除「${tab?.name ?? '未命名'}」吗？删除后内容无法恢复。`,
-        okText: '删除',
+        title: t('notepad.deleteTab'),
+        content: t('notepad.confirmDelete', { name: tab?.name ?? t('notepad.untitled') }),
+        okText: t('action.delete'),
         okButtonProps: { danger: true },
-        cancelText: '取消',
+        cancelText: t('action.cancel'),
         onOk: () => handleRemoveTab(targetKey),
       });
     }
@@ -300,8 +304,8 @@ export default function Notepad() {
 
   const activeExists = tabs.some((tab) => tab.id === activeTabId);
   const effectiveActive = activeExists ? activeTabId : undefined;
-  const modalTitle = dialogMode === 'rename' ? '重命名标签页' : '新建标签页';
-  const modalOkText = dialogMode === 'rename' ? '保存' : '创建';
+  const modalTitle = dialogMode === 'rename' ? t('action.rename') : t('notepad.newTab');
+  const modalOkText = dialogMode === 'rename' ? t('action.save') : t('action.ok');
 
   const detectedLanguage = useMemo(() => {
     const trimmed = content.trimStart();
@@ -404,7 +408,7 @@ export default function Notepad() {
       try {
         await openExternal(normalized);
       } catch (error) {
-        message.error(`链接打开失败：${String(error)}`);
+        message.error(`Failed to open link: ${String(error)}`);
       }
     });
 
@@ -452,7 +456,7 @@ export default function Notepad() {
   };
 
   return (
-    <ToolLayout title="记事本" description="支持多标签页的本地记事工具（内容仅保存在本机）">
+    <ToolLayout title={t('notepad.title')} description={t('notepad.description')}>
       <Space style={{ marginBottom: 12 }}>
         <Button
           danger
@@ -463,10 +467,10 @@ export default function Notepad() {
           }}
           disabled={!activeTabId}
         >
-          清空当前标签内容
+          {t('action.clear')}
         </Button>
         <span style={{ color: '#8f9bb3', fontSize: 12 }}>
-          提示：按住 {isMac ? 'Cmd' : 'Ctrl'} 并左键单击链接可直接在浏览器打开
+          {isMac ? 'Cmd' : 'Ctrl'}+Click to open links
         </span>
       </Space>
 
@@ -509,13 +513,13 @@ export default function Notepad() {
                 {detectedLanguage !== 'plaintext' && (
                   <span style={{ color: '#6366f1', marginRight: 8 }}>{detectedLanguage.toUpperCase()}</span>
                 )}
-                当前行字符数：{currentLineCharCount} ｜ 已选中字符数：{selectedCharCount}
+                {t('notepad.line')}: {currentLineCharCount} {t('notepad.chars')} | {t('notepad.selected')}: {selectedCharCount}
               </span>
             </div>
           </>
         ) : (
           <Empty
-            description="当前没有标签页，请点击右侧 + 新建"
+            description={t('notepad.newTab')}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             style={{ marginTop: 36 }}
           />
@@ -538,22 +542,22 @@ export default function Notepad() {
         }}
         onOk={() => void handleSubmit()}
         okText={modalOkText}
-        cancelText="取消"
+        cancelText={t('action.cancel')}
         confirmLoading={submittingDialog}
         destroyOnHidden
       >
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item
-            label="文件名"
+            label={t('notepad.tabName')}
             name="name"
             rules={[
-              { required: true, whitespace: true, message: '请输入文件名' },
-              { max: 60, message: '文件名最多 60 个字符' },
+              { required: true, whitespace: true, message: t('notepad.enterName') },
+              { max: 60, message: t('notepad.maxNameLength', { count: 60 }) },
             ]}
           >
             <Input
               ref={nameInputRef}
-              placeholder="例如：需求记录.md"
+              placeholder={t('notepad.namePlaceholder')}
               maxLength={60}
               onPressEnter={(event) => {
                 event.preventDefault();

@@ -5,13 +5,14 @@ import type { UploadFile, UploadProps } from 'antd';
 import jsPDF from 'jspdf';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
+import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import dayjs from 'dayjs';
 import styles from './ImgToPdf.module.css';
 
 const { Text } = Typography;
 
-/** A4 尺寸 (mm) */
+/** A4 dimensions (mm) */
 const A4_W = 210;
 const A4_H = 297;
 const GAP = 6;
@@ -56,7 +57,7 @@ function calcPagePlacements(
     });
   }
 
-  // 双图同倍率时，先把图片归一化到同一视觉长边，再应用用户缩放。
+  // Uniform scale for two images: normalize to same visual long edge, then apply user scale.
   const targetLongEdge = Math.min(...fitted.map((f) => Math.max(f.w, f.h)));
   return fitted.map((f) => {
     const currentLongEdge = Math.max(f.w, f.h) || 1;
@@ -67,7 +68,7 @@ function calcPagePlacements(
   });
 }
 
-/** 将图片 dataUrl 重新编码为指定质量的 JPEG dataUrl */
+/** Re-encode image dataUrl to JPEG at given quality */
 function compressImageToJpeg(dataUrl: string, naturalW: number, naturalH: number, quality: number): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -106,7 +107,7 @@ function readImageFile(file: File): Promise<ImageItem> {
   });
 }
 
-/** 按布局生成 A4 PDF，支持 JPEG 质量压缩 */
+/** Build A4 PDF from images with layout settings and JPEG quality compression */
 async function buildPDF(
   items: ImageItem[],
   perPage: number,
@@ -142,7 +143,7 @@ async function buildPDF(
       const ox = pageMargin + col * (cellW + GAP);
       const oy = pageMargin + row * (cellH + GAP);
       const { w, h, dx, dy } = pagePlacements[k];
-      // 统一压缩为 JPEG 以减小体积
+      // Compress all images to JPEG to reduce file size
       const imgData = await compressImageToJpeg(item.dataUrl, item.naturalW, item.naturalH, jpegQuality);
       doc.addImage(imgData, 'JPEG', ox + dx, oy + dy, w, h);
     }
@@ -151,7 +152,7 @@ async function buildPDF(
   return new Uint8Array(doc.output('arraybuffer'));
 }
 
-/** 解析用户输入的大小限制字符串，返回字节数，无效返回 null */
+/** Parse user-entered size limit string, return bytes or null if invalid */
 function parseMaxSizeMB(input: string): number | null {
   const trimmed = input.trim().toLowerCase().replace(/m[b]?$/, '');
   if (!trimmed) return null;
@@ -160,37 +161,38 @@ function parseMaxSizeMB(input: string): number | null {
   return num * 1024 * 1024;
 }
 
-/** 以二分搜索压缩质量来满足文件大小限制 */
+/** Binary search for JPEG quality to meet file size limit */
 async function buildPDFWithSizeLimit(
   builder: (quality: number) => Promise<Uint8Array>,
   maxBytes: number,
 ): Promise<Uint8Array> {
-  // 先用默认质量 0.75 尝试
+  // Try default quality 0.75 first
   let result = await builder(0.75);
   if (result.byteLength <= maxBytes) return result;
 
-  // 二分搜索合适的质量
+  // Binary search for suitable quality
   let lo = 0.1;
   let hi = 0.75;
   for (let i = 0; i < 6; i++) {
     const mid = (lo + hi) / 2;
     result = await builder(mid);
     if (result.byteLength <= maxBytes) {
-      lo = mid;  // 质量还可以再高
+      lo = mid;  // quality can be higher
     } else {
-      hi = mid;  // 质量需要再低
+      hi = mid;  // quality needs to be lower
     }
   }
-  // 用 lo 做最终结果（保证 <= maxBytes 的最高质量）
+  // Use lo as final result (highest quality that stays <= maxBytes)
   result = await builder(lo);
   if (result.byteLength > maxBytes) {
-    // 最低质量仍超出，用最低质量输出并提示
+    // Min quality still exceeds limit, output at lowest quality and warn
     result = await builder(0.1);
   }
   return result;
 }
 
 export default function ImgToPdf() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ImageItem[]>([]);
   const [perPage, setPerPage] = useState<number>(2);
   const [layoutDir, setLayoutDir] = useState<LayoutDir>('col');
@@ -275,7 +277,7 @@ export default function ImgToPdf() {
         .map((r) => r.value);
       const failCount = results.length - okItems.length;
       if (okItems.length > 0) setItems((prev) => [...prev, ...okItems]);
-      if (failCount > 0) message.error(`有 ${failCount} 张图片读取失败`);
+      if (failCount > 0) message.error(t('hash.readFailed', { count: failCount }));
     });
   };
 
@@ -290,13 +292,13 @@ export default function ImgToPdf() {
   };
 
   const handleGenerate = async () => {
-    if (items.length === 0) { message.warning('请先添加图片'); return; }
+    if (items.length === 0) { message.warning(t('imgToPdf.addImagesFirst')); return; }
     const defaultName = `images-${dayjs().format('YYYYMMDD-HHmmss')}.pdf`;
     let savePath: string | null;
     try {
       savePath = (await save({
         defaultPath: defaultName,
-        filters: [{ name: 'PDF 文件', extensions: ['pdf'] }],
+        filters: [{ name: t('imgToPdf.pdfFilter'), extensions: ['pdf'] }],
       })) as string | null;
     } catch { return; }
     if (!savePath) return;
@@ -312,17 +314,17 @@ export default function ImgToPdf() {
         );
         const actualMB = (pdfBytes.byteLength / 1024 / 1024).toFixed(2);
         if (pdfBytes.byteLength > maxBytes) {
-          message.warning(`PDF 最小可压缩至 ${actualMB}MB，无法达到目标大小`);
+          message.warning(t('imgToPdf.minSize', { size: actualMB }));
         } else {
-          message.info(`实际大小 ${actualMB}MB`);
+          message.info(t('imgToPdf.actualSize', { size: actualMB }));
         }
       } else {
         pdfBytes = await buildPDF(items, perPage, layoutDir, imageScalePct / 100, pageMargin, lockUniformWhenTwo);
       }
       await writeFile(savePath, pdfBytes);
-      message.success('PDF 已保存');
+      message.success(t('imgToPdf.pdfSaved'));
     } catch (e) {
-      message.error(`生成失败：${(e as Error).message}`);
+      message.error(t('imgToPdf.generateFailed', { error: (e as Error).message }));
     } finally {
       setGenerating(false);
     }
@@ -353,11 +355,11 @@ export default function ImgToPdf() {
   const hasImages = items.length > 0;
 
   return (
-    <ToolLayout title="图片排版" description="选择图片，设定每页布局，一键导出为 A4 尺寸 PDF">
+    <ToolLayout title={t('imgToPdf.title')} description={t('imgToPdf.description')}>
       <div className={styles.mainLayout}>
-        {/* ── 左侧控制面板 ── */}
+        {/* ── Left control panel ── */}
         <div className={styles.controlPanel}>
-          {/* 上传 */}
+          {/* Upload */}
           <Upload.Dragger
             className={styles.uploadArea}
             accept="image/jpeg,image/png,image/webp,image/gif,image/bmp"
@@ -369,20 +371,20 @@ export default function ImgToPdf() {
           >
             <div className={styles.uploadHint}>
               <PlusOutlined className={styles.uploadIcon} />
-              <span className={styles.uploadText}>添加图片</span>
-              <span className={styles.uploadSubText}>点击或拖拽，支持批量</span>
+              <span className={styles.uploadText}>{t('imgToPdf.addImages')}</span>
+              <span className={styles.uploadSubText}>{t('imgToPdf.clickOrDrag')}</span>
             </div>
           </Upload.Dragger>
 
-          {/* 缩略图 */}
+          {/* Thumbnails */}
           {hasImages && (
             <div className={styles.thumbSection}>
               <div className={styles.thumbHeader}>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  {items.length} 张图片 · 拖拽排序
+                  {t('imgToPdf.imageCount', { count: items.length })}
                 </Text>
                 <Button type="link" size="small" danger onClick={handleClearAll} icon={<DeleteOutlined />}>
-                  清空
+                  {t('action.clear')}
                 </Button>
               </div>
               <div
@@ -408,18 +410,18 @@ export default function ImgToPdf() {
                   >
                     <img src={item.dataUrl} alt={`img-${idx + 1}`} draggable={false} className={styles.thumbImg} />
                     <span className={styles.thumbIdx}>{idx + 1}</span>
-                    <button className={styles.thumbRemove} onClick={() => handleRemove(item.id)} title="移除">×</button>
+                    <button className={styles.thumbRemove} onClick={() => handleRemove(item.id)} title={t('imgToPdf.remove')}>×</button>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* 设置 */}
+          {/* Settings */}
           {hasImages && (
             <div className={styles.settingsSection}>
               <div className={styles.settingRow}>
-                <Text className={styles.settingLabel}>每页</Text>
+                <Text className={styles.settingLabel}>{t('imgToPdf.perPage')}</Text>
                 <Radio.Group
                   value={perPage}
                   onChange={(e) => setPerPage(e.target.value as number)}
@@ -433,11 +435,11 @@ export default function ImgToPdf() {
                     { label: '4', value: 4 },
                   ]}
                 />
-                <Text className={styles.settingLabel}>张</Text>
+                <Text className={styles.settingLabel}>{t('imgToPdf.images')}</Text>
               </div>
               {showLayoutOption && (
                 <div className={styles.settingRow}>
-                  <Text className={styles.settingLabel}>排列</Text>
+                  <Text className={styles.settingLabel}>{t('imgToPdf.layout')}</Text>
                   <Radio.Group
                     value={layoutDir}
                     onChange={(e) => setLayoutDir(e.target.value as LayoutDir)}
@@ -445,15 +447,15 @@ export default function ImgToPdf() {
                     buttonStyle="solid"
                     size="small"
                     options={[
-                      { label: '上下', value: 'col' },
-                      { label: '左右', value: 'row' },
+                      { label: t('imgToPdf.vertical'), value: 'col' },
+                      { label: t('imgToPdf.horizontal'), value: 'row' },
                     ]}
                   />
                 </div>
               )}
               <div className={styles.settingCol}>
                 <div className={styles.settingRow}>
-                  <Text className={styles.settingLabel}>图片缩放</Text>
+                  <Text className={styles.settingLabel}>{t('imgToPdf.imageScale')}</Text>
                   <Text className={styles.settingValue}>{imageScalePct}%</Text>
                 </div>
                 <Slider
@@ -467,7 +469,7 @@ export default function ImgToPdf() {
               </div>
               <div className={styles.settingCol}>
                 <div className={styles.settingRow}>
-                  <Text className={styles.settingLabel}>页面留白</Text>
+                  <Text className={styles.settingLabel}>{t('imgToPdf.pageMargin')}</Text>
                   <Text className={styles.settingValue}>{pageMargin}mm</Text>
                 </div>
                 <Slider
@@ -481,36 +483,36 @@ export default function ImgToPdf() {
               </div>
               {perPage === 2 && (
                 <div className={styles.settingRow}>
-                  <Text className={styles.settingLabel}>双图同倍率</Text>
+                  <Text className={styles.settingLabel}>{t('imgToPdf.uniformScale')}</Text>
                   <Switch size="small" checked={lockUniformWhenTwo} onChange={setLockUniformWhenTwo} />
                 </div>
               )}
               <div className={styles.settingActions}>
                 <Button size="small" onClick={applyPhonePreset}>
-                  手机照片推荐
+                  {t('imgToPdf.phonePreset')}
                 </Button>
                 <Button size="small" onClick={applyReceiptPreset}>
-                  证件/票据模式
+                  {t('imgToPdf.receiptPreset')}
                 </Button>
                 <Button size="small" type="text" onClick={resetLayoutPreset}>
-                  恢复默认
+                  {t('imgToPdf.resetDefault')}
                 </Button>
               </div>
               <Text type="secondary" className={styles.settingTip}>
-                预览与导出使用同一套缩放与留白参数
+                {t('imgToPdf.previewTip')}
               </Text>
             </div>
           )}
 
-          {/* 输出大小限制 */}
+          {/* Size limit */}
           {hasImages && (
             <div className={styles.settingsSection}>
               <div className={styles.settingRow}>
-                <Text className={styles.settingLabel}>输出大小限制</Text>
+                <Text className={styles.settingLabel}>{t('imgToPdf.sizeLimit')}</Text>
                 <Input
                   className={styles.sizeInput}
                   size="small"
-                  placeholder="如 2.5M"
+                  placeholder={t('imgToPdf.sizePlaceholder')}
                   value={maxSizeInput}
                   onChange={(e) => setMaxSizeInput(e.target.value)}
                   suffix="MB"
@@ -518,12 +520,12 @@ export default function ImgToPdf() {
                 />
               </div>
               <Text type="secondary" style={{ fontSize: 11 }}>
-                留空不限制；设定后自动压缩图片质量以控制文件大小
+                {t('imgToPdf.sizeHint')}
               </Text>
             </div>
           )}
 
-          {/* 导出 */}
+          {/* Export */}
           {hasImages && (
             <div className={styles.exportGroup}>
               <Button
@@ -535,18 +537,18 @@ export default function ImgToPdf() {
                 loading={generating}
                 block
               >
-                导出 PDF · {pageCount} 页
+                {t('imgToPdf.exportPdf', { count: pageCount })}
               </Button>
             </div>
           )}
         </div>
 
-        {/* ── 右侧预览 ── */}
+        {/* ── Right preview ── */}
         <div className={styles.previewPanel}>
           {!hasImages ? (
             <div className={styles.previewEmpty}>
               <FilePdfOutlined className={styles.previewEmptyIcon} />
-              <Text type="secondary">添加图片后预览排版效果</Text>
+              <Text type="secondary">{t('imgToPdf.previewHint')}</Text>
             </div>
           ) : (
             <>

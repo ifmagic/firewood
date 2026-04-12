@@ -11,9 +11,9 @@ interface ReleaseNotesResult {
   body: string;
 }
 
-/** 只保留 release notes 中变更说明部分，去掉下载/安装说明 */
+/** Strip everything after the first horizontal rule, keeping only the changelog */
 export function extractChangelog(body: string | null): string {
-  if (!body) return '包含最新功能与问题修复。';
+  if (!body) return 'Includes the latest features and bug fixes.';
   const cutoff = body.search(/^---+$/m);
   const section = cutoff > 0 ? body.slice(0, cutoff) : body;
   return section.trim();
@@ -40,8 +40,8 @@ export function readUpdateNotesCache(): UpdateNotesCache | null {
 }
 
 /**
- * 从 build.yml 原始内容中解析 release body。
- * 解析 github-script 中 `body: \`...\`` 模板字面量的内容。
+ * Parse the release body from the raw build.yml content.
+ * Extracts the `body: \`...\`` template literal from the github-script section.
  */
 export function parseReleaseBodyFromBuildYml(raw: string): string {
   const jsMarker = 'body: `';
@@ -49,7 +49,7 @@ export function parseReleaseBodyFromBuildYml(raw: string): string {
   if (jsIdx === -1) return '';
 
   const start = jsIdx + jsMarker.length;
-  // 找到闭合的反引号（考虑转义 \`）
+  // Find the closing backtick (accounting for escaped \`)
   let i = start;
   while (i < raw.length) {
     if (raw[i] === '\\' && i + 1 < raw.length) {
@@ -66,7 +66,7 @@ export function parseReleaseBodyFromBuildYml(raw: string): string {
 
   const lines = content.split('\n');
 
-  // 第一行与 `body: \`` 同行，缩进为 0；用后续非空行计算公共缩进
+  // First line is on the same line as `body: \``, indent is 0; use subsequent non-empty lines to calculate common indent
   let blockIndent = 0;
   for (let idx = 1; idx < lines.length; idx++) {
     if (lines[idx].trim() === '') continue;
@@ -85,13 +85,13 @@ export function parseReleaseBodyFromBuildYml(raw: string): string {
 }
 
 /**
- * 从本地 build.yml（构建时内联）获取当前版本的发布说明。
+ * Get release notes for the current version from the local build.yml (inlined at build time).
  */
 export function getLocalReleaseNotes(buildYmlRaw: string, version: string): ReleaseNotesResult {
   const fullBody = parseReleaseBodyFromBuildYml(buildYmlRaw);
   const changelog = extractChangelog(fullBody);
   return {
     version: version.replace(/^v/, ''),
-    body: changelog || '包含最新功能与问题修复。',
+    body: changelog || 'Includes the latest features and bug fixes.',
   };
 }

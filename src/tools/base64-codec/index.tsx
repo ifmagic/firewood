@@ -1,11 +1,13 @@
 import { Input, Button, Space, Radio } from 'antd';
 import { fromBase64, toBase64 } from 'js-base64';
+import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 
 const { TextArea } = Input;
 
 export default function Base64Codec() {
+  const { t } = useTranslation();
   const [input, setInput] = usePersistentState('tool:base64-codec:input', '');
   const [output, setOutput] = usePersistentState('tool:base64-codec:output', '');
   const [mode, setMode] = usePersistentState<'encode' | 'decode'>('tool:base64-codec:mode', 'encode');
@@ -18,7 +20,7 @@ export default function Base64Codec() {
         setOutput(fromBase64(input));
       }
     } catch {
-      setOutput('解码失败，请检查输入是否为合法的 Base64 字符串');
+      setOutput(t('base64.decodeFailed'));
     }
   };
 
@@ -29,17 +31,17 @@ export default function Base64Codec() {
   };
 
   return (
-    <ToolLayout title="Base64 编解码" description="文本 Base64 编码与解码">
+    <ToolLayout title={t('base64.title')} description={t('base64.description')}>
       <Space style={{ marginBottom: 12 }}>
         <Radio.Group value={mode} onChange={(e) => setMode(e.target.value)}>
-          <Radio.Button value="encode">编码</Radio.Button>
-          <Radio.Button value="decode">解码</Radio.Button>
+          <Radio.Button value="encode">{t('action.encode')}</Radio.Button>
+          <Radio.Button value="decode">{t('action.decode')}</Radio.Button>
         </Radio.Group>
         <Button type="primary" onClick={convert}>
-          {mode === 'encode' ? '编码' : '解码'}
+          {mode === 'encode' ? t('action.encode') : t('action.decode')}
         </Button>
-        <Button onClick={swap}>互换</Button>
-        <Button danger onClick={() => { setInput(''); setOutput(''); }}>清空</Button>
+        <Button onClick={swap}>{t('action.swap')}</Button>
+        <Button danger onClick={() => { setInput(''); setOutput(''); }}>{t('action.clear')}</Button>
       </Space>
 
       <Space direction="vertical" style={{ width: '100%' }}>
@@ -47,14 +49,14 @@ export default function Base64Codec() {
           rows={8}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={mode === 'encode' ? '请输入原始文本...' : '请输入 Base64 字符串...'}
+          placeholder={mode === 'encode' ? t('base64.enterPlainText') : t('base64.enterBase64')}
           style={{ fontFamily: 'monospace' }}
         />
         <TextArea
           rows={8}
           value={output}
           readOnly
-          placeholder="结果..."
+          placeholder={t('base64.resultPlaceholder')}
           style={{ fontFamily: 'monospace', background: '#fafafa' }}
         />
       </Space>

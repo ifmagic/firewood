@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './FontSizeControl.module.css';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function FontSizeControl({ fontSize, onIncrease, onDecrease }: Props) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   // Keep refs to callbacks so the wheel listener never needs to be re-registered
   const increaseRef = useRef(onIncrease);
@@ -29,9 +31,9 @@ export default function FontSizeControl({ fontSize, onIncrease, onDecrease }: Pr
 
   return (
     <div ref={ref} className={styles.control} tabIndex={0}>
-      <button className={styles.btn} onClick={onDecrease} title="缩小字体">−</button>
+      <button className={styles.btn} onClick={onDecrease} title={t('fontSizeControl.decrease')}>−</button>
       <span className={styles.size}>{fontSize}px</span>
-      <button className={styles.btn} onClick={onIncrease} title="放大字体">+</button>
+      <button className={styles.btn} onClick={onIncrease} title={t('fontSizeControl.increase')}>+</button>
     </div>
   );
 }

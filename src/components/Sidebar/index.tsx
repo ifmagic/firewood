@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { Layout, Button, Dropdown, Checkbox } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FireOutlined, MenuOutlined, HolderOutlined } from '@ant-design/icons';
+import { FireOutlined, MenuOutlined, HolderOutlined, SettingOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { MenuProps } from 'antd';
 import type { ToolMeta } from '../../types/tool';
 import styles from './Sidebar.module.css';
@@ -11,11 +12,13 @@ interface SidebarProps {
   visibility: Record<string, boolean>;
   onToggleToolVisibility: (toolId: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
+  onOpenSettings?: () => void;
 }
 
 const { Sider } = Layout;
 
-export default function Sidebar({ tools, visibility, onToggleToolVisibility, onReorder }: SidebarProps) {
+export default function Sidebar({ tools, visibility, onToggleToolVisibility, onReorder, onOpenSettings }: SidebarProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const currentKey = location.pathname.replace('/', '') || tools[0]?.id;
@@ -24,10 +27,10 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
   const dragIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  // 过滤出可见的工具
+  // Filter visible tools
   const visibleTools = tools.filter((t) => visibility[t.id] ?? true);
 
-  // View 菜单
+  // View menu
   const viewMenuItems: MenuProps['items'] = [
     ...tools.map((tool) => ({
       key: tool.id,
@@ -43,7 +46,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
             onChange={() => onToggleToolVisibility(tool.id)}
           />
           {tool.icon}
-          <span>{tool.name}</span>
+          <span>{t(`toolName.${tool.id}`)}</span>
         </div>
       ),
     })),
@@ -52,7 +55,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
     },
     {
       key: 'show-all',
-      label: '全部显示',
+      label: t('sidebar.showAll'),
       onClick: () => {
         tools.forEach((tool) => {
           if (!visibility[tool.id]) {
@@ -63,7 +66,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
     },
     {
       key: 'hide-all',
-      label: '全部隐藏',
+      label: t('sidebar.hideAll'),
       onClick: () => {
         tools.forEach((tool) => {
           if (visibility[tool.id]) {
@@ -149,11 +152,23 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
             >
               <HolderOutlined className={styles.dragHandle} />
               <span className={styles.toolIcon}>{tool.icon}</span>
-              <span className={styles.toolName}>{tool.name}</span>
+              <span className={styles.toolName}>{t(`toolName.${tool.id}`)}</span>
             </div>
           );
         })}
       </div>
+      {onOpenSettings && (
+        <div className={styles.siderFooter}>
+          <Button
+            type="text"
+            icon={<SettingOutlined />}
+            className={styles.settingsButton}
+            onClick={onOpenSettings}
+          >
+            {t('label.settings')}
+          </Button>
+        </div>
+      )}
     </Sider>
   );
 }

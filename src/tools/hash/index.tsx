@@ -4,6 +4,7 @@ import { FileOutlined, InboxOutlined, DeleteOutlined } from '@ant-design/icons';
 import SparkMD5 from 'spark-md5';
 import { sha1 } from 'js-sha1';
 import { sha256 } from 'js-sha256';
+import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import styles from './Hash.module.css';
@@ -45,9 +46,9 @@ async function hashFileBuffer(buffer: ArrayBuffer): Promise<HashRow[]> {
 }
 
 const columns = [
-  { title: '算法', dataIndex: 'algorithm', width: 120 },
+  { title: 'Algorithm', dataIndex: 'algorithm', width: 120 },
   {
-    title: '哈希值',
+    title: 'Hash',
     dataIndex: 'value',
     render: (v: string) => (
       <code style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{v}</code>
@@ -56,6 +57,7 @@ const columns = [
 ];
 
 function TextHash() {
+  const { t } = useTranslation();
   const [input, setInput] = usePersistentState('tool:hash:input', '');
   const [rows, setRows] = usePersistentState<HashRow[]>('tool:hash:rows', []);
 
@@ -73,12 +75,12 @@ function TextHash() {
         rows={6}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="请输入要计算哈希值的文本..."
+        placeholder={t('hash.enterText')}
         style={{ fontFamily: 'monospace' }}
       />
       <Space>
-        <Button type="primary" onClick={calculate}>计算</Button>
-        <Button danger onClick={() => { setInput(''); setRows([]); }}>清空</Button>
+        <Button type="primary" onClick={calculate}>{t('action.calculate')}</Button>
+        <Button danger onClick={() => { setInput(''); setRows([]); }}>{t('action.clear')}</Button>
       </Space>
       {rows.length > 0 && (
         <Table
@@ -94,6 +96,7 @@ function TextHash() {
 }
 
 function FileHash() {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<HashRow[]>([]);
   const [calculating, setCalculating] = useState(false);
@@ -153,8 +156,8 @@ function FileHash() {
         onClick={handleClick}
       >
         <div className={styles.dropIcon}><InboxOutlined /></div>
-        <div>点击选择文件，或将文件拖拽到此处</div>
-        <div className={styles.dropHint}>支持任意类型文件</div>
+        <div>{t('hash.dropFile')}</div>
+        <div className={styles.dropHint}>{t('hash.supportAllTypes')}</div>
         <input
           ref={inputRef}
           type="file"
@@ -180,7 +183,7 @@ function FileHash() {
       {calculating && (
         <div className={styles.calculating}>
           <Spin size="small" />
-          <span>正在计算哈希值…</span>
+          <span>{t('hash.calculating')}</span>
         </div>
       )}
 
@@ -198,14 +201,15 @@ function FileHash() {
 }
 
 export default function HashCalculator() {
+  const { t } = useTranslation();
   return (
-    <ToolLayout title="Hash 计算" description="计算文件或文本的 MD5 / SHA-1 / SHA-256">
+    <ToolLayout title={t('hash.title')} description={t('hash.description')}>
       <Tabs
         className={styles.tabs}
         defaultActiveKey="file"
         items={[
-          { key: 'file', label: '文件', children: <FileHash /> },
-          { key: 'text', label: '文本', children: <TextHash /> },
+          { key: 'file', label: t('label.file'), children: <FileHash /> },
+          { key: 'text', label: t('label.text'), children: <TextHash /> },
         ]}
       />
     </ToolLayout>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, Space, Alert } from 'antd';
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
+import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
@@ -9,6 +10,7 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { useResizablePanels } from '../../hooks/useResizablePanels';
 
 export default function JsonFormatter() {
+  const { t } = useTranslation();
   const [input, setInput] = usePersistentState('tool:json-formatter:input', '');
   const [output, setOutput] = usePersistentState('tool:json-formatter:output', '');
   const [error, setError] = usePersistentState('tool:json-formatter:error', '');
@@ -46,12 +48,12 @@ export default function JsonFormatter() {
   const unescape = () => {
     setHasCompared(true);
     try {
-      // 去除外层引号后解析转义字符串
+      // Strip outer quotes then parse escape sequences
       let text = input.trim();
       if (text.startsWith('"') && text.endsWith('"')) {
         text = JSON.parse(text);
       } else {
-        // 直接替换常见转义序列
+        // Replace common escape sequences directly
         text = text
           .replace(/\\n/g, '\n')
           .replace(/\\t/g, '\t')
@@ -88,11 +90,11 @@ export default function JsonFormatter() {
   } as const;
 
   return (
-    <ToolLayout title="JSON 格式化" description="JSON 格式化、压缩与语法校验">
+    <ToolLayout title={t('jsonFormatter.title')} description={t('jsonFormatter.description')}>
       <Space style={{ marginBottom: 12 }}>
-        <Button type="primary" onClick={format}>格式化</Button>
-        <Button onClick={minify}>压缩</Button>
-        <Button onClick={unescape}>去除转义</Button>
+        <Button type="primary" onClick={format}>{t('action.format')}</Button>
+        <Button onClick={minify}>{t('action.minify')}</Button>
+        <Button onClick={unescape}>{t('action.unescape')}</Button>
         {hasCompared && (
           <Button
             type="default"
@@ -100,10 +102,10 @@ export default function JsonFormatter() {
             icon={isInputCollapsed ? <EyeOutlined /> : <EyeInvisibleOutlined />}
             style={toggleInputButtonStyle}
           >
-            {isInputCollapsed ? '显示原始输入' : '隐藏原始输入'}
+            {isInputCollapsed ? t('action.showOriginalInput') : t('action.hideOriginalInput')}
           </Button>
         )}
-        <Button danger onClick={clear}>清空</Button>
+        <Button danger onClick={clear}>{t('action.clear')}</Button>
       </Space>
 
       {error && (

@@ -1,61 +1,65 @@
 # Firewood
 
-面向开发者的跨平台桌面工具集，基于 [Tauri](https://tauri.app) + React + TypeScript 构建。
+[中文文档](./README.zh-CN.md)
 
-## 功能
+A cross-platform desktop toolbox for developers, built with [Tauri](https://tauri.app) + React + TypeScript.
 
-| 工具 | 说明 |
-|------|------|
-| JSON 格式化 | 格式化、压缩、去除转义与语法校验；格式化后自动收起原始输入 |
-| 时间戳转换 | Unix timestamp ↔ 日期互转，支持秒/毫秒单位切换；转换历史记录（最多 50 条，持久化，支持复制详情） |
-| 文本对比 | 左右双栏逐行差异对比，支持面板宽度拖拽调整 |
-| 记事本 | 多标签页、本地持久化、Monaco 编辑器（亮色主题、行号、折叠）、右键 JSON 格式化、删除确认、状态栏字符统计 |
-| Base64 编解码 | Base64 编码与解码 |
-| URL 编解码 | URLEncode / URLDecode |
-| Hash 计算 | MD5 / SHA-1 / SHA-256，支持文本输入和文件拖拽计算 |
-| 图片排版 | 多图排版，自定义每页数量与排列方式，导出为 A4 尺寸 PDF |
-| 文本翻译 | 支持腾讯云 / 百度翻译 API，13 种语言互译；翻译历史记录（最多 50 条，持久化，支持复制详情） |
+## Tools
 
-### 应用特性
+| Tool | Description |
+|------|-------------|
+| JSON Formatter | Format, minify, unescape & validate JSON; auto-collapses original input after formatting |
+| Timestamp | Unix timestamp ↔ date conversion with seconds/milliseconds toggle; conversion history (up to 50 records, persisted, copyable) |
+| Text Diff | Side-by-side line-by-line diff with resizable panels |
+| Notepad | Multi-tab local notepad with Monaco Editor (light theme, line numbers, folding), right-click JSON formatting, delete confirmation, status bar char count |
+| Base64 Codec | Base64 encode & decode |
+| URL Codec | URL encode & decode |
+| Hash | MD5 / SHA-1 / SHA-256 for text input and file drag-and-drop |
+| Image to PDF | Multi-image layout with customizable per-page count and arrangement, exported as A4 PDF |
+| Translate | Tencent Cloud / Baidu translation API, 13 languages; translation history (up to 50 records, persisted, copyable) |
 
-- **侧边栏拖拽排序**：工具列表支持拖拽自定义顺序，排序结果自动持久化
-- **工具显隐管理**：通过侧边栏菜单按钮可控制每个工具的显示/隐藏
-- **单实例运行**：通过 tauri-plugin-single-instance 确保只运行一个进程，重复启动时自动聚焦已有窗口
-- **系统托盘**：支持显示窗口、检查更新、退出等托盘菜单操作
-- **自动更新**：内置 Tauri updater，检测新版本后展示更新日志与下载进度
-- **关于对话框**：版本更新说明从本地 build.yml 解析，无需网络即可查看
-- **字号调节**：记事本与翻译工具支持鼠标滚轮调节字体大小
+### App Features
 
-## 技术栈
+- **Sidebar drag-and-drop reorder**: Custom tool order with auto-persistence
+- **Tool visibility**: Show/hide individual tools via sidebar menu
+- **Single instance**: Only one process runs via tauri-plugin-single-instance; subsequent launches focus the existing window
+- **System tray**: Show window, check for updates, quit
+- **Auto update**: Built-in Tauri updater with release notes and download progress
+- **About dialog**: Release notes parsed from local build.yml, no network required
+- **Font size control**: Notepad and Translate support mouse wheel font resizing
+- **i18n**: English and Simplified Chinese with auto-detection and manual switching
 
-- **桌面框架**: Tauri 1.x (Rust)
-- **前端**: React 19 + TypeScript 5 + Vite 8
+## Tech Stack
+
+- **Desktop framework**: Tauri 2.x (Rust)
+- **Frontend**: React 19 + TypeScript 5 + Vite 8
 - **UI**: Ant Design 6.x
-- **编辑器**: Monaco Editor
-- **路由**: React Router DOM 7.x
-- **Rust 后端**: reqwest (HTTP)、hmac + sha2 (签名)、md-5 (MD5)、chrono (时间)
+- **Editor**: Monaco Editor
+- **Routing**: React Router DOM 7.x
+- **i18n**: i18next + react-i18next
+- **Rust backend**: reqwest (HTTP), hmac + sha2 (signing), md-5 (MD5), chrono (time)
 
-## 开发
+## Development
 
 ```bash
-# 安装依赖
+# Install dependencies
 npm install
 
-# 启动 Web 开发模式（仅前端）
+# Start web dev mode (frontend only)
 npm run dev
 
-# 启动 Tauri 开发模式（完整桌面应用）
+# Start Tauri dev mode (full desktop app)
 npm run tauri dev
 
-# 构建
+# Build
 npm run tauri build
 ```
 
-## 扩展工具
+## Adding Tools
 
-在 `src/tools/` 下新建目录并实现工具组件，然后在 `src/router/tools.tsx` 中注册 `ToolMeta` 即可。新工具会自动出现在侧边栏。
+Create a new directory under `src/tools/` with your tool component, then register a `ToolMeta` entry in `src/router/tools.tsx`. The new tool will automatically appear in the sidebar.
 
-详细设计参见 [DESIGN.md](./DESIGN.md)。
+See [DESIGN.md](./DESIGN.md) for detailed architecture.
 
 ## License
 

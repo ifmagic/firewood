@@ -1,6 +1,7 @@
 import { Input, Button, Space, Typography, Tag } from 'antd';
 import * as Diff from 'diff';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
@@ -11,6 +12,7 @@ import styles from './TextDiff.module.css';
 const { TextArea } = Input;
 
 export default function TextDiff() {
+  const { t } = useTranslation();
   const [left, setLeft] = usePersistentState('tool:text-diff:left', '');
   const [right, setRight] = usePersistentState('tool:text-diff:right', '');
   const [diffs, setDiffs] = usePersistentState<Diff.Change[]>('tool:text-diff:diffs', []);
@@ -65,7 +67,7 @@ export default function TextDiff() {
     ));
   };
 
-  /** 对一对 removed/added 行做 word-level diff，返回带高亮的 span */
+  /** Word-level diff for a pair of removed/added lines, returns highlighted spans */
   const renderInlineHighlight = (
     removedLine: string,
     addedLine: string,
@@ -89,7 +91,7 @@ export default function TextDiff() {
     };
   };
 
-  /** 渲染一对 removed+added 块，逐行做 word-level 高亮 */
+  /** Render a pair of removed+added blocks with word-level highlighting */
   const renderModifiedPair = (removedPart: Diff.Change, addedPart: Diff.Change, key: string) => {
     const removedLines = getLines(removedPart.value);
     const addedLines = getLines(addedPart.value);
@@ -101,7 +103,7 @@ export default function TextDiff() {
       const aLine = li < addedLines.length ? addedLines[li] : null;
 
       if (rLine !== null && aLine !== null) {
-        // 同时有对应行：做 inline word diff
+        // Both lines present: do inline word diff
         const { removedSpans, addedSpans } = renderInlineHighlight(rLine, aLine);
         elements.push(
           <div key={`${key}-r${li}`} className={`${styles.diffLine} ${styles.modRemovedLine}`}>
@@ -137,9 +139,9 @@ export default function TextDiff() {
   const renderDiff = () => {
     const elements: React.ReactNode[] = [];
     for (let i = 0; i < diffs.length; ) {
-      const ci = i; // 在 i 被修改前捕获，供闭包使用
+      const ci = i; // Capture i before mutation for closure use
       const part = diffs[i];
-      // 检测 removed + added 配对
+      // Detect removed + added pair
       if (part.removed && i + 1 < diffs.length && diffs[i + 1].added) {
         elements.push(
           <div key={ci} className={`${styles.chunk} ${styles.modifiedChunk}`}>
@@ -167,13 +169,13 @@ export default function TextDiff() {
             {expandedUnchangedChunks.includes(ci) ? (
               <div className={`${styles.chunk} ${styles.unchangedChunk}`}>
                 <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(ci)}>
-                  收起 {countLines(part.value)} 行未变化内容
+                  {t('textDiff.unfoldLines', { count: countLines(part.value) })}
                 </button>
                 {renderChunkLines(part.value, ' ')}
               </div>
             ) : (
               <button className={styles.foldButton} onClick={() => toggleUnchangedChunk(ci)}>
-                显示 {countLines(part.value)} 行未变化内容
+                 {t('textDiff.foldLines', { count: countLines(part.value) })}
               </button>
             )}
           </div>,
@@ -192,15 +194,15 @@ export default function TextDiff() {
   const removedLines = diffs.filter((d) => d.removed).reduce((sum, d) => sum + countLines(d.value), 0);
 
   return (
-    <ToolLayout title="文本对比" description="对比两段文本的差异">
+    <ToolLayout title={t('textDiff.title')} description={t('textDiff.description')}>
       <Space style={{ marginBottom: 12 }}>
-        <Button type="primary" onClick={compare}>对比</Button>
-        <Button onClick={restore} disabled={!compared}>恢复编辑视图</Button>
-        <Button danger onClick={clear}>清空</Button>
+        <Button type="primary" onClick={compare}>{t('action.compare')}</Button>
+        <Button onClick={restore} disabled={!compared}>{t('action.restoreEdit')}</Button>
+        <Button danger onClick={clear}>{t('action.clear')}</Button>
         {compared && (
           <>
-            <Tag color="green">+{addedLines} 新增</Tag>
-            <Tag color="red">-{removedLines} 删除</Tag>
+            <Tag color="green">+{addedLines} {t('textDiff.added')}</Tag>
+            <Tag color="red">-{removedLines} {t('textDiff.deleted')}</Tag>
           </>
         )}
       </Space>
@@ -212,12 +214,12 @@ export default function TextDiff() {
         {!compared ? (
           <div style={{ display: 'flex', height: '100%' }}>
             <div style={{ width: `${leftPercent}%`, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <Typography.Text strong>原文</Typography.Text>
+              <Typography.Text strong>{t('label.original')}</Typography.Text>
               <div style={{ flex: 1, marginTop: 8, position: 'relative' }}>
                 <TextArea
                   value={left}
                   onChange={(e) => setLeft(e.target.value)}
-                  placeholder="请输入原始文本..."
+                  placeholder={t('textDiff.enterOriginal')}
                   style={{
                     position: 'absolute',
                     inset: 0,
@@ -244,12 +246,12 @@ export default function TextDiff() {
               <div style={{ width: 2, height: 32, background: 'rgba(0,0,0,0.2)', borderRadius: 1 }} />
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <Typography.Text strong>修改后</Typography.Text>
+              <Typography.Text strong>{t('label.modified')}</Typography.Text>
               <div style={{ flex: 1, marginTop: 8, position: 'relative' }}>
                 <TextArea
                   value={right}
                   onChange={(e) => setRight(e.target.value)}
-                  placeholder="请输入修改后文本..."
+                  placeholder={t('textDiff.enterModified')}
                   style={{
                     position: 'absolute',
                     inset: 0,

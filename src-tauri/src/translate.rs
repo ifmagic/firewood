@@ -57,24 +57,24 @@ pub async fn baidu_translate(
             ("sign", sign.as_str()),
         ],
     )
-    .map_err(|e| format!("URL 构造失败: {}", e))?;
+    .map_err(|e| format!("URL construction failed: {}", e))?;
     let resp = reqwest::Client::new()
         .get(url)
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
-    let body: BaiduResponse = resp.json().await.map_err(|e| format!("解析失败: {}", e))?;
+        .map_err(|e| format!("Request failed: {}", e))?;
+    let body: BaiduResponse = resp.json().await.map_err(|e| format!("Parse failed: {}", e))?;
     if let Some(code) = &body.error_code {
         if code != "52000" {
             return Err(format!(
-                "百度翻译错误 {}: {}",
+                "Baidu Translate error {}: {}",
                 code,
                 body.error_msg.unwrap_or_default()
             ));
         }
     }
 
-    let results = body.trans_result.ok_or("翻译结果为空")?;
+    let results = body.trans_result.ok_or("Translation result is empty")?;
     let translated = results
         .iter()
         .map(|r| r.dst.clone())
@@ -205,12 +205,12 @@ pub async fn tencent_translate(
         .body(payload)
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| format!("Request failed: {}", e))?;
 
-    let body: TencentResponse = resp.json().await.map_err(|e| format!("解析失败: {}", e))?;
+    let body: TencentResponse = resp.json().await.map_err(|e| format!("Parse failed: {}", e))?;
 
     if let Some(err) = body.response.error {
-        return Err(format!("腾讯翻译错误 {}: {}", err.code, err.message));
+        return Err(format!("Tencent Translate error {}: {}", err.code, err.message));
     }
 
     Ok(TranslateResult {

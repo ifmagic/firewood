@@ -7,7 +7,7 @@ export function useToolVisibility(toolIds: string[]) {
     try {
       const saved = localStorage.getItem(VISIBILITY_STORAGE_KEY);
       const parsed = saved ? JSON.parse(saved) : {};
-      // 确保所有工具都有默认值
+      // Ensure all tools have default values
       return toolIds.reduce(
         (acc, id) => {
           acc[id] = parsed[id] ?? true;
@@ -16,7 +16,7 @@ export function useToolVisibility(toolIds: string[]) {
         {} as Record<string, boolean>,
       );
     } catch {
-      // 返回所有工具默认可见
+      // Return all tools visible by default
       return toolIds.reduce(
         (acc, id) => {
           acc[id] = true;

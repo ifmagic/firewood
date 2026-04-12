@@ -57,7 +57,7 @@
   text-decoration: line-through;
 }
 
-/* 修改块（removed + added 配对） */
+/* Modified chunk (removed + added pair) */
 .modifiedChunk {
   border-color: rgba(139, 148, 158, 0.20);
   background: transparent;
@@ -66,7 +66,7 @@
   gap: 0;
 }
 
-/* 修改块内的 removed 行 */
+/* Removed lines in a modified chunk */
 .modRemovedLine {
   background-color: rgba(248, 81, 73, 0.14);
 }
@@ -79,7 +79,7 @@
   color: #f85149;
 }
 
-/* 修改块内的 added 行 */
+/* Added lines in a modified chunk */
 .modAddedLine {
   background-color: rgba(46, 160, 67, 0.16);
 }
@@ -92,7 +92,7 @@
   color: #3fb950;
 }
 
-/* inline 高亮：removed 词级高亮 */
+/* Inline highlight: removed word-level */
 .inlineRemoved {
   background-color: rgba(255, 200, 50, 0.38);
   color: #ffe08a;
@@ -103,7 +103,7 @@
   box-shadow: 0 0 0 1px rgba(255, 200, 50, 0.25);
 }
 
-/* inline 高亮：added 词级高亮 */
+/* Inline highlight: added word-level */
 .inlineAdded {
   background-color: rgba(255, 200, 50, 0.38);
   color: #ffe08a;

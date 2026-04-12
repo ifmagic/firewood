@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -38,25 +39,25 @@ interface TranslateHistoryRecord {
 const MAX_HISTORY = 50;
 
 const LANGUAGES: LangOption[] = [
-  { value: 'zh', label: '中文', tencentCode: 'zh', baiduCode: 'zh' },
-  { value: 'en', label: '英语', tencentCode: 'en', baiduCode: 'en' },
-  { value: 'ja', label: '日语', tencentCode: 'ja', baiduCode: 'jp' },
-  { value: 'ko', label: '韩语', tencentCode: 'ko', baiduCode: 'kor' },
-  { value: 'fr', label: '法语', tencentCode: 'fr', baiduCode: 'fra' },
-  { value: 'de', label: '德语', tencentCode: 'de', baiduCode: 'de' },
-  { value: 'es', label: '西班牙语', tencentCode: 'es', baiduCode: 'spa' },
-  { value: 'ru', label: '俄语', tencentCode: 'ru', baiduCode: 'ru' },
-  { value: 'pt', label: '葡萄牙语', tencentCode: 'pt', baiduCode: 'pt' },
-  { value: 'it', label: '意大利语', tencentCode: 'it', baiduCode: 'it' },
-  { value: 'vi', label: '越南语', tencentCode: 'vi', baiduCode: 'vie' },
-  { value: 'th', label: '泰语', tencentCode: 'th', baiduCode: 'th' },
-  { value: 'ar', label: '阿拉伯语', tencentCode: 'ar', baiduCode: 'ara' },
+  { value: 'zh', label: 'lang.zh', tencentCode: 'zh', baiduCode: 'zh' },
+  { value: 'en', label: 'lang.en', tencentCode: 'en', baiduCode: 'en' },
+  { value: 'ja', label: 'lang.ja', tencentCode: 'ja', baiduCode: 'jp' },
+  { value: 'ko', label: 'lang.ko', tencentCode: 'ko', baiduCode: 'kor' },
+  { value: 'fr', label: 'lang.fr', tencentCode: 'fr', baiduCode: 'fra' },
+  { value: 'de', label: 'lang.de', tencentCode: 'de', baiduCode: 'de' },
+  { value: 'es', label: 'lang.es', tencentCode: 'es', baiduCode: 'spa' },
+  { value: 'ru', label: 'lang.ru', tencentCode: 'ru', baiduCode: 'ru' },
+  { value: 'pt', label: 'lang.pt', tencentCode: 'pt', baiduCode: 'pt' },
+  { value: 'it', label: 'lang.it', tencentCode: 'it', baiduCode: 'it' },
+  { value: 'vi', label: 'lang.vi', tencentCode: 'vi', baiduCode: 'vie' },
+  { value: 'th', label: 'lang.th', tencentCode: 'th', baiduCode: 'th' },
+  { value: 'ar', label: 'lang.ar', tencentCode: 'ar', baiduCode: 'ara' },
 ];
 
-const AUTO_OPTION = { value: 'auto', label: '自动检测' };
+const AUTO_OPTION = { value: 'auto', label: 'lang.auto' };
 
-const SOURCE_LANGS = [AUTO_OPTION, ...LANGUAGES];
-const TARGET_LANGS = LANGUAGES;
+const SOURCE_LANG_VALUES = [AUTO_OPTION, ...LANGUAGES];
+const TARGET_LANG_VALUES = LANGUAGES;
 
 function getLangCode(value: string, provider: Provider): string {
   if (value === 'auto') return 'auto';
@@ -65,16 +66,17 @@ function getLangCode(value: string, provider: Provider): string {
   return provider === 'tencent' ? lang.tencentCode : lang.baiduCode;
 }
 
-function getLangLabel(value: string): string {
-  if (value === 'auto') return '自动';
-  return LANGUAGES.find((l) => l.value === value)?.label ?? value;
+function getLangLabel(value: string, t: (key: string) => string): string {
+  if (value === 'auto') return t('lang.auto');
+  const lang = LANGUAGES.find((l) => l.value === value);
+  return lang ? t(lang.label) : value;
 }
 
-function formatHistoryForCopy(record: TranslateHistoryRecord) {
-  const engine = record.provider === 'tencent' ? '腾讯翻译' : '百度翻译';
-  const from = getLangLabel(record.sourceLang);
-  const to = getLangLabel(record.targetLang);
-  return `${engine}（${from} → ${to}）\n原文: ${record.input}\n译文: ${record.output}`;
+function formatHistoryForCopy(record: TranslateHistoryRecord, t: (key: string) => string) {
+  const engine = record.provider === 'tencent' ? t('translate.tencent') : t('translate.baidu');
+  const from = getLangLabel(record.sourceLang, t);
+  const to = getLangLabel(record.targetLang, t);
+  return `${engine}（${from} → ${to}）\n${t('translate.sourceText')}: ${record.input}\n${t('translate.targetText')}: ${record.output}`;
 }
 
 function HistoryPreviewText({ content }: { content: string }) {
@@ -123,6 +125,7 @@ function HistoryPreviewText({ content }: { content: string }) {
 }
 
 export default function Translate() {
+  const { t } = useTranslation();
   const [provider, setProvider] = usePersistentState<Provider>('tool:translate:provider', 'tencent');
   const [sourceLang, setSourceLang] = usePersistentState('tool:translate:source', 'auto');
   const [targetLang, setTargetLang] = usePersistentState('tool:translate:target', 'en');
@@ -163,7 +166,7 @@ export default function Translate() {
   const handleTranslate = async () => {
     if (!input.trim()) return;
     if (!isConfigured) {
-      message.warning('请先配置 API 密钥');
+      message.warning(t('translate.configureKeys'));
       setShowConfig(true);
       return;
     }
@@ -218,19 +221,19 @@ export default function Translate() {
   };
 
   return (
-    <ToolLayout title="文本翻译" description="支持腾讯云 / 百度翻译 API">
+    <ToolLayout title={t('translate.title')} description={t('translate.description')}>
       <div className={styles.container}>
         {/* Settings bar */}
         <div className={styles.settingsBar}>
-          <span>翻译引擎</span>
+          <span>{t('translate.engine')}</span>
           <Select
             value={provider}
             onChange={setProvider}
             style={{ width: 130 }}
             size="small"
             options={[
-              { value: 'tencent', label: '腾讯翻译' },
-              { value: 'baidu', label: '百度翻译' },
+              { value: 'tencent', label: t('translate.tencent') },
+              { value: 'baidu', label: t('translate.baidu') },
             ]}
           />
           <Select
@@ -238,9 +241,9 @@ export default function Translate() {
             onChange={setSourceLang}
             style={{ width: 120 }}
             size="small"
-            options={SOURCE_LANGS}
+            options={SOURCE_LANG_VALUES.map((l) => ({ value: l.value, label: t(l.label) }))}
           />
-          <Tooltip title="交换语言">
+          <Tooltip title={t('translate.swapLang')}>
             <Button
               type="text"
               size="small"
@@ -254,7 +257,7 @@ export default function Translate() {
             onChange={setTargetLang}
             style={{ width: 120 }}
             size="small"
-            options={TARGET_LANGS}
+            options={TARGET_LANG_VALUES.map((l) => ({ value: l.value, label: t(l.label) }))}
           />
           <div style={{ flex: 1 }} />
           <span
@@ -262,7 +265,7 @@ export default function Translate() {
             onClick={() => setShowConfig(!showConfig)}
           >
             <SettingOutlined />
-            {showConfig ? '收起配置' : 'API 配置'}
+            {showConfig ? t('translate.collapseConfig') : t('translate.apiConfig')}
           </span>
         </div>
 
@@ -272,11 +275,11 @@ export default function Translate() {
             {provider === 'tencent' ? (
               <>
                 <div className={styles.configGuide} style={{ borderLeftColor: '#1677ff', background: 'rgba(22, 119, 255, 0.04)' }}>
-                  前往{' '}
+                  {t('translate.tencentGuide', { link: '' }).split('{link}')[0]}
                   <a href="https://console.cloud.tencent.com/cam/capi" target="_blank" rel="noreferrer">
-                    腾讯云 API 密钥管理
+                    {t('translate.tencentLink')}
                   </a>
-                  {' '}页面获取 SecretId 和 SecretKey（每月免费额度 500 万字符）
+                  {t('translate.tencentGuide', { link: '' }).split('{link}')[1]}
                 </div>
                 <div className={styles.configRow}>
                   <label>SecretId</label>
@@ -284,7 +287,7 @@ export default function Translate() {
                     size="small"
                     value={tencentSecretId}
                     onChange={(e) => setTencentSecretId(e.target.value)}
-                    placeholder="腾讯云 SecretId"
+                    placeholder="SecretId"
                   />
                 </div>
                 <div className={styles.configRow}>
@@ -293,7 +296,7 @@ export default function Translate() {
                     size="small"
                     value={tencentSecretKey}
                     onChange={(e) => setTencentSecretKey(e.target.value)}
-                    placeholder="腾讯云 SecretKey"
+                    placeholder="SecretKey"
                   />
                 </div>
                 <div className={styles.configRow}>
@@ -304,11 +307,11 @@ export default function Translate() {
                     onChange={setTencentRegion}
                     style={{ width: 180 }}
                     options={[
-                      { value: 'ap-guangzhou', label: '广州' },
-                      { value: 'ap-shanghai', label: '上海' },
-                      { value: 'ap-beijing', label: '北京' },
-                      { value: 'ap-chengdu', label: '成都' },
-                      { value: 'ap-hongkong', label: '香港' },
+                      { value: 'ap-guangzhou', label: t('region.ap-guangzhou') },
+                      { value: 'ap-shanghai', label: t('region.ap-shanghai') },
+                      { value: 'ap-beijing', label: t('region.ap-beijing') },
+                      { value: 'ap-chengdu', label: t('region.ap-chengdu') },
+                      { value: 'ap-hongkong', label: t('region.ap-hongkong') },
                     ]}
                   />
                 </div>
@@ -316,11 +319,11 @@ export default function Translate() {
             ) : (
               <>
                 <div className={styles.configGuide} style={{ borderLeftColor: '#f5a623', background: 'rgba(245, 166, 35, 0.04)' }}>
-                  前往{' '}
+                  {t('translate.baiduGuide', { link: '' }).split('{link}')[0]}
                   <a href="https://fanyi-api.baidu.com/manage/developer" target="_blank" rel="noreferrer">
-                    百度翻译开放平台 → 开发者信息
+                    {t('translate.baiduLink')}
                   </a>
-                  {' '}页面获取 APPID 和密钥（标准版每月免费 5 万字符）
+                  {t('translate.baiduGuide', { link: '' }).split('{link}')[1]}
                 </div>
                 <div className={styles.configRow}>
                   <label>App ID</label>
@@ -328,16 +331,16 @@ export default function Translate() {
                     size="small"
                     value={baiduAppId}
                     onChange={(e) => setBaiduAppId(e.target.value)}
-                    placeholder="百度翻译 APPID"
+                    placeholder="App ID"
                   />
                 </div>
                 <div className={styles.configRow}>
-                  <label>密钥</label>
+                  <label>{t('translate.secretLabel')}</label>
                   <Input.Password
                     size="small"
                     value={baiduSecret}
                     onChange={(e) => setBaiduSecret(e.target.value)}
-                    placeholder="百度翻译密钥"
+                    placeholder={t('translate.secretLabel')}
                   />
                 </div>
               </>
@@ -349,7 +352,7 @@ export default function Translate() {
         <div className={styles.editorArea} style={{ position: 'relative' }}>
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
-              <span className={styles.panelLabel}>原文</span>
+              <span className={styles.panelLabel}>{t('translate.sourceText')}</span>
               <Space size={4}>
                 <Button
                   type="primary"
@@ -358,21 +361,21 @@ export default function Translate() {
                   loading={loading}
                   disabled={!input.trim()}
                 >
-                  翻 译
+                  {t('action.translate')}
                 </Button>
                 <Button
                   size="small"
                   onClick={() => { setInput(''); setOutput(''); }}
                   disabled={!input && !output}
                 >
-                  清空
+                  {t('action.clear')}
                 </Button>
               </Space>
             </div>
             <TextArea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="输入要翻译的文本…"
+              placeholder={t('translate.enterText')}
               style={{ fontSize }}
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -383,8 +386,8 @@ export default function Translate() {
           </div>
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
-              <span className={styles.panelLabel}>译文</span>
-              <Tooltip title="复制">
+              <span className={styles.panelLabel}>{t('translate.targetText')}</span>
+              <Tooltip title={t('action.copy')}>
                 <Button
                   type="text"
                   size="small"
@@ -392,21 +395,21 @@ export default function Translate() {
                   disabled={!output}
                   onClick={() => {
                     navigator.clipboard.writeText(output);
-                    message.success('已复制');
+                    message.success(t('action.copied'));
                   }}
                 />
               </Tooltip>
             </div>
-            <TextArea value={output} readOnly placeholder="翻译结果" style={{ fontSize }} />
+            <TextArea value={output} readOnly placeholder={t('translate.translationResult')} style={{ fontSize }} />
           </div>
           <FontSizeControl fontSize={fontSize} onIncrease={increaseFontSize} onDecrease={decreaseFontSize} />
         </div>
 
-        {/* 翻译历史 */}
+        {/* Translation history */}
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
             <h4 className={styles.historyTitle}>
-              翻译历史
+              {t('translate.history')}
               {history.length > 0 && <span className={styles.historyCount}>{history.length}</span>}
             </h4>
             {history.length > 0 && (
@@ -418,13 +421,13 @@ export default function Translate() {
                 onClick={clearHistory}
                 className={styles.clearBtn}
               >
-                清空
+                {t('action.clear')}
               </Button>
             )}
           </div>
           {history.length === 0 ? (
             <div className={styles.historyEmpty}>
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无翻译记录" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('translate.noHistory')} />
             </div>
           ) : (
             <div className={styles.historyList}>
@@ -435,12 +438,12 @@ export default function Translate() {
                       color={record.provider === 'tencent' ? 'blue' : 'orange'}
                       className={styles.historyTag}
                     >
-                      {record.provider === 'tencent' ? '腾讯' : '百度'}
+                      {record.provider === 'tencent' ? t('translate.tencent') : t('translate.baidu')}
                     </Tag>
                     <span className={styles.historyLang}>
-                      {getLangLabel(record.sourceLang)}
+                      {getLangLabel(record.sourceLang, t)}
                       <SwapRightOutlined className={styles.historyArrow} />
-                      {getLangLabel(record.targetLang)}
+                      {getLangLabel(record.targetLang, t)}
                     </span>
                     <HistoryPreviewText content={record.input} />
                     <SwapRightOutlined className={styles.historyArrow} />
@@ -449,15 +452,15 @@ export default function Translate() {
                       {dayjs(record.convertedAt).format('HH:mm:ss')}
                     </span>
                   </div>
-                  <Tooltip title="复制翻译详情">
+                  <Tooltip title={t('translate.copyDetails')}>
                     <Button
                       type="text"
                       size="small"
                       icon={<CopyOutlined />}
                       className={styles.historyCopyBtn}
                       onClick={() => {
-                        navigator.clipboard.writeText(formatHistoryForCopy(record));
-                        message.success('已复制');
+                        navigator.clipboard.writeText(formatHistoryForCopy(record, t));
+                        message.success(t('action.copied'));
                       }}
                     />
                   </Tooltip>

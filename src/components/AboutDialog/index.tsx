@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { Modal, Tag, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { getLocalReleaseNotes } from '../../utils/updateNotes';
 import buildYmlRaw from '../../../.github/workflows/build.yml?raw';
@@ -11,8 +12,10 @@ import styles from './AboutDialog.module.css';
 
 const GITHUB_HOMEPAGE_URL = 'https://github.com/ifmagic/firewood';
 
-export default function AboutDialog() {
-  const [open, setOpen] = useState(false);
+export default function AboutDialog({ open: externalOpen, onClose }: { open?: boolean; onClose?: () => void } = {}) {
+  const { t } = useTranslation();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
   const [version, setVersion] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
   const [notesVersion, setNotesVersion] = useState('');
@@ -30,7 +33,7 @@ export default function AboutDialog() {
       unlisten = await listen('app://about-firewood', async () => {
         const currentVersion = await getVersion();
         setVersion(currentVersion);
-        setOpen(true);
+        setInternalOpen(true);
       });
     };
 
@@ -40,6 +43,17 @@ export default function AboutDialog() {
       unlisten?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (externalOpen && !version) {
+      getVersion().then(setVersion);
+    }
+  }, [externalOpen]);
+
+  const handleClose = () => {
+    setInternalOpen(false);
+    onClose?.();
+  };
 
   const openVersionNotes = async () => {
     const currentVersion = version || (await getVersion());
@@ -61,7 +75,7 @@ export default function AboutDialog() {
         width={520}
         footer={null}
         centered
-        onCancel={() => setOpen(false)}
+        onCancel={handleClose}
         className={styles.modal}
         styles={{ body: { padding: 0 } }}
       >
@@ -75,7 +89,7 @@ export default function AboutDialog() {
                 Firewood
               </Typography.Title>
               <Typography.Text className={styles.subtitle}>
-                A compact toolbox that keeps everyday dev workflows fast and focused.
+                {t('about.subtitle')}
               </Typography.Text>
             </div>
           </div>
@@ -84,7 +98,7 @@ export default function AboutDialog() {
             <button type="button" className={`${styles.infoItem} ${styles.infoItemButton}`} onClick={openVersionNotes}>
               <CodeOutlined />
               <span>Version {version || '0.0.0'}</span>
-              <span className={styles.infoHint}>查看修改点</span>
+              <span className={styles.infoHint}>{t('about.viewChanges')}</span>
             </button>
             <button
               type="button"
@@ -109,7 +123,7 @@ export default function AboutDialog() {
 
       <Modal
         open={notesOpen}
-        title={`版本更新说明 · v${notesVersion || version || '0.0.0'}`}
+        title={t('about.releaseNotesTitle', { version: notesVersion || version || '0.0.0' })}
         width={640}
         footer={null}
         centered

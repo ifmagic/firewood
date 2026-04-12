@@ -1,8 +1,9 @@
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout, Spin } from 'antd';
 import Sidebar from './components/Sidebar';
 import AboutDialog from './components/AboutDialog';
+import SettingsDialog from './components/SettingsDialog';
 import Updater from './components/Updater';
 import tools from './router/tools';
 import { useToolVisibility } from './hooks/useToolVisibility';
@@ -15,6 +16,8 @@ function App() {
   const toolIds = tools.map((t) => t.id);
   const { visibility, toggleToolVisibility } = useToolVisibility(toolIds);
   const { orderedIds, reorder } = useToolOrder(toolIds);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   // Build tool list in user-defined order
   const toolMap = new Map(tools.map((t) => [t.id, t]));
@@ -23,13 +26,15 @@ function App() {
   return (
     <BrowserRouter>
       <Updater />
-      <AboutDialog />
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} onOpenAbout={() => setAboutOpen(true)} />
       <Layout style={{ height: '100vh' }}>
         <Sidebar
           tools={orderedTools}
           visibility={visibility}
           onToggleToolVisibility={toggleToolVisibility}
           onReorder={reorder}
+          onOpenSettings={() => setSettingsOpen(true)}
         />
         <Content style={{ overflow: 'auto', background: '#fff' }}>
           <Suspense fallback={<Spin style={{ margin: 40 }} />}>

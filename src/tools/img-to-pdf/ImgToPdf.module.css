@@ -1,4 +1,4 @@
-/* ── 主布局：左控制 + 右预览 ── */
+/* ── Main layout: left controls + right preview ── */
 .mainLayout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -7,7 +7,7 @@
   min-height: 0;
 }
 
-/* ── 左侧控制面板 ── */
+/* ── Left control panel ── */
 .controlPanel {
   display: flex;
   flex-direction: column;
@@ -16,7 +16,7 @@
   padding-right: 4px;
 }
 
-/* 上传区 */
+/* Upload area */
 .uploadArea {
   border-radius: 10px;
   flex-shrink: 0;
@@ -70,7 +70,7 @@
   color: rgba(0, 0, 0, 0.3);
 }
 
-/* 缩略图区 */
+/* Thumbnail area */
 .thumbSection {
   display: flex;
   flex-direction: column;
@@ -152,7 +152,7 @@
   transition: opacity 0.15s;
 }
 
-/* 设置区 */
+/* Settings area */
 .settingsSection {
   display: flex;
   flex-direction: column;
@@ -202,7 +202,7 @@
   white-space: nowrap;
 }
 
-/* 导出按钮 */
+/* Export button */
 .exportGroup {
   display: flex;
   flex-direction: column;
@@ -222,7 +222,7 @@
   margin-left: auto;
 }
 
-/* ── 右侧预览面板 ── */
+/* ── Right preview panel ── */
 .previewPanel {
   display: flex;
   flex-direction: column;
@@ -288,7 +288,7 @@
   margin-top: 12px;
 }
 
-/* ── 响应式 ── */
+/* ── Responsive ── */
 @media (max-width: 680px) {
   .mainLayout {
     grid-template-columns: 1fr;
