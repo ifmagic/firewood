@@ -29,33 +29,21 @@ jobs:
               repo: context.repo.repo,
               tag_name: context.ref.replace('refs/tags/', ''),
               name: `Firewood ${context.ref.replace('refs/tags/', '')}`,
-              body: `## ✨ Features
+              body: `## 🐛 Bug Fixes
 
-            - Full internationalization (i18n) support: English and Simplified Chinese across all tools, sidebar, dialogs, and system tray.
-            - New VS Code-style settings popup menu at the bottom-left gear icon — replaces the old centered modal.
-            - Language switcher, Check for Updates, and About Firewood consolidated into the settings menu.
-            - Auto-detect system language on first launch; manual override persisted to localStorage.
+            - Fix release notes parsing so the first markdown heading is no longer truncated in the About panel.
 
-            ## 🐛 Bug Fixes
+            ## 🔧 Chore / Updates
 
-            - Fix settings button invisible due to Ant Design Sider inner wrapper not inheriting flex layout.
-            - Fix About dialog not opening from macOS menu due to nullish coalescing (\`??\`) vs \`false\` prop.
-            - Fix timestamp unit selector overflow by switching to universal short labels (\`s\` / \`ms\`).
-
-            ## 🔧 Improvements
-
-            - History text display enhanced with truncation and hover preview tooltip.
-            - About dialog refactored to support both event-driven and prop-driven opening.
-            - Removed macOS-only "About" and "Check for Updates" menu bar items for better cross-platform consistency.
-            - All Chinese code comments replaced with English throughout the codebase.
-            - README rewritten in English; added README.zh-CN.md; DESIGN.md rewritten in English.
+            - Add MIT LICENSE file to the repository.
+            - Include release prompt refinement updates from the merged maintenance pull request.
 
             ---
 
             ## Download
 
-            - **macOS (Apple Silicon)**: Download \\\`firewood_0.6.0_aarch64.dmg\\\`
-            - **macOS (Intel)**: Download \\\`firewood_0.6.0_x64.dmg\\\`
+            - **macOS (Apple Silicon)**: Download \\\`firewood_0.6.1_aarch64.dmg\\\`
+            - **macOS (Intel)**: Download \\\`firewood_0.6.1_x64.dmg\\\`
             - **Windows**: Download the \\\`.exe\\\` installer
 
             ## macOS Installation Guide
