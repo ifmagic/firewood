@@ -29,38 +29,45 @@ jobs:
               repo: context.repo.repo,
               tag_name: context.ref.replace('refs/tags/', ''),
               name: `Firewood ${context.ref.replace('refs/tags/', '')}`,
-              body: `## ✨ 新功能
+              body: `## ✨ Features
 
-            - 关于弹窗新增「Desktop Utility Suite」入口，可一键跳转项目 GitHub 主页。
+            - Full internationalization (i18n) support: English and Simplified Chinese across all tools, sidebar, dialogs, and system tray.
+            - New VS Code-style settings popup menu at the bottom-left gear icon — replaces the old centered modal.
+            - Language switcher, Check for Updates, and About Firewood consolidated into the settings menu.
+            - Auto-detect system language on first launch; manual override persisted to localStorage.
 
-            ## 🐛 修复
+            ## 🐛 Bug Fixes
 
-            - 修复关于弹窗更新说明解析逻辑，正确提取并展示变更内容。
-            - 修复发布流程中 create-release 阶段调用 tauri 命令失败的问题。
+            - Fix settings button invisible due to Ant Design Sider inner wrapper not inheriting flex layout.
+            - Fix About dialog not opening from macOS menu due to nullish coalescing (\`??\`) vs \`false\` prop.
+            - Fix timestamp unit selector overflow by switching to universal short labels (\`s\` / \`ms\`).
 
-            ## 🔧 优化
+            ## 🔧 Improvements
 
-            - 托盘点击行为优化为左键直接打开应用、右键显示菜单。
-            - 发布提示词与工作流逻辑同步，统一 github-script 的 release body 更新方式。
+            - History text display enhanced with truncation and hover preview tooltip.
+            - About dialog refactored to support both event-driven and prop-driven opening.
+            - Removed macOS-only "About" and "Check for Updates" menu bar items for better cross-platform consistency.
+            - All Chinese code comments replaced with English throughout the codebase.
+            - README rewritten in English; added README.zh-CN.md; DESIGN.md rewritten in English.
 
             ---
 
-            ## 下载
+            ## Download
 
-            - **macOS (Apple Silicon)**: 下载 \`firewood_0.5.7_aarch64.dmg\`
-            - **macOS (Intel)**: 下载 \`firewood_0.5.7_x64.dmg\`
-            - **Windows**: 下载 \`.exe\` 安装包
+            - **macOS (Apple Silicon)**: Download \\\`firewood_0.6.0_aarch64.dmg\\\`
+            - **macOS (Intel)**: Download \\\`firewood_0.6.0_x64.dmg\\\`
+            - **Windows**: Download the \\\`.exe\\\` installer
 
-            ## macOS 安装说明
+            ## macOS Installation Guide
 
-            由于应用暂未通过 Apple 公证，首次打开需执行以下任一方式：
+            Since the app is not yet notarized by Apple, you need to bypass Gatekeeper on the first launch using one of the following methods:
 
-            **方式一（推荐）**：终端运行一行命令移除隔离标记后再打开
-            \`\`\`bash
+            **Method 1 (Recommended)**: Run this single command in your Terminal to remove the quarantine attribute, then open the app normally:
+            \\\`\\\`\\\`bash
             xattr -cr /Applications/Firewood.app
-            \`\`\`
+            \\\`\\\`\\\`
 
-            **方式二**：点击打开提示风险之后, 前往系统设置 -> 隐私与安全性 -> 找到 Firewood, 点击"仍要打开"按钮`,
+            **Method 2**: Open the app, and when you see the security warning, go to **System Settings -> Privacy & Security**, scroll down to find Firewood, and click **"Open Anyway"**.`,
               draft: true,
               prerelease: false
             });
