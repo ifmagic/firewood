@@ -13,7 +13,7 @@ interface ReleaseNotesResult {
 
 /** Strip everything after the first horizontal rule, keeping only the changelog */
 export function extractChangelog(body: string | null): string {
-  if (!body) return 'Includes the latest features and bug fixes.';
+  if (!body) return '';
   const cutoff = body.search(/^---+$/m);
   const section = cutoff > 0 ? body.slice(0, cutoff) : body;
   return section.trim();

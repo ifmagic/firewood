@@ -102,10 +102,17 @@ export default function Updater() {
   const showUpdateNotification = (info: UpdateInfo) => {
     const key = 'firewood-update';
     const changelog = extractChangelog(info.body);
+    const description = changelog ? (
+      <MarkdownBody content={changelog} />
+    ) : (
+      <div style={{ fontSize: 13 }}>
+        {i18n.t('updater.upToDate') || 'A new version is available. Update now to get the latest features and improvements.'}
+      </div>
+    );
     notification.info({
       key,
       message: i18n.t('updater.newVersion', { version: info.version }),
-      description: <MarkdownBody content={changelog} />,
+      description,
       duration: 0,
       placement: 'bottomRight',
       style: { width: 360 },
