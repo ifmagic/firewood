@@ -28,22 +28,26 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: context.ref.replace('refs/tags/', ''),
-              name: `Firewood ${context.ref.replace('refs/tags/', '')}`,
-              body: `## 🐛 Bug Fixes
+              name: `Firewood v0.6.2`,
+              body: `## ✨ Features
 
-            - Fix release notes parsing so the first markdown heading is no longer truncated in the About panel.
+            - Add local file opening, novel reader mode, and Save As support to Notepad.
+            - Add a workspace prompt for handling Firewood repository code tasks.
+
+            ## 🐛 Bug Fixes
+
+            - Patch publish-step release notes so latest.json uses the full release body.
 
             ## 🔧 Chore / Updates
 
-            - Add MIT LICENSE file to the repository.
-            - Include release prompt refinement updates from the merged maintenance pull request.
+            - Refresh Notepad translations and related release assets for the new reader workflow.
 
             ---
 
             ## Download
 
-            - **macOS (Apple Silicon)**: Download \\\`firewood_0.6.1_aarch64.dmg\\\`
-            - **macOS (Intel)**: Download \\\`firewood_0.6.1_x64.dmg\\\`
+            - **macOS (Apple Silicon)**: Download \\\`firewood_0.6.2_aarch64.dmg\\\`
+            - **macOS (Intel)**: Download \\\`firewood_0.6.2_x64.dmg\\\`
             - **Windows**: Download the \\\`.exe\\\` installer
 
             ## macOS Installation Guide
