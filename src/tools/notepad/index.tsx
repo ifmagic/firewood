@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import Editor, { type OnMount, type BeforeMount } from '@monaco-editor/react';
 import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
 import type { InputRef } from 'antd';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from '@tauri-apps/plugin-fs';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { useTranslation } from 'react-i18next';
 import FontSizeControl from '../../components/FontSizeControl';
@@ -14,11 +16,73 @@ import './notepad.css';
 interface NoteTab {
   id: string;
   name: string;
+  sourcePath?: string;
+  sourceName?: string;
+  readerVariant?: 'abyss';
+  viewMode?: 'reader' | 'editor';
 }
 
 const STORAGE_TABS_KEY = 'tool:notepad:tabs';
 const STORAGE_ACTIVE_KEY = 'tool:notepad:active';
+const STORAGE_READER_THEME_KEY = 'tool:notepad:reader-theme';
 const MAX_TABS = 8;
+const LOCAL_TEXT_EXTENSIONS = ['txt', 'md', 'markdown', 'json', 'log', 'csv', 'yml', 'yaml', 'xml', 'html', 'js', 'ts', 'tsx', 'jsx', 'css'];
+const ABYSS_TRIGGER_WORD = 'abyss';
+const NOVEL_CHAPTER_RE = /^(序章|楔子|正文|尾声|终章|后记|番外|第[0-9一二三四五六七八九十百千万零两〇]+[章回节卷部集篇].*|chapter\s+\d+.*)$/i;
+
+type ReaderThemeId = 'parchment' | 'bamboo' | 'midnight';
+
+const READER_THEME_CONFIG: Record<ReaderThemeId, {
+  labelKey: string;
+  shellBackground: string;
+  shellBorder: string;
+  paperBackground: string;
+  bannerBackground: string;
+  bannerColor: string;
+  headingColor: string;
+  paragraphColor: string;
+  paperShadow: string;
+}> = {
+  parchment: {
+    labelKey: 'notepad.readerThemeParchment',
+    shellBackground: 'radial-gradient(circle at top, rgba(255, 248, 232, 0.92), rgba(239, 226, 197, 0.96)), linear-gradient(180deg, #f7efe1 0%, #efe3ca 100%)',
+    shellBorder: '#dccfb5',
+    paperBackground: 'linear-gradient(180deg, rgba(255, 250, 240, 0.62), rgba(255, 248, 237, 0.4))',
+    bannerBackground: 'rgba(146, 64, 14, 0.12)',
+    bannerColor: '#9a3412',
+    headingColor: '#7c2d12',
+    paragraphColor: '#3f2d1d',
+    paperShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.32)',
+  },
+  bamboo: {
+    labelKey: 'notepad.readerThemeBamboo',
+    shellBackground: 'radial-gradient(circle at top, rgba(239, 248, 239, 0.95), rgba(221, 235, 220, 0.98)), linear-gradient(180deg, #eef7ea 0%, #dbe8d6 100%)',
+    shellBorder: '#b5c7af',
+    paperBackground: 'linear-gradient(180deg, rgba(248, 252, 246, 0.72), rgba(237, 245, 233, 0.5))',
+    bannerBackground: 'rgba(31, 95, 70, 0.12)',
+    bannerColor: '#166534',
+    headingColor: '#166534',
+    paragraphColor: '#243b2f',
+    paperShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.28)',
+  },
+  midnight: {
+    labelKey: 'notepad.readerThemeMidnight',
+    shellBackground: 'radial-gradient(circle at top, rgba(29, 42, 67, 0.92), rgba(15, 23, 42, 0.98)), linear-gradient(180deg, #172033 0%, #0f172a 100%)',
+    shellBorder: '#32425f',
+    paperBackground: 'linear-gradient(180deg, rgba(30, 41, 59, 0.68), rgba(17, 24, 39, 0.46))',
+    bannerBackground: 'rgba(125, 211, 252, 0.14)',
+    bannerColor: '#bae6fd',
+    headingColor: '#e2e8f0',
+    paragraphColor: '#dbe4f0',
+    paperShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+  },
+};
+
+interface ReaderBlock {
+  key: string;
+  kind: 'heading' | 'paragraph';
+  text: string;
+}
 
 function getContentKey(tabId: string) {
   return `tool:notepad:content:${tabId}`;
@@ -26,6 +90,33 @@ function getContentKey(tabId: string) {
 
 function createTabId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getFileNameFromPath(filePath: string) {
+  return filePath.split(/[\\/]/).pop() || filePath;
+}
+
+function stripFileExtension(fileName: string) {
+  const extensionIndex = fileName.lastIndexOf('.');
+  return extensionIndex > 0 ? fileName.slice(0, extensionIndex) : fileName;
+}
+
+function getReaderVariantForName(fileName: string): NoteTab['readerVariant'] {
+  const baseName = stripFileExtension(fileName).trim();
+  const lowerBaseName = baseName.toLowerCase();
+  return lowerBaseName.includes(ABYSS_TRIGGER_WORD) ? 'abyss' : undefined;
+}
+
+function buildReaderBlocks(text: string): ReaderBlock[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => ({
+      key: `${index}-${line.slice(0, 16)}`,
+      kind: NOVEL_CHAPTER_RE.test(line) ? 'heading' : 'paragraph',
+      text: line,
+    }));
 }
 
 const DEFAULT_NAME_POOL = [
@@ -56,7 +147,7 @@ function getUrlAtColumn(line: string, column: number) {
 }
 
 function normalizeUrl(raw: string) {
-  const trimmed = raw.trim().replace(/[),.;:!?\]\}]+$/g, '');
+  const trimmed = raw.trim().replace(/[),.;:!?\]}]+$/g, '');
   return trimmed.startsWith('www.') ? `https://${trimmed}` : trimmed;
 }
 
@@ -154,6 +245,12 @@ export default function Notepad() {
   const isMac = navigator.platform.toLowerCase().includes('mac');
   const [currentLineCharCount, setCurrentLineCharCount] = useState(0);
   const [selectedCharCount, setSelectedCharCount] = useState(0);
+  const [readerThemeId, setReaderThemeId] = usePersistentState<ReaderThemeId>(STORAGE_READER_THEME_KEY, 'parchment');
+  const activeTab = useMemo(
+    () => tabs.find((tab) => tab.id === activeTabId) ?? null,
+    [activeTabId, tabs],
+  );
+  const activeReaderTheme = READER_THEME_CONFIG[readerThemeId] ?? READER_THEME_CONFIG.parchment;
 
   useEffect(() => {
     document.body.classList.add('firewood-notepad-active');
@@ -180,6 +277,115 @@ export default function Notepad() {
     const saved = localStorage.getItem(getContentKey(resolvedActive));
     setContent(saved ?? '');
   }, [activeTabId, setActiveTabId, tabs]);
+
+  const handleOpenLocalFile = useCallback(async () => {
+    const selected = await open({
+      multiple: false,
+      directory: false,
+      filters: [{ name: t('notepad.textFiles'), extensions: LOCAL_TEXT_EXTENSIONS }],
+    });
+
+    if (!selected || Array.isArray(selected)) {
+      return;
+    }
+
+    try {
+      const fileText = await readTextFile(selected);
+      const fileName = getFileNameFromPath(selected);
+      const readerVariant = getReaderVariantForName(fileName);
+      const existingTab = tabs.find((tab) => tab.sourcePath === selected);
+      const successMessage = readerVariant
+        ? t('notepad.readerActivated', { name: fileName })
+        : existingTab
+          ? t('notepad.fileReloaded', { name: fileName })
+          : t('notepad.fileOpened', { name: fileName });
+
+      if (existingTab) {
+        setTabs((currentTabs) => currentTabs.map((tab) => {
+          if (tab.id !== existingTab.id) {
+            return tab;
+          }
+
+          return {
+            ...tab,
+            name: fileName,
+            sourcePath: selected,
+            sourceName: fileName,
+            readerVariant,
+            viewMode: readerVariant ? 'reader' : undefined,
+          };
+        }));
+        localStorage.setItem(getContentKey(existingTab.id), fileText);
+        setActiveTabId(existingTab.id);
+        setContent(fileText);
+        message.success(successMessage);
+        return;
+      }
+
+      if (tabs.length >= MAX_TABS) {
+        message.warning(t('notepad.maxTabs', { count: MAX_TABS }));
+        return;
+      }
+
+      const id = createTabId();
+      const nextTab: NoteTab = {
+        id,
+        name: fileName,
+        sourcePath: selected,
+        sourceName: fileName,
+        readerVariant,
+        viewMode: readerVariant ? 'reader' : undefined,
+      };
+
+      setTabs((currentTabs) => [...currentTabs, nextTab]);
+      setActiveTabId(id);
+      localStorage.setItem(getContentKey(id), fileText);
+      setContent(fileText);
+      message.success(successMessage);
+    } catch (error) {
+      message.error(t('notepad.openFailed', {
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    }
+  }, [setActiveTabId, setTabs, t, tabs]);
+
+  const handleToggleReaderView = useCallback(() => {
+    if (!activeTabId || activeTab?.readerVariant !== 'abyss') {
+      return;
+    }
+
+    setTabs((currentTabs) => currentTabs.map((tab) => {
+      if (tab.id !== activeTabId) {
+        return tab;
+      }
+
+      return {
+        ...tab,
+        viewMode: tab.viewMode === 'editor' ? 'reader' : 'editor',
+      };
+    }));
+  }, [activeTab, activeTabId, setTabs]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const modifierPressed = isMac ? event.metaKey : event.ctrlKey;
+      if (!modifierPressed || event.altKey || event.shiftKey) {
+        return;
+      }
+
+      if (event.key.toLowerCase() !== 'o') {
+        return;
+      }
+
+      event.preventDefault();
+      void handleOpenLocalFile();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [handleOpenLocalFile, isMac]);
 
   const tabItems = useMemo(
     () =>
@@ -211,7 +417,7 @@ export default function Notepad() {
         closable: true,
         children: null,
       })),
-    [form, tabs],
+    [form, t, tabs],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -226,8 +432,20 @@ export default function Notepad() {
       const name = values.name.trim();
 
       if (dialogMode === 'rename' && editingTabId) {
+        const readerVariant = getReaderVariantForName(name);
         setTabs(
-          tabs.map((tab) => (tab.id === editingTabId ? { ...tab, name } : tab)),
+          tabs.map((tab) => {
+            if (tab.id !== editingTabId) {
+              return tab;
+            }
+
+            return {
+              ...tab,
+              name,
+              readerVariant,
+              viewMode: readerVariant ? 'reader' : undefined,
+            };
+          }),
         );
         form.resetFields();
         setEditingTabId(null);
@@ -254,7 +472,7 @@ export default function Notepad() {
     } finally {
       setSubmittingDialog(false);
     }
-  }, [dialogMode, editingTabId, form, setActiveTabId, setTabs, submittingDialog, tabs]);
+  }, [dialogMode, editingTabId, form, setActiveTabId, setTabs, submittingDialog, t, tabs]);
 
   const handleRemoveTab = (targetKey: string) => {
     const currentIndex = tabs.findIndex((tab) => tab.id === targetKey);
@@ -314,6 +532,21 @@ export default function Notepad() {
     if (/^(import |export |const |let |var |function |class |=>|\/\/)/.test(trimmed)) return 'javascript';
     return 'plaintext';
   }, [content]);
+  const showReaderView = activeTab?.readerVariant === 'abyss' && activeTab.viewMode !== 'editor';
+  const readerBlocks = useMemo(
+    () => (showReaderView ? buildReaderBlocks(content) : []),
+    [content, showReaderView],
+  );
+  const readerThemeStyle = useMemo(() => ({
+    '--firewood-reader-shell-background': activeReaderTheme.shellBackground,
+    '--firewood-reader-shell-border': activeReaderTheme.shellBorder,
+    '--firewood-reader-paper-background': activeReaderTheme.paperBackground,
+    '--firewood-reader-paper-shadow': activeReaderTheme.paperShadow,
+    '--firewood-reader-banner-background': activeReaderTheme.bannerBackground,
+    '--firewood-reader-banner-color': activeReaderTheme.bannerColor,
+    '--firewood-reader-heading-color': activeReaderTheme.headingColor,
+    '--firewood-reader-paragraph-color': activeReaderTheme.paragraphColor,
+  }) as CSSProperties, [activeReaderTheme]);
 
   const focusNameInput = useCallback(() => {
     requestAnimationFrame(() => {
@@ -457,22 +690,56 @@ export default function Notepad() {
 
   return (
     <ToolLayout title={t('notepad.title')} description={t('notepad.description')}>
-      <Space style={{ marginBottom: 12 }}>
-        <Button
-          danger
-          onClick={() => {
-            if (!activeTabId) return;
-            localStorage.removeItem(getContentKey(activeTabId));
-            setContent('');
-          }}
-          disabled={!activeTabId}
-        >
-          {t('action.clear')}
-        </Button>
-        <span style={{ color: '#8f9bb3', fontSize: 12 }}>
-          {isMac ? 'Cmd' : 'Ctrl'}+Click to open links
-        </span>
-      </Space>
+      <div className="firewood-notepad-toolbar">
+        <Space wrap>
+          <Button
+            onClick={() => {
+              void handleOpenLocalFile();
+            }}
+          >
+            {t('notepad.openFile')}
+          </Button>
+          {activeTab?.readerVariant === 'abyss' && (
+            <>
+              <Button type={showReaderView ? 'primary' : 'default'} onClick={handleToggleReaderView}>
+                {showReaderView ? t('notepad.sourceView') : t('notepad.readerView')}
+              </Button>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  selectable: true,
+                  selectedKeys: [readerThemeId],
+                  items: (Object.entries(READER_THEME_CONFIG) as Array<[ReaderThemeId, typeof READER_THEME_CONFIG[ReaderThemeId]]>).map(([themeId, theme]) => ({
+                    key: themeId,
+                    label: t(theme.labelKey),
+                  })),
+                  onClick: ({ key }) => {
+                    setReaderThemeId(key as ReaderThemeId);
+                  },
+                }}
+              >
+                <Button>{t('notepad.readerTheme')}: {t(activeReaderTheme.labelKey)}</Button>
+              </Dropdown>
+            </>
+          )}
+          <Button
+            danger
+            onClick={() => {
+              if (!activeTabId) return;
+              localStorage.removeItem(getContentKey(activeTabId));
+              setContent('');
+            }}
+            disabled={!activeTabId}
+          >
+            {t('action.clear')}
+          </Button>
+        </Space>
+        <div className="firewood-notepad-toolbarMeta">
+          <span>{t('notepad.linkHint', { shortcut: isMac ? 'Cmd' : 'Ctrl' })}</span>
+          <span>{t('notepad.openHint', { shortcut: isMac ? 'Cmd' : 'Ctrl' })}</span>
+          {activeTab?.name && <span>{activeTab.name}</span>}
+        </div>
+      </div>
 
       <Tabs
         type="editable-card"
@@ -486,16 +753,43 @@ export default function Notepad() {
       <div style={{ position: 'relative', height: 'calc(100% - 110px)' }}>
         {activeTabId ? (
           <>
-            <Editor
-              height="calc(100% - 34px)"
-              language={detectedLanguage}
-              value={content}
-              onChange={(value) => onContentChange(value ?? '')}
-              beforeMount={handleEditorBeforeMount}
-              onMount={handleEditorMount}
-              theme="firewood-contrast-light"
-              options={editorOptions}
-            />
+            {showReaderView ? (
+              <div className="firewood-notepad-readerShell" style={{ ...readerThemeStyle, height: 'calc(100% - 34px)' }}>
+                <div className="firewood-notepad-readerPaper">
+                  <div className="firewood-notepad-readerBanner">{t('notepad.readerBadge')}</div>
+                  {readerBlocks.length > 0 ? (
+                    readerBlocks.map((block) => (
+                      block.kind === 'heading' ? (
+                        <h3 key={block.key} className="firewood-notepad-readerHeading">
+                          {block.text}
+                        </h3>
+                      ) : (
+                        <p key={block.key} className="firewood-notepad-readerParagraph" style={{ fontSize }}>
+                          {block.text}
+                        </p>
+                      )
+                    ))
+                  ) : (
+                    <Empty
+                      description={t('notepad.readerEmpty')}
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      style={{ marginTop: 36 }}
+                    />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Editor
+                height="calc(100% - 34px)"
+                language={detectedLanguage}
+                value={content}
+                onChange={(value) => onContentChange(value ?? '')}
+                beforeMount={handleEditorBeforeMount}
+                onMount={handleEditorMount}
+                theme="firewood-contrast-light"
+                options={editorOptions}
+              />
+            )}
             <div
               style={{
                 height: 34,
@@ -510,10 +804,19 @@ export default function Notepad() {
               }}
             >
               <span>
-                {detectedLanguage !== 'plaintext' && (
-                  <span style={{ color: '#6366f1', marginRight: 8 }}>{detectedLanguage.toUpperCase()}</span>
+                {showReaderView ? (
+                  <>
+                    <span style={{ color: activeReaderTheme.bannerColor, marginRight: 8 }}>{t('notepad.readerBadge')}</span>
+                    {activeTab?.name}
+                  </>
+                ) : (
+                  <>
+                    {detectedLanguage !== 'plaintext' && (
+                      <span style={{ color: '#6366f1', marginRight: 8 }}>{detectedLanguage.toUpperCase()}</span>
+                    )}
+                    {t('notepad.line')}: {currentLineCharCount} {t('notepad.chars')} | {t('notepad.selected')}: {selectedCharCount}
+                  </>
                 )}
-                {t('notepad.line')}: {currentLineCharCount} {t('notepad.chars')} | {t('notepad.selected')}: {selectedCharCount}
               </span>
             </div>
           </>
