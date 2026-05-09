@@ -141,6 +141,7 @@ const en = {
     maxNameLength: 'Name must be at most {{count}} characters',
     namePlaceholder: 'e.g.: notes.md',
     openFile: 'Open Local File',
+    saveAs: 'Save As',
     sourceView: 'Source View',
     readerView: 'Novel View',
     readerTheme: 'Background',
@@ -150,12 +151,15 @@ const en = {
     textFiles: 'Text Files',
     fileOpened: 'Opened "{{name}}"',
     fileReloaded: 'Reloaded "{{name}}"',
+    fileSaved: 'Saved "{{name}}"',
     openFailed: 'Failed to open file: {{error}}',
+    saveFailed: 'Failed to save file: {{error}}',
     readerActivated: 'Opened "{{name}}" in Abyss reader mode',
     readerBadge: 'Abyss Reader',
     readerEmpty: 'No readable text content',
     linkHint: '{{shortcut}}+Click to open links',
     openHint: '{{shortcut}}+O to open local files',
+    saveHint: '{{shortcut}}+S to save as',
   },
 
   // Base64

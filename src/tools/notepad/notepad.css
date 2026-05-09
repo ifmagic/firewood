@@ -11,15 +11,6 @@
   flex-wrap: wrap;
 }
 
-.firewood-notepad-toolbarMeta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  color: #8f9bb3;
-  font-size: 12px;
-}
-
 .firewood-notepad-readerShell {
   overflow: auto;
   border: 1px solid var(--firewood-reader-shell-border, #dccfb5);

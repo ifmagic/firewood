@@ -141,6 +141,7 @@ const zhCN = {
     maxNameLength: '文件名最多 {{count}} 个字符',
     namePlaceholder: '例如：需求记录.md',
     openFile: '打开本地文件',
+    saveAs: '另存为',
     sourceView: '查看原文',
     readerView: '小说阅读',
     readerTheme: '背景',
@@ -150,12 +151,15 @@ const zhCN = {
     textFiles: '文本文件',
     fileOpened: '已打开「{{name}}」',
     fileReloaded: '已重新载入「{{name}}」',
+    fileSaved: '已保存「{{name}}」',
     openFailed: '打开文件失败：{{error}}',
+    saveFailed: '保存文件失败：{{error}}',
     readerActivated: '已按 Abyss 小说模式打开「{{name}}」',
     readerBadge: 'Abyss 阅读',
     readerEmpty: '没有可阅读的文本内容',
     linkHint: '{{shortcut}}+点击可打开链接',
     openHint: '{{shortcut}}+O 打开本地文件',
+    saveHint: '{{shortcut}}+S 另存为',
   },
 
   // Base64

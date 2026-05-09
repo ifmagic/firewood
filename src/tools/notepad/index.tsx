@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import Editor, { type OnMount, type BeforeMount } from '@monaco-editor/react';
 import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
 import type { InputRef } from 'antd';
-import { open } from '@tauri-apps/plugin-dialog';
-import { readTextFile } from '@tauri-apps/plugin-fs';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { useTranslation } from 'react-i18next';
 import FontSizeControl from '../../components/FontSizeControl';
@@ -99,6 +99,14 @@ function getFileNameFromPath(filePath: string) {
 function stripFileExtension(fileName: string) {
   const extensionIndex = fileName.lastIndexOf('.');
   return extensionIndex > 0 ? fileName.slice(0, extensionIndex) : fileName;
+}
+
+function getPreferredSaveName(tab: NoteTab | null, fallbackName: string) {
+  if (tab?.sourceName?.trim()) {
+    return tab.sourceName.trim();
+  }
+
+  return tab?.name?.trim() || fallbackName.trim();
 }
 
 function getReaderVariantForName(fileName: string): NoteTab['readerVariant'] {
@@ -366,6 +374,48 @@ export default function Notepad() {
     }));
   }, [activeTab, activeTabId, setTabs]);
 
+  const handleSaveAs = useCallback(async () => {
+    if (!activeTabId) {
+      return;
+    }
+
+    const suggestedName = getPreferredSaveName(activeTab, t('notepad.untitled'));
+    const targetPath = await save({
+      defaultPath: activeTab?.sourcePath ?? suggestedName,
+    });
+
+    if (!targetPath) {
+      return;
+    }
+
+    try {
+      await writeTextFile(targetPath, content);
+      const fileName = getFileNameFromPath(targetPath);
+      const readerVariant = getReaderVariantForName(fileName);
+
+      setTabs((currentTabs) => currentTabs.map((tab) => {
+        if (tab.id !== activeTabId) {
+          return tab;
+        }
+
+        return {
+          ...tab,
+          name: fileName,
+          sourcePath: targetPath,
+          sourceName: fileName,
+          readerVariant,
+          viewMode: readerVariant ? 'reader' : tab.viewMode,
+        };
+      }));
+
+      message.success(t('notepad.fileSaved', { name: fileName }));
+    } catch (error) {
+      message.error(t('notepad.saveFailed', {
+        error: error instanceof Error ? error.message : String(error),
+      }));
+    }
+  }, [activeTab, activeTabId, content, setTabs, t]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const modifierPressed = isMac ? event.metaKey : event.ctrlKey;
@@ -373,19 +423,24 @@ export default function Notepad() {
         return;
       }
 
-      if (event.key.toLowerCase() !== 'o') {
+      const key = event.key.toLowerCase();
+      if (key === 'o') {
+        event.preventDefault();
+        void handleOpenLocalFile();
         return;
       }
 
-      event.preventDefault();
-      void handleOpenLocalFile();
+      if (key === 's') {
+        event.preventDefault();
+        void handleSaveAs();
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [handleOpenLocalFile, isMac]);
+  }, [handleOpenLocalFile, handleSaveAs, isMac]);
 
   const tabItems = useMemo(
     () =>
@@ -699,6 +754,14 @@ export default function Notepad() {
           >
             {t('notepad.openFile')}
           </Button>
+          <Button
+            onClick={() => {
+              void handleSaveAs();
+            }}
+            disabled={!activeTabId}
+          >
+            {t('notepad.saveAs')}
+          </Button>
           {activeTab?.readerVariant === 'abyss' && (
             <>
               <Button type={showReaderView ? 'primary' : 'default'} onClick={handleToggleReaderView}>
@@ -734,11 +797,6 @@ export default function Notepad() {
             {t('action.clear')}
           </Button>
         </Space>
-        <div className="firewood-notepad-toolbarMeta">
-          <span>{t('notepad.linkHint', { shortcut: isMac ? 'Cmd' : 'Ctrl' })}</span>
-          <span>{t('notepad.openHint', { shortcut: isMac ? 'Cmd' : 'Ctrl' })}</span>
-          {activeTab?.name && <span>{activeTab.name}</span>}
-        </div>
       </div>
 
       <Tabs
