@@ -10,6 +10,10 @@
     "fs:default",
     "opener:default",
     "process:default",
+    "shell:allow-execute",
+    "shell:allow-kill",
+    "shell:allow-spawn",
+    "shell:allow-stdin-write",
     "updater:default",
     {
       "identifier": "fs:allow-write-text-file",

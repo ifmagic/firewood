@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import {
   CodeOutlined,
+  ConsoleSqlOutlined,
   DiffOutlined,
   FileTextOutlined,
   LockOutlined,
@@ -13,6 +14,13 @@ import {
 import type { ToolMeta } from '../types/tool';
 
 const tools: ToolMeta[] = [
+  {
+    id: 'terminal',
+    name: 'Terminal',
+    icon: <ConsoleSqlOutlined />,
+    description: 'Embedded local shell terminal',
+    component: lazy(() => import('../tools/terminal/index.tsx')),
+  },
   {
     id: 'json-formatter',
     name: 'JSON',

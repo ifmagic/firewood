@@ -31,6 +31,7 @@ hex = "0.4"
 chrono = "0.4"
 md-5 = "0.11"
 rand = "0.10"
+tauri-plugin-shell = "2.3.5"
 
 [profile.release]
 strip = true
