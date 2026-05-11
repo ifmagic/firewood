@@ -12,28 +12,15 @@ const en = {
 
   // Tool names
   toolName: {
-    'json-formatter': 'JSON Formatter',
+    'json-formatter': 'JSON',
     'timestamp': 'Timestamp',
-    'text-diff': 'Text Diff',
+    'text-diff': 'Diffchecker',
     'notepad': 'Notepad',
     'base64-codec': 'Base64 Codec',
     'url-codec': 'URL Codec',
     'hash': 'Hash',
     'img-to-pdf': 'Image to PDF',
     'translate': 'Translate',
-  },
-
-  // Tool descriptions
-  toolDesc: {
-    'json-formatter': 'Format, minify & validate JSON',
-    'timestamp': 'Convert between Unix timestamps and dates',
-    'text-diff': 'Compare two texts line by line',
-    'notepad': 'Multi-tab local notepad with local file open',
-    'base64-codec': 'Base64 encode & decode',
-    'url-codec': 'URL encode & decode',
-    'hash': 'Calculate MD5 / SHA-1 / SHA-256 for text or files',
-    'img-to-pdf': 'Arrange images and export as A4 PDF',
-    'translate': 'Translate via Tencent Cloud / Baidu API',
   },
 
   // Common actions
@@ -57,8 +44,6 @@ const en = {
     save: 'Save',
     delete: 'Delete',
     translate: 'Translate',
-    showOriginalInput: 'Show Original Input',
-    hideOriginalInput: 'Hide Original Input',
   },
 
   // Common labels
@@ -84,10 +69,12 @@ const en = {
     increase: 'Increase font size',
   },
 
-  // JSON Formatter
+  // JSON
   jsonFormatter: {
-    title: 'JSON Formatter',
-    description: 'Format, minify & validate JSON',
+    title: 'JSON',
+    description: 'Format, minify & unescape JSON',
+    emptyHint: 'Paste JSON or escaped text, then format, minify, or unescape it here',
+    emptyError: 'Paste or enter JSON content first',
   },
 
   // Timestamp
@@ -111,10 +98,9 @@ const en = {
     formatCopyTs: 'Timestamp',
   },
 
-  // Text Diff
+  // Diffchecker
   textDiff: {
-    title: 'Text Diff',
-    description: 'Compare two texts line by line',
+    title: 'Diffchecker',
     enterOriginal: 'Enter original text...',
     enterModified: 'Enter modified text...',
     added: 'added',
@@ -157,6 +143,31 @@ const en = {
     readerActivated: 'Opened "{{name}}" in Abyss reader mode',
     readerBadge: 'Abyss Reader',
     readerEmpty: 'No readable text content',
+    searchPlaceholder: 'Find in source text',
+    replacePlaceholder: 'Replace with...',
+    findPrev: 'Previous',
+    findNext: 'Next',
+    replaceOne: 'Replace',
+    replaceAll: 'Replace All',
+    chapterJump: 'Jump to Chapter',
+    chapterToc: 'Table of Contents',
+    tocModeFixed: 'Pinned',
+    tocModeAutoHide: 'Auto Hide',
+    collapseToc: 'Collapse',
+    expandToc: 'Expand',
+    readingProgress: 'Progress',
+    currentChapter: 'Chapter',
+    showReaderRail: 'Show Side Rail',
+    hideReaderRail: 'Hide Side Rail',
+    addBookmark: 'Save Bookmark',
+    bookmarks: 'Bookmarks',
+    noBookmarks: 'No saved bookmarks yet',
+    noChapters: 'No chapter headings detected',
+    bookmarkAdded: 'Saved the current reading position',
+    enterSearchKeyword: 'Enter text to search for first',
+    noSearchResults: 'No matches found',
+    searchMatchCount: '{{current}} / {{total}}',
+    replaceAllDone: 'Replaced {{count}} matches',
     linkHint: '{{shortcut}}+Click to open links',
     openHint: '{{shortcut}}+O to open local files',
     saveHint: '{{shortcut}}+S to save as',

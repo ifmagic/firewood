@@ -197,7 +197,7 @@ export default function TextDiff() {
   const statusText = `${t('label.original')} ${countLines(left)} · ${t('label.modified')} ${countLines(right)}`;
 
   return (
-    <ToolLayout title={t('textDiff.title')} description={t('textDiff.description')}>
+    <ToolLayout title={t('textDiff.title')}>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">

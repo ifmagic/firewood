@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { Button, Alert } from 'antd';
-import { DeleteOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { Alert, Button, Empty, Tooltip, message } from 'antd';
+import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
 import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
@@ -8,75 +7,70 @@ import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import { useResizablePanels } from '../../hooks/useResizablePanels';
 
 export default function JsonFormatter() {
   const { t } = useTranslation();
-  const [input, setInput] = usePersistentState('tool:json-formatter:input', '');
-  const [output, setOutput] = usePersistentState('tool:json-formatter:output', '');
+  const [content, setContent] = usePersistentState('tool:json-formatter:input', '');
   const [error, setError] = usePersistentState('tool:json-formatter:error', '');
-  const [hasCompared, setHasCompared] = useState(false);
-  const [isInputCollapsed, setIsInputCollapsed] = useState(false);
   const { fontSize, increase, decrease } = useEditorFontSize();
-  const { leftPercent, containerRef, onDividerMouseDown } = useResizablePanels();
 
-  const format = () => {
-    setHasCompared(true);
+  const applyTransform = (transform: (text: string) => string) => {
+    if (!content.trim()) {
+      setError(t('jsonFormatter.emptyError'));
+      return;
+    }
+
     try {
-      const parsed = JSON.parse(input);
-      setOutput(JSON.stringify(parsed, null, 2));
+      const nextContent = transform(content);
+      setContent(nextContent);
       setError('');
-      setIsInputCollapsed(true);
     } catch (e) {
       setError((e as Error).message);
-      setOutput('');
     }
+  };
+
+  const format = () => {
+    applyTransform((text) => {
+      const parsed = JSON.parse(text);
+      return JSON.stringify(parsed, null, 2);
+    });
   };
 
   const minify = () => {
-    setHasCompared(true);
-    try {
-      const parsed = JSON.parse(input);
-      setOutput(JSON.stringify(parsed));
-      setError('');
-      setIsInputCollapsed(true);
-    } catch (e) {
-      setError((e as Error).message);
-      setOutput('');
-    }
+    applyTransform((text) => {
+      const parsed = JSON.parse(text);
+      return JSON.stringify(parsed);
+    });
   };
 
   const unescape = () => {
-    setHasCompared(true);
-    try {
+    applyTransform((text) => {
       // Strip outer quotes then parse escape sequences
-      let text = input.trim();
-      if (text.startsWith('"') && text.endsWith('"')) {
-        text = JSON.parse(text);
+      let nextText = text.trim();
+      if (nextText.startsWith('"') && nextText.endsWith('"')) {
+        nextText = JSON.parse(nextText);
       } else {
         // Replace common escape sequences directly
-        text = text
+        nextText = nextText
           .replace(/\\n/g, '\n')
           .replace(/\\t/g, '\t')
           .replace(/\\r/g, '\r')
           .replace(/\\"/g, '"')
           .replace(/\\\\/g, '\\');
       }
-      setOutput(text);
-      setError('');
-      setIsInputCollapsed(true);
-    } catch (e) {
-      setError((e as Error).message);
-      setOutput('');
-    }
+      return nextText;
+    });
   };
 
   const clear = () => {
-    setInput('');
-    setOutput('');
+    setContent('');
     setError('');
-    setHasCompared(false);
-    setIsInputCollapsed(false);
+  };
+
+  const handleContentChange = (value?: string) => {
+    const nextValue = value ?? '';
+    setContent(nextValue);
+    setError('');
   };
 
   const editorOptions = {
@@ -84,16 +78,8 @@ export default function JsonFormatter() {
     fontSize,
     fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
     letterSpacing: 0.5,
+    automaticLayout: true,
   };
-  const toggleInputButtonStyle = {
-    color: 'rgba(31, 41, 55, 0.9)',
-    borderColor: 'rgba(15, 23, 42, 0.14)',
-    background: isInputCollapsed ? 'rgba(15, 23, 42, 0.1)' : 'rgba(15, 23, 42, 0.04)',
-    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.08)',
-    borderRadius: 8,
-    fontWeight: 500,
-    transition: 'all 180ms ease',
-  } as const;
 
   return (
     <ToolLayout title={t('jsonFormatter.title')} description={t('jsonFormatter.description')}>
@@ -103,26 +89,32 @@ export default function JsonFormatter() {
             <Button type="primary" onClick={format}>{t('action.format')}</Button>
             <Button onClick={minify}>{t('action.minify')}</Button>
             <Button onClick={unescape}>{t('action.unescape')}</Button>
-            {hasCompared && (
-              <Button
-                type="default"
-                onClick={() => setIsInputCollapsed((prev) => !prev)}
-                icon={isInputCollapsed ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                style={toggleInputButtonStyle}
-              >
-                {isInputCollapsed ? t('action.showOriginalInput') : t('action.hideOriginalInput')}
-              </Button>
-            )}
           </div>
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            className="fw-tool-iconDangerButton"
-            title={t('action.clear')}
-            aria-label={t('action.clear')}
-            onClick={clear}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Tooltip title={t('action.copy')}>
+              <Button
+                type="text"
+                icon={<CopyOutlined />}
+                className="fw-tool-iconDangerButton"
+                title={t('action.copy')}
+                aria-label={t('action.copy')}
+                disabled={!content}
+                onClick={() => {
+                  navigator.clipboard.writeText(content);
+                  message.success(t('action.copied'));
+                }}
+              />
+            </Tooltip>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              className="fw-tool-iconDangerButton"
+              title={t('action.clear')}
+              aria-label={t('action.clear')}
+              onClick={clear}
+            />
+          </div>
         </div>
 
         {error && (
@@ -130,51 +122,38 @@ export default function JsonFormatter() {
         )}
 
         <div className="fw-tool-editorShell">
-          <div
-            ref={containerRef}
-            className="fw-tool-split"
-          >
-            <div
-              className="fw-tool-pane"
-              style={{
-                width: isInputCollapsed ? 0 : `${leftPercent}%`,
-                opacity: isInputCollapsed ? 0 : 1,
-                overflow: 'hidden',
-                transition: 'width 220ms ease, opacity 220ms ease',
-              }}
-            >
-              <div className="fw-tool-paneLabel">{t('label.text')}</div>
-              <div className="fw-tool-paneBody">
-                <Editor
-                  height="100%"
-                  language="json"
-                  value={input}
-                  onChange={(v) => setInput(v ?? '')}
-                  theme="vs-light"
-                  options={editorOptions}
-                />
-              </div>
-            </div>
-            {!isInputCollapsed && (
-              <div className="fw-tool-divider" onMouseDown={onDividerMouseDown}>
-                <div className="fw-tool-dividerGrip" />
-              </div>
-            )}
-            <div className="fw-tool-pane" style={{ flex: 1 }}>
-              <div className="fw-tool-paneLabel">{t('label.result')}</div>
-              <div className="fw-tool-paneBody">
-                <Editor
-                  height="100%"
-                  language="json"
-                  value={output}
-                  theme="vs-light"
-                  options={{ ...editorOptions, readOnly: true }}
-                />
-              </div>
+          <div className="fw-tool-pane" style={{ flex: 1 }}>
+            <div className="fw-tool-paneBody">
+              {!content && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                  }}
+                >
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={t('jsonFormatter.emptyHint')}
+                  />
+                </div>
+              )}
+              <Editor
+                height="100%"
+                language="json"
+                value={content}
+                onChange={handleContentChange}
+                theme="vs-light"
+                options={editorOptions}
+              />
             </div>
           </div>
           <StatusBar
-            left={<span className="fw-tool-statusHint">{error || (isInputCollapsed ? t('label.result') : `${t('label.text')} / ${t('label.result')}`)}</span>}
+            left={error ? <span className="fw-tool-statusHint">{error}</span> : undefined}
             right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
           />
         </div>

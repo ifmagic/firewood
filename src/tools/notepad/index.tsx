@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import Editor, { type OnMount, type BeforeMount } from '@monaco-editor/react';
-import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
-import { BgColorsOutlined, BookOutlined, DeleteOutlined, EditOutlined, FolderOpenOutlined, SaveOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Empty, Form, Input, Modal, Progress, Space, Tabs, message } from 'antd';
+import { BgColorsOutlined, BookOutlined, DeleteOutlined, EditOutlined, FolderOpenOutlined, LeftOutlined, RightOutlined, SaveOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
@@ -84,10 +84,77 @@ interface ReaderBlock {
   key: string;
   kind: 'heading' | 'paragraph';
   text: string;
+  lineNumber: number;
+  startOffset: number;
+}
+
+interface ReaderChapter {
+  key: string;
+  title: string;
+  lineNumber: number;
+  startOffset: number;
+}
+
+interface ReaderBookmark {
+  id: string;
+  label: string;
+  chapterKey: string | null;
+  scrollTop: number;
+  progress: number;
+  createdAt: number;
 }
 
 function getContentKey(tabId: string) {
   return `tool:notepad:content:${tabId}`;
+}
+
+function getReaderScrollKey(tabId: string) {
+  return `tool:notepad:reader-scroll:${tabId}`;
+}
+
+function readReaderScrollPosition(tabId: string) {
+  const raw = localStorage.getItem(getReaderScrollKey(tabId));
+  const parsed = raw ? Number(raw) : 0;
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+
+function persistReaderScrollPosition(tabId: string, scrollTop: number) {
+  localStorage.setItem(getReaderScrollKey(tabId), String(Math.max(0, Math.round(scrollTop))));
+}
+
+function getReaderBookmarkStorageKey(tab: NoteTab | null) {
+  const identity = tab?.sourcePath ?? tab?.sourceName ?? tab?.name ?? tab?.id ?? 'default';
+  return `tool:notepad:reader-bookmarks:${encodeURIComponent(identity)}`;
+}
+
+function readReaderBookmarks(tab: NoteTab | null): ReaderBookmark[] {
+  try {
+    const raw = localStorage.getItem(getReaderBookmarkStorageKey(tab));
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((item): item is ReaderBookmark => (
+      item
+      && typeof item.id === 'string'
+      && typeof item.label === 'string'
+      && (typeof item.chapterKey === 'string' || item.chapterKey === null)
+      && typeof item.scrollTop === 'number'
+      && typeof item.progress === 'number'
+      && typeof item.createdAt === 'number'
+    ));
+  } catch {
+    return [];
+  }
+}
+
+function persistReaderBookmarks(tab: NoteTab | null, bookmarks: ReaderBookmark[]) {
+  localStorage.setItem(getReaderBookmarkStorageKey(tab), JSON.stringify(bookmarks));
 }
 
 function createTabId() {
@@ -118,15 +185,37 @@ function getReaderVariantForName(fileName: string): NoteTab['readerVariant'] {
 }
 
 function buildReaderBlocks(text: string): ReaderBlock[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line, index) => ({
-      key: `${index}-${line.slice(0, 16)}`,
-      kind: NOVEL_CHAPTER_RE.test(line) ? 'heading' : 'paragraph',
-      text: line,
-    }));
+  const blocks: ReaderBlock[] = [];
+  const linePattern = /([^\r\n]*)(\r\n|\n|$)/g;
+  let lineNumber = 0;
+
+  for (const match of text.matchAll(linePattern)) {
+    const rawLine = match[1] ?? '';
+    const lineBreak = match[2] ?? '';
+    if (!rawLine && !lineBreak) {
+      break;
+    }
+
+    lineNumber += 1;
+    const trimmed = rawLine.trim();
+    if (trimmed) {
+      const leadingWhitespace = rawLine.length - rawLine.trimStart().length;
+      const startOffset = (match.index ?? 0) + leadingWhitespace;
+      blocks.push({
+        key: `${lineNumber}-${trimmed.slice(0, 16)}`,
+        kind: NOVEL_CHAPTER_RE.test(trimmed) ? 'heading' : 'paragraph',
+        text: trimmed,
+        lineNumber,
+        startOffset,
+      });
+    }
+
+    if (!lineBreak) {
+      break;
+    }
+  }
+
+  return blocks;
 }
 
 const DEFAULT_NAME_POOL = [
@@ -239,6 +328,26 @@ function getCharacterCountWithoutLineBreaks(text: string) {
   return getCharacterCount(text.replace(/\r?\n/g, ''));
 }
 
+function findPlainTextMatchOffsets(text: string, query: string) {
+  if (!query) {
+    return [] as number[];
+  }
+
+  const offsets: number[] = [];
+  let searchFrom = 0;
+  while (searchFrom <= text.length - query.length) {
+    const matchIndex = text.indexOf(query, searchFrom);
+    if (matchIndex < 0) {
+      break;
+    }
+
+    offsets.push(matchIndex);
+    searchFrom = matchIndex + Math.max(query.length, 1);
+  }
+
+  return offsets;
+}
+
 export default function Notepad() {
   const { t } = useTranslation();
   const [tabs, setTabs] = usePersistentState<NoteTab[]>(STORAGE_TABS_KEY, [
@@ -251,15 +360,32 @@ export default function Notepad() {
   const [submittingDialog, setSubmittingDialog] = useState(false);
   const [form] = Form.useForm<{ name: string }>();
   const nameInputRef = useRef<InputRef>(null);
+  const sourceTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const readerShellRef = useRef<HTMLDivElement | null>(null);
+  const readerHeadingRefs = useRef<Record<string, HTMLHeadingElement | null>>({});
+  const readerScrollPositionsRef = useRef<Record<string, number>>({});
   const { fontSize, increase, decrease } = useEditorFontSize();
   const isMac = navigator.platform.toLowerCase().includes('mac');
   const [selectedCharCount, setSelectedCharCount] = useState(0);
+  const [sourceSearchQuery, setSourceSearchQuery] = useState('');
+  const [sourceReplaceQuery, setSourceReplaceQuery] = useState('');
+  const [sourceActiveMatchIndex, setSourceActiveMatchIndex] = useState<number | null>(null);
+  const [readerProgress, setReaderProgress] = useState(0);
+  const [currentChapterKey, setCurrentChapterKey] = useState<string | null>(null);
+  const [readerBookmarks, setReaderBookmarks] = useState<ReaderBookmark[]>([]);
+  const [readerBookmarkScopeKey, setReaderBookmarkScopeKey] = useState<string | null>(null);
+  const [isReaderTocCollapsed, setIsReaderTocCollapsed] = usePersistentState<boolean>('tool:notepad:reader-toc-collapsed', false);
+  const [isReaderRailHidden, setIsReaderRailHidden] = usePersistentState<boolean>('tool:notepad:reader-rail-hidden', false);
   const [readerThemeId, setReaderThemeId] = usePersistentState<ReaderThemeId>(STORAGE_READER_THEME_KEY, 'parchment');
   const activeTab = useMemo(
     () => tabs.find((tab) => tab.id === activeTabId) ?? null,
     [activeTabId, tabs],
   );
   const activeReaderTheme = READER_THEME_CONFIG[readerThemeId] ?? READER_THEME_CONFIG.parchment;
+  const readerBookmarkStorageKey = useMemo(
+    () => (activeTab?.readerVariant === 'abyss' ? getReaderBookmarkStorageKey(activeTab) : null),
+    [activeTab],
+  );
 
   useEffect(() => {
     document.body.classList.add('firewood-notepad-active');
@@ -537,6 +663,8 @@ export default function Notepad() {
     const nextTabs = tabs.filter((tab) => tab.id !== targetKey);
     setTabs(nextTabs);
     localStorage.removeItem(getContentKey(targetKey));
+    localStorage.removeItem(getReaderScrollKey(targetKey));
+    delete readerScrollPositionsRef.current[targetKey];
 
     if (activeTabId === targetKey) {
       const fallback = nextTabs[currentIndex] ?? nextTabs[currentIndex - 1];
@@ -576,6 +704,24 @@ export default function Notepad() {
     localStorage.setItem(getContentKey(activeTabId), value);
   };
 
+  const updateNativeSelectionStats = useCallback((element: HTMLTextAreaElement | null) => {
+    if (!element) {
+      setSelectedCharCount(0);
+      return;
+    }
+
+    const selectionStart = element.selectionStart ?? 0;
+    const selectionEnd = element.selectionEnd ?? selectionStart;
+    if (selectionEnd <= selectionStart) {
+      setSelectedCharCount(0);
+      return;
+    }
+
+    setSelectedCharCount(
+      getCharacterCountWithoutLineBreaks(element.value.slice(selectionStart, selectionEnd)),
+    );
+  }, []);
+
   const activeExists = tabs.some((tab) => tab.id === activeTabId);
   const effectiveActive = activeExists ? activeTabId : undefined;
   const modalTitle = dialogMode === 'rename' ? t('action.rename') : t('notepad.newTab');
@@ -591,10 +737,45 @@ export default function Notepad() {
   const totalCharCount = useMemo(() => getCharacterCount(content), [content]);
   const totalLineCount = useMemo(() => (content ? content.split(/\r?\n/).length : 1), [content]);
   const showReaderView = activeTab?.readerVariant === 'abyss' && activeTab.viewMode !== 'editor';
+  const showAbyssSourceView = activeTab?.readerVariant === 'abyss' && activeTab.viewMode === 'editor';
   const readerBlocks = useMemo(
-    () => (showReaderView ? buildReaderBlocks(content) : []),
-    [content, showReaderView],
+    () => (activeTab?.readerVariant === 'abyss' ? buildReaderBlocks(content) : []),
+    [activeTab?.readerVariant, content],
   );
+  const readerChapters = useMemo<ReaderChapter[]>(
+    () => readerBlocks
+      .filter((block) => block.kind === 'heading')
+      .map((block) => ({
+        key: block.key,
+        title: block.text,
+        lineNumber: block.lineNumber,
+        startOffset: block.startOffset,
+      })),
+    [readerBlocks],
+  );
+  const activeChapter = useMemo(
+    () => readerChapters.find((chapter) => chapter.key === currentChapterKey) ?? readerChapters[0] ?? null,
+    [currentChapterKey, readerChapters],
+  );
+  const sourceMatchOffsets = useMemo(
+    () => findPlainTextMatchOffsets(content, sourceSearchQuery),
+    [content, sourceSearchQuery],
+  );
+  const sourceMatchLabel = useMemo(() => {
+    if (!sourceSearchQuery) {
+      return '';
+    }
+
+    if (sourceMatchOffsets.length === 0) {
+      return t('notepad.noSearchResults');
+    }
+
+    const currentIndex = sourceActiveMatchIndex !== null ? sourceActiveMatchIndex + 1 : 0;
+    return t('notepad.searchMatchCount', {
+      current: currentIndex,
+      total: sourceMatchOffsets.length,
+    });
+  }, [sourceActiveMatchIndex, sourceMatchOffsets.length, sourceSearchQuery, t]);
   const readerThemeStyle = useMemo(() => ({
     '--firewood-reader-shell-background': activeReaderTheme.shellBackground,
     '--firewood-reader-shell-border': activeReaderTheme.shellBorder,
@@ -605,6 +786,276 @@ export default function Notepad() {
     '--firewood-reader-heading-color': activeReaderTheme.headingColor,
     '--firewood-reader-paragraph-color': activeReaderTheme.paragraphColor,
   }) as CSSProperties, [activeReaderTheme]);
+
+  const syncReaderProgress = useCallback((shell: HTMLDivElement) => {
+    const maxScroll = Math.max(shell.scrollHeight - shell.clientHeight, 0);
+    const nextProgress = maxScroll > 0 ? (shell.scrollTop / maxScroll) * 100 : 0;
+    setReaderProgress(nextProgress);
+
+    if (readerChapters.length === 0) {
+      setCurrentChapterKey(null);
+      return;
+    }
+
+    const shellTop = shell.getBoundingClientRect().top;
+    const probeTop = shellTop + 96;
+    let resolvedChapterKey = readerChapters[0]?.key ?? null;
+
+    for (const chapter of readerChapters) {
+      const heading = readerHeadingRefs.current[chapter.key];
+      if (!heading) {
+        continue;
+      }
+
+      if (heading.getBoundingClientRect().top <= probeTop) {
+        resolvedChapterKey = chapter.key;
+      } else {
+        break;
+      }
+    }
+
+    setCurrentChapterKey(resolvedChapterKey);
+  }, [readerChapters]);
+
+  const focusSourceRange = useCallback((startOffset: number, length: number) => {
+    const textarea = sourceTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    textarea.focus();
+    textarea.setSelectionRange(startOffset, startOffset + length);
+    updateNativeSelectionStats(textarea);
+  }, [updateNativeSelectionStats]);
+
+  const jumpToSourceOffset = useCallback((startOffset: number, length = 0) => {
+    focusSourceRange(startOffset, length);
+  }, [focusSourceRange]);
+
+  const navigateSourceMatch = useCallback((direction: 'next' | 'prev') => {
+    if (!sourceSearchQuery) {
+      message.info(t('notepad.enterSearchKeyword'));
+      return;
+    }
+
+    if (sourceMatchOffsets.length === 0) {
+      message.info(t('notepad.noSearchResults'));
+      setSourceActiveMatchIndex(null);
+      return;
+    }
+
+    const textarea = sourceTextareaRef.current;
+    const cursorStart = textarea?.selectionStart ?? 0;
+    const cursorEnd = textarea?.selectionEnd ?? 0;
+
+    let targetIndex = -1;
+    if (direction === 'next') {
+      targetIndex = sourceMatchOffsets.findIndex((offset) => offset >= cursorEnd);
+    } else {
+      for (let index = sourceMatchOffsets.length - 1; index >= 0; index -= 1) {
+        if (sourceMatchOffsets[index] < cursorStart) {
+          targetIndex = index;
+          break;
+        }
+      }
+    }
+
+    const resolvedIndex = targetIndex >= 0
+      ? targetIndex
+      : direction === 'next'
+        ? 0
+        : sourceMatchOffsets.length - 1;
+
+    focusSourceRange(sourceMatchOffsets[resolvedIndex], sourceSearchQuery.length);
+    setSourceActiveMatchIndex(resolvedIndex);
+  }, [focusSourceRange, sourceMatchOffsets, sourceSearchQuery, t]);
+
+  const replaceCurrentSourceMatch = useCallback(() => {
+    if (!sourceSearchQuery) {
+      message.info(t('notepad.enterSearchKeyword'));
+      return;
+    }
+
+    if (sourceMatchOffsets.length === 0) {
+      message.info(t('notepad.noSearchResults'));
+      return;
+    }
+
+    const textarea = sourceTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+
+    const selectionStart = textarea.selectionStart ?? 0;
+    const selectionEnd = textarea.selectionEnd ?? selectionStart;
+    const selectedText = content.slice(selectionStart, selectionEnd);
+    const matchesSelection = selectedText === sourceSearchQuery;
+    const replaceFrom = matchesSelection
+      ? selectionStart
+      : sourceMatchOffsets.find((offset) => offset >= selectionEnd) ?? sourceMatchOffsets[0];
+
+    const nextContent = `${content.slice(0, replaceFrom)}${sourceReplaceQuery}${content.slice(replaceFrom + sourceSearchQuery.length)}`;
+    onContentChange(nextContent);
+
+    window.requestAnimationFrame(() => {
+      focusSourceRange(replaceFrom, sourceReplaceQuery.length);
+    });
+  }, [content, focusSourceRange, onContentChange, sourceMatchOffsets, sourceReplaceQuery, sourceSearchQuery, t]);
+
+  const replaceAllSourceMatches = useCallback(() => {
+    if (!sourceSearchQuery) {
+      message.info(t('notepad.enterSearchKeyword'));
+      return;
+    }
+
+    if (sourceMatchOffsets.length === 0) {
+      message.info(t('notepad.noSearchResults'));
+      return;
+    }
+
+    onContentChange(content.split(sourceSearchQuery).join(sourceReplaceQuery));
+    setSourceActiveMatchIndex(null);
+    message.success(t('notepad.replaceAllDone', { count: sourceMatchOffsets.length }));
+  }, [content, onContentChange, sourceMatchOffsets.length, sourceReplaceQuery, sourceSearchQuery, t]);
+
+  const scrollReaderToTop = useCallback((scrollTop: number) => {
+    const shell = readerShellRef.current;
+    if (!shell) {
+      return;
+    }
+
+    shell.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+  }, []);
+
+  const scrollReaderToChapter = useCallback((chapterKey: string) => {
+    const shell = readerShellRef.current;
+    const heading = readerHeadingRefs.current[chapterKey];
+    if (!shell || !heading) {
+      return;
+    }
+
+    const shellRect = shell.getBoundingClientRect();
+    const headingRect = heading.getBoundingClientRect();
+    const nextScrollTop = shell.scrollTop + (headingRect.top - shellRect.top) - 24;
+    shell.scrollTo({ top: Math.max(0, nextScrollTop), behavior: 'smooth' });
+  }, []);
+
+  const addReaderBookmark = useCallback(() => {
+    if (!showReaderView || !activeTab) {
+      return;
+    }
+
+    const shell = readerShellRef.current;
+    if (!shell) {
+      return;
+    }
+
+    const bookmarkLabel = activeChapter?.title ?? activeTab.name;
+    const nextBookmark: ReaderBookmark = {
+      id: createTabId(),
+      label: bookmarkLabel,
+      chapterKey: activeChapter?.key ?? null,
+      scrollTop: shell.scrollTop,
+      progress: readerProgress,
+      createdAt: Date.now(),
+    };
+
+    setReaderBookmarks((currentBookmarks) => [nextBookmark, ...currentBookmarks].slice(0, 24));
+    message.success(t('notepad.bookmarkAdded'));
+  }, [activeChapter, activeTab, readerProgress, showReaderView, t]);
+
+  const removeReaderBookmark = useCallback((bookmarkId: string) => {
+    setReaderBookmarks((currentBookmarks) => currentBookmarks.filter((bookmark) => bookmark.id !== bookmarkId));
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!showReaderView || !activeTabId) {
+      return;
+    }
+
+    const shell = readerShellRef.current;
+    if (!shell) {
+      return;
+    }
+
+    const nextScrollTop = readerScrollPositionsRef.current[activeTabId] ?? readReaderScrollPosition(activeTabId);
+    readerScrollPositionsRef.current[activeTabId] = nextScrollTop;
+
+    const restoreId = window.requestAnimationFrame(() => {
+      if (readerShellRef.current === shell) {
+        shell.scrollTop = nextScrollTop;
+        syncReaderProgress(shell);
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(restoreId);
+    };
+  }, [activeTabId, readerBlocks.length, showReaderView, syncReaderProgress]);
+
+  useEffect(() => {
+    if (!showReaderView || !activeTabId) {
+      return;
+    }
+
+    const shell = readerShellRef.current;
+    if (!shell) {
+      return;
+    }
+
+    const handleScroll = () => {
+      readerScrollPositionsRef.current[activeTabId] = shell.scrollTop;
+      persistReaderScrollPosition(activeTabId, shell.scrollTop);
+      syncReaderProgress(shell);
+    };
+
+    shell.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      shell.removeEventListener('scroll', handleScroll);
+      const lastScrollTop = readerScrollPositionsRef.current[activeTabId] ?? shell.scrollTop;
+      readerScrollPositionsRef.current[activeTabId] = lastScrollTop;
+      persistReaderScrollPosition(activeTabId, lastScrollTop);
+    };
+  }, [activeTabId, showReaderView, syncReaderProgress]);
+
+  useEffect(() => {
+    if (!readerBookmarkStorageKey || activeTab?.readerVariant !== 'abyss') {
+      setReaderBookmarks([]);
+      setReaderBookmarkScopeKey(null);
+      return;
+    }
+
+    setReaderBookmarks(readReaderBookmarks(activeTab));
+    setReaderBookmarkScopeKey(readerBookmarkStorageKey);
+  }, [activeTab, readerBookmarkStorageKey]);
+
+  useEffect(() => {
+    if (!readerBookmarkStorageKey || activeTab?.readerVariant !== 'abyss') {
+      return;
+    }
+
+    if (readerBookmarkScopeKey !== readerBookmarkStorageKey) {
+      return;
+    }
+
+    persistReaderBookmarks(activeTab, readerBookmarks);
+  }, [activeTab, readerBookmarkScopeKey, readerBookmarkStorageKey, readerBookmarks]);
+
+  useEffect(() => {
+    setSourceSearchQuery('');
+    setSourceReplaceQuery('');
+    setSourceActiveMatchIndex(null);
+  }, [activeTabId]);
+
+  useEffect(() => {
+    setSourceActiveMatchIndex(null);
+  }, [sourceSearchQuery]);
+
+  useEffect(() => {
+    setSelectedCharCount(0);
+  }, [activeTabId, showAbyssSourceView, showReaderView]);
 
   const focusNameInput = useCallback(() => {
     requestAnimationFrame(() => {
@@ -741,12 +1192,19 @@ export default function Notepad() {
     links: true,
     smoothScrolling: true,
     scrollBeyondLastLine: false,
+    unicodeHighlight: {
+      invisibleCharacters: false,
+      ambiguousCharacters: false,
+      nonBasicASCII: false,
+    },
   };
 
   const statusMeta = showReaderView ? (
     <span className="firewood-notepad-statusMeta">
       <span className="firewood-notepad-statusBadge">{t('notepad.readerBadge')}</span>
       <span>{activeTab?.name ?? t('notepad.untitled')}</span>
+      <span>{t('notepad.readingProgress')} {Math.round(readerProgress)}%</span>
+      {activeChapter && <span>{t('notepad.currentChapter')} {activeChapter.title}</span>}
     </span>
   ) : (
     <span className="firewood-notepad-statusMeta">
@@ -755,6 +1213,7 @@ export default function Notepad() {
       )}
       <span>{t('notepad.chars')} {totalCharCount}</span>
       <span>{t('notepad.line')} {totalLineCount}</span>
+      {showAbyssSourceView && sourceMatchLabel && <span>{sourceMatchLabel}</span>}
       {selectedCharCount > 0 && <span>{t('notepad.selected')} {selectedCharCount}</span>}
     </span>
   );
@@ -849,29 +1308,223 @@ export default function Notepad() {
           <div className={`firewood-notepad-stage${activeTabId ? '' : ' firewood-notepad-stageEmpty'}`}>
             {activeTabId ? (
               showReaderView ? (
-                <div className="firewood-notepad-readerShell" style={readerThemeStyle}>
-                  <div className="firewood-notepad-readerPaper">
-                    <div className="firewood-notepad-readerBanner">{t('notepad.readerBadge')}</div>
-                    {readerBlocks.length > 0 ? (
-                      readerBlocks.map((block) => (
-                        block.kind === 'heading' ? (
-                          <h3 key={block.key} className="firewood-notepad-readerHeading">
-                            {block.text}
-                          </h3>
+                <div ref={readerShellRef} className="firewood-notepad-readerShell" style={readerThemeStyle}>
+                  <div className="firewood-notepad-readerLayout">
+                    <div className="firewood-notepad-readerMain">
+                      <div className="firewood-notepad-readerPaper">
+                        <div className="firewood-notepad-readerBanner">{t('notepad.readerBadge')}</div>
+                        {readerBlocks.length > 0 ? (
+                          readerBlocks.map((block) => (
+                            block.kind === 'heading' ? (
+                              <h3
+                                key={block.key}
+                                ref={(node) => {
+                                  readerHeadingRefs.current[block.key] = node;
+                                }}
+                                className="firewood-notepad-readerHeading"
+                              >
+                                {block.text}
+                              </h3>
+                            ) : (
+                              <p key={block.key} className="firewood-notepad-readerParagraph" style={{ fontSize }}>
+                                {block.text}
+                              </p>
+                            )
+                          ))
                         ) : (
-                          <p key={block.key} className="firewood-notepad-readerParagraph" style={{ fontSize }}>
-                            {block.text}
-                          </p>
-                        )
-                      ))
-                    ) : (
-                      <Empty
-                        description={t('notepad.readerEmpty')}
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        style={{ marginTop: 36 }}
+                          <Empty
+                            description={t('notepad.readerEmpty')}
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            style={{ marginTop: 36 }}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={`firewood-notepad-readerRailSlot${isReaderRailHidden ? ' is-hidden' : ''}`}>
+                      <Button
+                        type="text"
+                        className="firewood-notepad-readerRailVisibilityToggle"
+                        icon={isReaderRailHidden ? <LeftOutlined /> : <RightOutlined />}
+                        title={isReaderRailHidden ? t('notepad.showReaderRail') : t('notepad.hideReaderRail')}
+                        aria-label={isReaderRailHidden ? t('notepad.showReaderRail') : t('notepad.hideReaderRail')}
+                        onClick={() => {
+                          setIsReaderRailHidden((currentValue) => !currentValue);
+                        }}
                       />
-                    )}
+
+                      <div className="firewood-notepad-readerRailViewport" aria-hidden={isReaderRailHidden}>
+                        <aside className="firewood-notepad-readerRail">
+                          <section className="firewood-notepad-readerPanel">
+                            <div className="firewood-notepad-readerPanelHeader">
+                              <span>{t('notepad.readingProgress')}</span>
+                              <Button type="text" className="firewood-notepad-ghostButton" onClick={addReaderBookmark}>
+                                {t('notepad.addBookmark')}
+                              </Button>
+                            </div>
+                            <Progress percent={Math.round(readerProgress)} size="small" showInfo={false} strokeColor="#ff7a45" />
+                            <div className="firewood-notepad-readerPanelMeta">
+                              <span>{Math.round(readerProgress)}%</span>
+                              <span>{activeChapter?.title ?? t('notepad.noChapters')}</span>
+                            </div>
+                          </section>
+
+                          <section className="firewood-notepad-readerPanel firewood-notepad-readerTocPanel">
+                            <div className="firewood-notepad-readerPanelHeader">
+                              <span>{t('notepad.chapterToc')}</span>
+                              <Button
+                                type="text"
+                                className="firewood-notepad-readerPanelToggle"
+                                aria-expanded={!isReaderTocCollapsed}
+                                onClick={() => {
+                                  setIsReaderTocCollapsed((currentValue) => !currentValue);
+                                }}
+                              >
+                                {isReaderTocCollapsed ? t('notepad.expandToc') : t('notepad.collapseToc')}
+                              </Button>
+                            </div>
+                            {!isReaderTocCollapsed && (
+                              <div className="firewood-notepad-readerList">
+                                {readerChapters.length > 0 ? (
+                                  readerChapters.map((chapter) => (
+                                    <button
+                                      key={chapter.key}
+                                      type="button"
+                                      className={`firewood-notepad-readerListItem${chapter.key === activeChapter?.key ? ' is-active' : ''}`}
+                                      onClick={() => {
+                                        scrollReaderToChapter(chapter.key);
+                                      }}
+                                    >
+                                      {chapter.title}
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="firewood-notepad-readerPanelEmpty">{t('notepad.noChapters')}</div>
+                                )}
+                              </div>
+                            )}
+                          </section>
+
+                          <section className="firewood-notepad-readerPanel">
+                            <div className="firewood-notepad-readerPanelHeader">
+                              <span>{t('notepad.bookmarks')}</span>
+                            </div>
+                            <div className="firewood-notepad-readerList">
+                              {readerBookmarks.length > 0 ? (
+                                readerBookmarks.map((bookmark) => (
+                                  <div key={bookmark.id} className="firewood-notepad-readerBookmarkItem">
+                                    <button
+                                      type="button"
+                                      className="firewood-notepad-readerBookmarkButton"
+                                      onClick={() => {
+                                        scrollReaderToTop(bookmark.scrollTop);
+                                      }}
+                                    >
+                                      <span>{bookmark.label}</span>
+                                      <span className="firewood-notepad-readerBookmarkMeta">{Math.round(bookmark.progress)}%</span>
+                                    </button>
+                                    <Button
+                                      type="text"
+                                      className="firewood-notepad-readerBookmarkDelete"
+                                      icon={<DeleteOutlined />}
+                                      title={t('action.delete')}
+                                      aria-label={t('action.delete')}
+                                      onClick={() => {
+                                        removeReaderBookmark(bookmark.id);
+                                      }}
+                                    />
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="firewood-notepad-readerPanelEmpty">{t('notepad.noBookmarks')}</div>
+                              )}
+                            </div>
+                          </section>
+                        </aside>
+                      </div>
+                    </div>
                   </div>
+                </div>
+              ) : showAbyssSourceView ? (
+                <div className="firewood-notepad-sourceShell">
+                  <div className="firewood-notepad-sourceTools">
+                    <Input
+                      value={sourceSearchQuery}
+                      placeholder={t('notepad.searchPlaceholder')}
+                      onChange={(event) => {
+                        setSourceSearchQuery(event.target.value);
+                      }}
+                      onPressEnter={(event) => {
+                        if (event.shiftKey) {
+                          navigateSourceMatch('prev');
+                          return;
+                        }
+
+                        navigateSourceMatch('next');
+                      }}
+                    />
+                    <Input
+                      value={sourceReplaceQuery}
+                      placeholder={t('notepad.replacePlaceholder')}
+                      onChange={(event) => {
+                        setSourceReplaceQuery(event.target.value);
+                      }}
+                      onPressEnter={() => {
+                        replaceCurrentSourceMatch();
+                      }}
+                    />
+                    <Space wrap>
+                      <Button type="text" className="firewood-notepad-ghostButton" onClick={() => navigateSourceMatch('prev')}>
+                        {t('notepad.findPrev')}
+                      </Button>
+                      <Button type="text" className="firewood-notepad-ghostButton" onClick={() => navigateSourceMatch('next')}>
+                        {t('notepad.findNext')}
+                      </Button>
+                      <Button type="text" className="firewood-notepad-ghostButton" onClick={replaceCurrentSourceMatch}>
+                        {t('notepad.replaceOne')}
+                      </Button>
+                      <Button type="text" className="firewood-notepad-ghostButton" onClick={replaceAllSourceMatches}>
+                        {t('notepad.replaceAll')}
+                      </Button>
+                      <Dropdown
+                        trigger={['click']}
+                        menu={{
+                          items: readerChapters.map((chapter) => ({ key: chapter.key, label: chapter.title })),
+                          onClick: ({ key }) => {
+                            const chapter = readerChapters.find((item) => item.key === key);
+                            if (chapter) {
+                              jumpToSourceOffset(chapter.startOffset, chapter.title.length);
+                            }
+                          },
+                        }}
+                        disabled={readerChapters.length === 0}
+                      >
+                        <Button type="text" className="firewood-notepad-ghostButton">
+                          {t('notepad.chapterJump')}
+                        </Button>
+                      </Dropdown>
+                    </Space>
+                  </div>
+                  <textarea
+                    ref={sourceTextareaRef}
+                    value={content}
+                    onChange={(event) => {
+                      onContentChange(event.target.value);
+                      updateNativeSelectionStats(event.currentTarget);
+                    }}
+                    onSelect={(event) => {
+                      updateNativeSelectionStats(event.currentTarget);
+                    }}
+                    onKeyUp={(event) => {
+                      updateNativeSelectionStats(event.currentTarget);
+                    }}
+                    onMouseUp={(event) => {
+                      updateNativeSelectionStats(event.currentTarget);
+                    }}
+                    className="firewood-notepad-sourceTextarea"
+                    style={{ fontSize }}
+                    spellCheck={false}
+                  />
                 </div>
               ) : (
                 <Editor

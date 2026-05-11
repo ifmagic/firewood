@@ -15,9 +15,9 @@ import type { ToolMeta } from '../types/tool';
 const tools: ToolMeta[] = [
   {
     id: 'json-formatter',
-    name: 'JSON Formatter',
+    name: 'JSON',
     icon: <CodeOutlined />,
-    description: 'Format, minify & validate JSON',
+    description: 'Format, minify & unescape JSON',
     component: lazy(() => import('../tools/json-formatter/index.tsx')),
   },
   {
@@ -29,7 +29,7 @@ const tools: ToolMeta[] = [
   },
   {
     id: 'text-diff',
-    name: 'Text Diff',
+    name: 'Diffchecker',
     icon: <DiffOutlined />,
     description: 'Compare two texts line by line',
     component: lazy(() => import('../tools/text-diff/index.tsx')),

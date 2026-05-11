@@ -12,28 +12,15 @@ const zhCN = {
 
   // Tool names
   toolName: {
-    'json-formatter': 'JSON 格式化',
+    'json-formatter': 'JSON',
     'timestamp': '时间戳转换',
-    'text-diff': '文本对比',
+    'text-diff': 'Diffchecker',
     'notepad': '记事本',
     'base64-codec': 'Base64 编解码',
     'url-codec': 'URL 编解码',
     'hash': 'Hash 计算',
     'img-to-pdf': '图片排版',
     'translate': '文本翻译',
-  },
-
-  // Tool descriptions
-  toolDesc: {
-    'json-formatter': 'JSON 格式化、压缩与校验',
-    'timestamp': 'Unix 时间戳与日期互转',
-    'text-diff': '逐行比较两段文本的差异',
-    'notepad': '本地多标签记事，支持打开本地文本文件',
-    'base64-codec': 'Base64 编码与解码',
-    'url-codec': 'URL 编码与解码',
-    'hash': '计算文本或文件的 MD5 / SHA-1 / SHA-256',
-    'img-to-pdf': '多图排版，导出为 A4 尺寸 PDF',
-    'translate': '支持腾讯云 / 百度翻译 API',
   },
 
   // Common actions
@@ -57,8 +44,6 @@ const zhCN = {
     save: '保存',
     delete: '删除',
     translate: '翻 译',
-    showOriginalInput: '显示原始输入',
-    hideOriginalInput: '隐藏原始输入',
   },
 
   // Common labels
@@ -84,10 +69,12 @@ const zhCN = {
     increase: '放大字体',
   },
 
-  // JSON Formatter
+  // JSON
   jsonFormatter: {
-    title: 'JSON 格式化',
-    description: 'JSON 格式化、压缩与语法校验',
+    title: 'JSON',
+    description: 'JSON 格式化、压缩与去除转义',
+    emptyHint: '粘贴 JSON 或转义文本，然后执行格式化、压缩或去除转义',
+    emptyError: '请先输入 JSON 内容',
   },
 
   // Timestamp
@@ -111,10 +98,9 @@ const zhCN = {
     formatCopyTs: '时间戳',
   },
 
-  // Text Diff
+  // Diffchecker
   textDiff: {
-    title: '文本对比',
-    description: '对比两段文本的差异',
+    title: 'Diffchecker',
     enterOriginal: '请输入原始文本...',
     enterModified: '请输入修改后文本...',
     added: '新增',
@@ -157,6 +143,31 @@ const zhCN = {
     readerActivated: '已按 Abyss 小说模式打开「{{name}}」',
     readerBadge: 'Abyss 阅读',
     readerEmpty: '没有可阅读的文本内容',
+    searchPlaceholder: '查找当前源文中的内容',
+    replacePlaceholder: '替换为...',
+    findPrev: '上一个',
+    findNext: '下一个',
+    replaceOne: '替换',
+    replaceAll: '全部替换',
+    chapterJump: '章节跳转',
+    chapterToc: '章节目录',
+    tocModeFixed: '固定',
+    tocModeAutoHide: '自动隐藏',
+    collapseToc: '收起',
+    expandToc: '展开',
+    readingProgress: '阅读进度',
+    currentChapter: '当前章节',
+    showReaderRail: '显示侧栏',
+    hideReaderRail: '隐藏侧栏',
+    addBookmark: '记下书签',
+    bookmarks: '书签',
+    noBookmarks: '还没有保存书签',
+    noChapters: '没有识别到章节标题',
+    bookmarkAdded: '已记下当前位置',
+    enterSearchKeyword: '请先输入查找内容',
+    noSearchResults: '没有找到匹配内容',
+    searchMatchCount: '{{current}} / {{total}}',
+    replaceAllDone: '已替换 {{count}} 处匹配',
     linkHint: '{{shortcut}}+点击可打开链接',
     openHint: '{{shortcut}}+O 打开本地文件',
     saveHint: '{{shortcut}}+S 另存为',

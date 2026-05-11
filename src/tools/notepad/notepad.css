@@ -208,6 +208,18 @@
   background: var(--firewood-reader-shell-background, linear-gradient(180deg, #f7efe1 0%, #efe3ca 100%));
 }
 
+.firewood-notepad-readerLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  min-height: 100%;
+  padding: 0 20px 0 0;
+}
+
+.firewood-notepad-readerMain {
+  min-width: 0;
+}
+
 .firewood-notepad-readerPaper {
   width: min(100%, 1120px);
   margin: 0;
@@ -247,6 +259,243 @@
   font-family: 'Source Han Serif SC', 'Songti SC', 'STSong', 'Noto Serif SC', serif;
 }
 
+.firewood-notepad-sourceShell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  padding: 14px 16px 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 249, 251, 0.98));
+}
+
+.firewood-notepad-sourceTools {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.firewood-notepad-sourceTextarea {
+  width: 100%;
+  height: 100% !important;
+  min-height: 100%;
+  resize: none;
+  padding: 18px 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  color: var(--fw-text-strong);
+  line-height: 1.9;
+  letter-spacing: 0.015em;
+  font-family: 'Source Han Serif SC', 'Songti SC', 'STSong', 'Noto Serif SC', serif;
+  outline: none;
+}
+
+.firewood-notepad-sourceTextarea:hover,
+.firewood-notepad-sourceTextarea:focus {
+  border-color: rgba(255, 122, 69, 0.42);
+  box-shadow: 0 0 0 3px rgba(255, 122, 69, 0.12);
+}
+
+.firewood-notepad-sourceTextarea::placeholder {
+  color: #94a3b8;
+}
+
+.firewood-notepad-readerRailSlot {
+  --firewood-notepad-reader-rail-width: 280px;
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: var(--firewood-notepad-reader-rail-width);
+  min-width: 32px;
+  transition: width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.firewood-notepad-readerRailSlot.is-hidden {
+  --firewood-notepad-reader-rail-width: 0px;
+}
+
+.firewood-notepad-readerRailViewport {
+  width: var(--firewood-notepad-reader-rail-width);
+  min-width: 0;
+  overflow: hidden;
+  transition: width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.firewood-notepad-readerRailVisibilityToggle.ant-btn {
+  align-self: flex-end;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  margin: 0 8px 0 0;
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--fw-text-tertiary);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(10px);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.24s ease, box-shadow 0.24s ease;
+  z-index: 1;
+}
+
+.firewood-notepad-readerRailSlot.is-hidden .firewood-notepad-readerRailVisibilityToggle.ant-btn {
+  margin-right: 0;
+}
+
+.firewood-notepad-readerRailVisibilityToggle.ant-btn .anticon {
+  font-size: 14px;
+}
+
+.firewood-notepad-readerRailVisibilityToggle.ant-btn:hover,
+.firewood-notepad-readerRailVisibilityToggle.ant-btn:focus-visible {
+  background: rgba(255, 247, 237, 0.96) !important;
+  color: var(--fw-text-strong) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.firewood-notepad-readerRail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 280px;
+  max-height: calc(100dvh - 220px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px 8px 24px 0;
+  scrollbar-gutter: stable;
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  transition: opacity 0.22s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0s;
+}
+
+.firewood-notepad-readerRailSlot.is-hidden .firewood-notepad-readerRailViewport {
+  pointer-events: none;
+}
+
+.firewood-notepad-readerRailSlot.is-hidden .firewood-notepad-readerRail {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(20px) scale(0.985);
+  transition: opacity 0.18s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.34s;
+}
+
+.firewood-notepad-readerPanelToggle.ant-btn {
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  color: var(--fw-text-tertiary);
+  box-shadow: none;
+}
+
+.firewood-notepad-readerPanelToggle.ant-btn:hover,
+.firewood-notepad-readerPanelToggle.ant-btn:focus-visible {
+  background: var(--fw-hover-light) !important;
+  color: var(--fw-text-strong) !important;
+}
+
+.firewood-notepad-readerPanel {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(10px);
+}
+
+.firewood-notepad-readerPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  color: var(--fw-text-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.firewood-notepad-readerPanel .ant-progress {
+  padding: 12px 14px 4px;
+}
+
+.firewood-notepad-readerPanelMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px 14px;
+  color: var(--fw-text-body);
+  font-size: 12px;
+}
+
+.firewood-notepad-readerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+}
+
+.firewood-notepad-readerListItem,
+.firewood-notepad-readerBookmarkButton {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fw-text-body);
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.firewood-notepad-readerListItem:hover,
+.firewood-notepad-readerBookmarkButton:hover,
+.firewood-notepad-readerListItem.is-active {
+  background: rgba(255, 122, 69, 0.12);
+  color: var(--fw-text-strong);
+}
+
+.firewood-notepad-readerPanelEmpty {
+  padding: 12px 14px 16px;
+  color: var(--fw-text-tertiary);
+  font-size: 12px;
+}
+
+.firewood-notepad-readerBookmarkItem {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.firewood-notepad-readerBookmarkButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.firewood-notepad-readerBookmarkMeta {
+  color: var(--fw-text-tertiary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.firewood-notepad-readerBookmarkDelete.ant-btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  align-self: center;
+  color: #c65f5f;
+}
+
 @media (max-width: 768px) {
   .firewood-notepad-shell {
     border-radius: 10px;
@@ -267,5 +516,68 @@
   .firewood-notepad-readerPaper {
     width: 100%;
     padding: 20px 18px 36px;
+  }
+
+  .firewood-notepad-readerLayout {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-right: 0;
+  }
+
+  .firewood-notepad-readerRail {
+    width: 100%;
+    max-height: min(42vh, 320px);
+    overflow: auto;
+    padding: 0 12px 20px;
+  }
+
+  .firewood-notepad-readerRailSlot {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .firewood-notepad-readerRailSlot.is-hidden {
+    width: 100%;
+  }
+
+  .firewood-notepad-readerRailViewport {
+    width: 100%;
+    max-height: min(42vh, 320px);
+    transition: max-height 0.28s ease, opacity 0.18s ease;
+  }
+
+  .firewood-notepad-readerRailSlot.is-hidden .firewood-notepad-readerRailViewport {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .firewood-notepad-readerRailVisibilityToggle.ant-btn {
+    align-self: flex-end;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    margin: 0;
+    border-radius: 999px;
+    transform: none;
+  }
+
+  .firewood-notepad-readerRailVisibilityToggle.ant-btn:hover,
+  .firewood-notepad-readerRailVisibilityToggle.ant-btn:focus-visible {
+    transform: none;
+  }
+
+  .firewood-notepad-sourceShell {
+    padding: 10px 12px 12px;
+  }
+
+  .firewood-notepad-sourceTools {
+    grid-template-columns: 1fr;
+  }
+
+  .firewood-notepad-sourceTextarea {
+    padding: 16px 16px 18px;
   }
 }
