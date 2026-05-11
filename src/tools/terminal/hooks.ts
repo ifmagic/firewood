@@ -244,7 +244,7 @@ export function useTerminalSessions() {
       return;
     }
 
-    if (code && code !== 0) {
+    if (code !== null && code !== 0) {
       appendOutput(sessionId, 'system', `Command exited with code ${code}.\n`);
     }
   }, [appendOutput, flushStdout, updateSession]);
@@ -445,7 +445,7 @@ export function useTerminalSessions() {
     };
     runtimeRef.current.set(sessionId, runtime);
 
-    const commandLine = `${session.cwd || homePath} ${shell.label}> ${rawCommand}\n`;
+    const commandLine = `[${shell.label}] ${session.cwd || homePath}> ${rawCommand}\n`;
     updateSession(sessionId, (currentSession) => ({
       ...currentSession,
       input: '',

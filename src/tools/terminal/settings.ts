@@ -5,16 +5,16 @@ export const TERMINAL_FONT_STACK = "'CaskaydiaCove Nerd Font', 'JetBrainsMono Ne
 export const TERMINAL_SHELL_MARKER_PREFIX = '__FIREWOOD_TERMINAL_CWD__';
 
 function buildPosixCommand(command: string, marker: string) {
-  return `${command}\n__fw_terminal_status=$?\nprintf '\\n${marker}%s\\n' "$PWD"\nexit $__fw_terminal_status`;
+  return `${command}\n__fw_terminal_status=$?\nprintf '%s\\n' "" "${marker}$PWD"\nexit $__fw_terminal_status`;
 }
 
 function buildFishCommand(command: string, marker: string) {
-  return `${command}\nset __fw_terminal_status $status\nprintf '\\n${marker}%s\\n' "$PWD"\nexit $__fw_terminal_status`;
+  return `${command}\nset __fw_terminal_status $status\nprintf '%s\\n' "" "${marker}$PWD"\nexit $__fw_terminal_status`;
 }
 
 function buildPowerShellCommand(command: string, marker: string) {
   const escapedMarker = marker.replace(/'/g, "''");
-  return `${command}\n$__fwTerminalStatus = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } elseif ($?) { 0 } else { 1 }\nWrite-Output ('${escapedMarker}' + (Get-Location).Path)\nexit $__fwTerminalStatus`;
+  return `${command}\n$__fwTerminalStatus = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } elseif ($?) { 0 } else { 1 }\nWrite-Output ''\nWrite-Output ('${escapedMarker}' + (Get-Location).Path)\nexit $__fwTerminalStatus`;
 }
 
 export const TERMINAL_SHELLS: TerminalShellDefinition[] = [
