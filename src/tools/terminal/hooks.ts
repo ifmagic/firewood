@@ -85,6 +85,32 @@ function getFriendlyMissingShellMessage(label: string) {
   return `${label} is not available on this system.`;
 }
 
+async function detectTerminalShell(shell: (typeof TERMINAL_SHELLS)[number]) {
+  let lastError = 'The shell could not be started.';
+
+  for (const candidate of shell.commandCandidates) {
+    try {
+      await Command.create(candidate.name, shell.detectArgs).execute();
+      return {
+        id: shell.id,
+        label: shell.label,
+        available: true,
+        commandName: candidate.name,
+        commandPath: candidate.cmd,
+      } satisfies TerminalShellAvailability;
+    } catch (error) {
+      lastError = formatShellError(error);
+    }
+  }
+
+  return {
+    id: shell.id,
+    label: shell.label,
+    available: false,
+    error: lastError,
+  } satisfies TerminalShellAvailability;
+}
+
 export function useTerminalSessions() {
   const platform = useMemo<TerminalPlatform>(() => getTerminalPlatform(), []);
   const initialShellId = useMemo<TerminalShellId>(() => getTerminalShellOrder(platform)[0], [platform]);
@@ -262,23 +288,7 @@ export function useTerminalSessions() {
 
       const [resolvedHomePath, detectedShells] = await Promise.all([
         homeDir().catch(() => '~'),
-        Promise.all(TERMINAL_SHELLS.map(async (shell) => {
-          try {
-            await Command.create(shell.command, shell.detectArgs).execute();
-            return {
-              id: shell.id,
-              label: shell.label,
-              available: true,
-            } satisfies TerminalShellAvailability;
-          } catch (error) {
-            return {
-              id: shell.id,
-              label: shell.label,
-              available: false,
-              error: formatShellError(error),
-            } satisfies TerminalShellAvailability;
-          }
-        })),
+        Promise.all(TERMINAL_SHELLS.map((shell) => detectTerminalShell(shell))),
       ]);
 
       if (cancelled) {
@@ -461,7 +471,7 @@ export function useTerminalSessions() {
     }));
 
     const command = Command.create(
-      shell.command,
+      availability.commandName ?? session.shellId,
       shell.spawnArgs,
       { cwd: session.cwd || homePath },
     );

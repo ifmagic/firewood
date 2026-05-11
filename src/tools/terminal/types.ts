@@ -7,7 +7,10 @@ export type TerminalOutputKind = 'command' | 'stdout' | 'stderr' | 'system';
 export interface TerminalShellDefinition {
   id: TerminalShellId;
   label: string;
-  command: string;
+  commandCandidates: Array<{
+    name: string;
+    cmd: string;
+  }>;
   detectArgs: string[];
   spawnArgs: string[];
   buildCommandPayload: (command: string, marker: string) => string;
@@ -17,6 +20,8 @@ export interface TerminalShellAvailability {
   id: TerminalShellId;
   label: string;
   available: boolean;
+  commandName?: string;
+  commandPath?: string;
   error?: string;
 }
 

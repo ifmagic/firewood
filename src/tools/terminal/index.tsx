@@ -275,6 +275,7 @@ export default function Terminal() {
           <Tabs
             activeKey={activeSessionId}
             type="editable-card"
+            hideAdd
             className="firewood-terminal-tabs"
             onChange={setActiveSessionId}
             onEdit={(targetKey, action) => {
@@ -322,7 +323,7 @@ export default function Terminal() {
                     </Tag>
                   </div>
                   <div className="firewood-terminal-shellCardBody">
-                    {shell.available ? 'Ready to use.' : shell.error || 'Not found on this system.'}
+                    {shell.available ? `Ready to use: ${shell.commandPath}` : shell.error || 'Not found on this system.'}
                   </div>
                 </div>
               ))}

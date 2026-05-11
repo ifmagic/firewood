@@ -10,9 +10,51 @@
     "fs:default",
     "opener:default",
     "process:default",
-    "shell:allow-execute",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "terminal-zsh-homebrew", "cmd": "/opt/homebrew/bin/zsh", "args": true },
+        { "name": "terminal-zsh-local", "cmd": "/usr/local/bin/zsh", "args": true },
+        { "name": "terminal-zsh-system", "cmd": "/bin/zsh", "args": true },
+        { "name": "terminal-zsh", "cmd": "zsh", "args": true },
+        { "name": "terminal-bash-system", "cmd": "/bin/bash", "args": true },
+        { "name": "terminal-bash-homebrew", "cmd": "/opt/homebrew/bin/bash", "args": true },
+        { "name": "terminal-bash-local", "cmd": "/usr/local/bin/bash", "args": true },
+        { "name": "terminal-bash", "cmd": "bash", "args": true },
+        { "name": "terminal-fish-homebrew", "cmd": "/opt/homebrew/bin/fish", "args": true },
+        { "name": "terminal-fish-local", "cmd": "/usr/local/bin/fish", "args": true },
+        { "name": "terminal-fish-system", "cmd": "/bin/fish", "args": true },
+        { "name": "terminal-fish", "cmd": "fish", "args": true },
+        { "name": "terminal-pwsh-homebrew", "cmd": "/opt/homebrew/bin/pwsh", "args": true },
+        { "name": "terminal-pwsh-local", "cmd": "/usr/local/bin/pwsh", "args": true },
+        { "name": "terminal-pwsh", "cmd": "pwsh", "args": true },
+        { "name": "terminal-powershell", "cmd": "powershell", "args": true },
+        { "name": "terminal-powershell-exe", "cmd": "powershell.exe", "args": true }
+      ]
+    },
     "shell:allow-kill",
-    "shell:allow-spawn",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        { "name": "terminal-zsh-homebrew", "cmd": "/opt/homebrew/bin/zsh", "args": true },
+        { "name": "terminal-zsh-local", "cmd": "/usr/local/bin/zsh", "args": true },
+        { "name": "terminal-zsh-system", "cmd": "/bin/zsh", "args": true },
+        { "name": "terminal-zsh", "cmd": "zsh", "args": true },
+        { "name": "terminal-bash-system", "cmd": "/bin/bash", "args": true },
+        { "name": "terminal-bash-homebrew", "cmd": "/opt/homebrew/bin/bash", "args": true },
+        { "name": "terminal-bash-local", "cmd": "/usr/local/bin/bash", "args": true },
+        { "name": "terminal-bash", "cmd": "bash", "args": true },
+        { "name": "terminal-fish-homebrew", "cmd": "/opt/homebrew/bin/fish", "args": true },
+        { "name": "terminal-fish-local", "cmd": "/usr/local/bin/fish", "args": true },
+        { "name": "terminal-fish-system", "cmd": "/bin/fish", "args": true },
+        { "name": "terminal-fish", "cmd": "fish", "args": true },
+        { "name": "terminal-pwsh-homebrew", "cmd": "/opt/homebrew/bin/pwsh", "args": true },
+        { "name": "terminal-pwsh-local", "cmd": "/usr/local/bin/pwsh", "args": true },
+        { "name": "terminal-pwsh", "cmd": "pwsh", "args": true },
+        { "name": "terminal-powershell", "cmd": "powershell", "args": true },
+        { "name": "terminal-powershell-exe", "cmd": "powershell.exe", "args": true }
+      ]
+    },
     "shell:allow-stdin-write",
     "updater:default",
     {

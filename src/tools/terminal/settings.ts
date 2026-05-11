@@ -21,7 +21,12 @@ export const TERMINAL_SHELLS: TerminalShellDefinition[] = [
   {
     id: 'zsh',
     label: 'zsh',
-    command: 'zsh',
+    commandCandidates: [
+      { name: 'terminal-zsh-homebrew', cmd: '/opt/homebrew/bin/zsh' },
+      { name: 'terminal-zsh-local', cmd: '/usr/local/bin/zsh' },
+      { name: 'terminal-zsh-system', cmd: '/bin/zsh' },
+      { name: 'terminal-zsh', cmd: 'zsh' },
+    ],
     detectArgs: ['-lc', 'printf ready'],
     spawnArgs: [],
     buildCommandPayload: buildPosixCommand,
@@ -29,7 +34,12 @@ export const TERMINAL_SHELLS: TerminalShellDefinition[] = [
   {
     id: 'bash',
     label: 'bash',
-    command: 'bash',
+    commandCandidates: [
+      { name: 'terminal-bash-system', cmd: '/bin/bash' },
+      { name: 'terminal-bash-homebrew', cmd: '/opt/homebrew/bin/bash' },
+      { name: 'terminal-bash-local', cmd: '/usr/local/bin/bash' },
+      { name: 'terminal-bash', cmd: 'bash' },
+    ],
     detectArgs: ['-lc', 'printf ready'],
     spawnArgs: [],
     buildCommandPayload: buildPosixCommand,
@@ -37,7 +47,12 @@ export const TERMINAL_SHELLS: TerminalShellDefinition[] = [
   {
     id: 'fish',
     label: 'fish',
-    command: 'fish',
+    commandCandidates: [
+      { name: 'terminal-fish-homebrew', cmd: '/opt/homebrew/bin/fish' },
+      { name: 'terminal-fish-local', cmd: '/usr/local/bin/fish' },
+      { name: 'terminal-fish-system', cmd: '/bin/fish' },
+      { name: 'terminal-fish', cmd: 'fish' },
+    ],
     detectArgs: ['-lc', 'printf ready'],
     spawnArgs: [],
     buildCommandPayload: buildFishCommand,
@@ -45,7 +60,11 @@ export const TERMINAL_SHELLS: TerminalShellDefinition[] = [
   {
     id: 'pwsh',
     label: 'PowerShell (pwsh)',
-    command: 'pwsh',
+    commandCandidates: [
+      { name: 'terminal-pwsh-homebrew', cmd: '/opt/homebrew/bin/pwsh' },
+      { name: 'terminal-pwsh-local', cmd: '/usr/local/bin/pwsh' },
+      { name: 'terminal-pwsh', cmd: 'pwsh' },
+    ],
     detectArgs: ['-NoLogo', '-NoProfile', '-Command', '$PSVersionTable.PSVersion.ToString()'],
     spawnArgs: ['-NoLogo', '-NoProfile', '-Command', '-'],
     buildCommandPayload: buildPowerShellCommand,
@@ -53,7 +72,10 @@ export const TERMINAL_SHELLS: TerminalShellDefinition[] = [
   {
     id: 'powershell',
     label: 'Windows PowerShell',
-    command: 'powershell',
+    commandCandidates: [
+      { name: 'terminal-powershell', cmd: 'powershell' },
+      { name: 'terminal-powershell-exe', cmd: 'powershell.exe' },
+    ],
     detectArgs: ['-NoLogo', '-NoProfile', '-Command', '$PSVersionTable.PSVersion.ToString()'],
     spawnArgs: ['-NoLogo', '-NoProfile', '-Command', '-'],
     buildCommandPayload: buildPowerShellCommand,

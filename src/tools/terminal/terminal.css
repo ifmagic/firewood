@@ -82,6 +82,28 @@
   background: rgba(255, 255, 255, 0.72) !important;
 }
 
+.firewood-terminal-tabs .ant-tabs-tab-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 8px !important;
+  border-radius: 999px;
+  color: #8c8c8c !important;
+  opacity: 1;
+}
+
+.firewood-terminal-tabs .ant-tabs-tab-remove:hover,
+.firewood-terminal-tabs .ant-tabs-tab-remove:focus-visible {
+  background: var(--fw-hover-light) !important;
+  color: var(--fw-accent) !important;
+}
+
+.firewood-terminal-tabs .ant-tabs-nav-add {
+  display: none !important;
+}
+
 .firewood-terminal-tabs .ant-tabs-tab-active {
   background: #10161f !important;
 }
