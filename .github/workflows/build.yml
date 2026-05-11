@@ -28,26 +28,23 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: context.ref.replace('refs/tags/', ''),
-              name: `Firewood v0.6.2`,
+              name: `Firewood v0.7.0`,
               body: `## ✨ Features
 
-            - Add local file opening, novel reader mode, and Save As support to Notepad.
-            - Add a workspace prompt for handling Firewood repository code tasks.
-
-            ## 🐛 Bug Fixes
-
-            - Patch publish-step release notes so latest.json uses the full release body.
+            - Refresh the workspace tooling experience across Firewood.
+            - Add enhanced reader navigation and reading controls to Notepad.
+            - Simplify the JSON tool workflow and rename Text Diff to Diffchecker.
 
             ## 🔧 Chore / Updates
 
-            - Refresh Notepad translations and related release assets for the new reader workflow.
+            - Clean up unused locale entries and align updated tool labels for the new release.
 
             ---
 
             ## Download
 
-            - **macOS (Apple Silicon)**: Download \\\`firewood_0.6.2_aarch64.dmg\\\`
-            - **macOS (Intel)**: Download \\\`firewood_0.6.2_x64.dmg\\\`
+            - **macOS (Apple Silicon)**: Download \\\`firewood_0.7.0_aarch64.dmg\\\`
+            - **macOS (Intel)**: Download \\\`firewood_0.7.0_x64.dmg\\\`
             - **Windows**: Download the \\\`.exe\\\` installer
 
             ## macOS Installation Guide
