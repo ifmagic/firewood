@@ -1,0 +1,23 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 28px;
+  padding: 0 12px;
+  border-top: 1px solid var(--fw-divider);
+  background: var(--fw-status-bg);
+  color: var(--fw-status-text);
+  font-size: 12px;
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sectionRight {
+  margin-left: auto;
+}

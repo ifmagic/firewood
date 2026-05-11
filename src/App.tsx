@@ -1,6 +1,6 @@
 import { Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Layout, Spin } from 'antd';
+import { ConfigProvider, Layout, Spin } from 'antd';
 import Sidebar from './components/Sidebar';
 import AboutDialog from './components/AboutDialog';
 import Updater from './components/Updater';
@@ -22,33 +22,58 @@ function App() {
   const orderedTools = orderedIds.map((id) => toolMap.get(id)!).filter(Boolean);
 
   return (
-    <BrowserRouter>
-      <Updater />
-      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
-      <Layout style={{ height: '100vh' }}>
-        <Sidebar
-          tools={orderedTools}
-          visibility={visibility}
-          onToggleToolVisibility={toggleToolVisibility}
-          onReorder={reorder}
-          onOpenAbout={() => setAboutOpen(true)}
-        />
-        <Content style={{ overflow: 'auto', background: '#fff' }}>
-          <Suspense fallback={<Spin style={{ margin: 40 }} />}>
-            <Routes>
-              <Route path="/" element={<Navigate to={`/${tools[0].id}`} replace />} />
-              {tools.map((tool) => (
-                <Route
-                  key={tool.id}
-                  path={`/${tool.id}`}
-                  element={<tool.component />}
-                />
-              ))}
-            </Routes>
-          </Suspense>
-        </Content>
-      </Layout>
-    </BrowserRouter>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#ff7a45',
+          colorInfo: '#ff7a45',
+          colorLink: '#ff7a45',
+          borderRadius: 8,
+          fontSize: 14,
+          lineWidth: 1,
+          colorText: '#1f1f1f',
+          colorTextSecondary: '#666666',
+          colorBorder: '#eeeeee',
+          colorBorderSecondary: '#eeeeee',
+          colorBgContainer: '#ffffff',
+          colorBgElevated: '#ffffff',
+          colorFillAlter: '#f7f7f8',
+          colorFillSecondary: '#f2f3f5',
+          controlItemBgActive: '#fff4ef',
+          controlItemBgActiveHover: '#fff1ea',
+          controlOutline: 'rgba(255, 122, 69, 0.18)',
+          boxShadowSecondary: '0 12px 32px rgba(15, 23, 42, 0.08)',
+        },
+      }}
+    >
+      <BrowserRouter>
+        <Updater />
+        <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
+        <Layout style={{ height: '100vh' }}>
+          <Sidebar
+            tools={orderedTools}
+            visibility={visibility}
+            onToggleToolVisibility={toggleToolVisibility}
+            onReorder={reorder}
+            onOpenAbout={() => setAboutOpen(true)}
+          />
+          <Content style={{ overflow: 'auto', background: 'var(--fw-surface)' }}>
+            <Suspense fallback={<Spin style={{ margin: 40 }} />}>
+              <Routes>
+                <Route path="/" element={<Navigate to={`/${tools[0].id}`} replace />} />
+                {tools.map((tool) => (
+                  <Route
+                    key={tool.id}
+                    path={`/${tool.id}`}
+                    element={<tool.component />}
+                  />
+                ))}
+              </Routes>
+            </Suspense>
+          </Content>
+        </Layout>
+      </BrowserRouter>
+    </ConfigProvider>
   );
 }
 

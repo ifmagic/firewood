@@ -383,9 +383,16 @@ export default function ImgToPdf() {
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {t('imgToPdf.imageCount', { count: items.length })}
                 </Text>
-                <Button type="link" size="small" danger onClick={handleClearAll} icon={<DeleteOutlined />}>
-                  {t('action.clear')}
-                </Button>
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  onClick={handleClearAll}
+                  icon={<DeleteOutlined />}
+                  className="fw-tool-iconDangerButton"
+                  title={t('action.clear')}
+                  aria-label={t('action.clear')}
+                />
               </div>
               <div
                 className={styles.thumbGrid}

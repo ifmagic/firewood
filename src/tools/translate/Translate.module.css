@@ -10,11 +10,25 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--fw-divider);
+  border-radius: 12px;
+  background: var(--fw-panel-subtle);
 }
 
 .settingsBar > span {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--fw-text-tertiary);
   font-size: 13px;
+}
+
+.editorShell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--fw-divider);
+  border-radius: 12px;
+  background: var(--fw-surface);
+  overflow: hidden;
 }
 
 .editorArea {
@@ -22,34 +36,47 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   min-height: 180px;
-  max-height: 320px;
+  max-height: 360px;
+  padding: 16px;
+  background: var(--fw-editor-bg);
 }
 
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   min-height: 0;
+  border: 1px solid var(--fw-divider);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--fw-surface);
 }
 
 .panelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--fw-divider);
+  background: var(--fw-panel-subtle);
 }
 
 .panelLabel {
-  font-weight: 500;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--fw-text-tertiary);
+  letter-spacing: 0.02em;
 }
 
-.panel :global(.ant-input) {
+.editorTextarea {
   flex: 1;
+  min-height: 220px !important;
   resize: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
+  border: none !important;
+  border-radius: 0 !important;
+  background: var(--fw-panel-subtle) !important;
 }
 
 .actions {
@@ -59,13 +86,13 @@
 }
 
 .configSection {
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 8px;
-  padding: 12px 16px;
+  background: var(--fw-panel-subtle);
+  border: 1px solid var(--fw-divider);
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .configRow {
@@ -77,8 +104,9 @@
 .configRow > label {
   width: 80px;
   flex-shrink: 0;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+  color: var(--fw-text-tertiary);
+  font-weight: 600;
 }
 
 .configRow > :global(.ant-input),
@@ -89,20 +117,28 @@
 .configToggle {
   cursor: pointer;
   font-size: 13px;
-  color: #1677ff;
+  color: var(--fw-text-body);
   user-select: none;
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.configToggle:hover {
+  background: var(--fw-hover-light);
+  color: var(--fw-text-strong);
 }
 
 .configGuide {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--fw-text-body);
   line-height: 1.6;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-left: 3px solid;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 8px 8px 0;
 }
 
 .configGuide a {
@@ -111,9 +147,9 @@
 
 /* History section */
 .historySection {
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--fw-surface);
+  border-radius: 12px;
+  border: 1px solid var(--fw-divider);
   overflow: hidden;
 }
 
@@ -121,16 +157,16 @@
   display: flex;
   align-items: center;
   padding: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--fw-divider);
 }
 
 .historyTitle {
   flex: 1;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  padding: 14px 20px;
+  padding: 14px 16px;
   margin: 0;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--fw-panel-subtle);
 }
 
 .historyCount {
@@ -144,8 +180,8 @@
   font-size: 12px;
   font-weight: 500;
   line-height: 1;
-  color: rgba(0, 0, 0, 0.45);
-  background: rgba(0, 0, 0, 0.06);
+  color: var(--fw-text-tertiary);
+  background: var(--fw-hover-light);
   border-radius: 10px;
 }
 
@@ -166,9 +202,9 @@
 .historyItem {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 12px 16px;
   gap: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--fw-divider);
   transition: background 0.15s;
 }
 
@@ -177,7 +213,7 @@
 }
 
 .historyItem:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--fw-panel-subtle);
 }
 
 .historyItemMain {
@@ -201,7 +237,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--fw-text-tertiary);
   white-space: nowrap;
 }
 
@@ -215,7 +251,7 @@
   display: block;
   width: 100%;
   font-size: 13px;
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--fw-text-body);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -234,21 +270,34 @@
 
 .historyArrow {
   flex-shrink: 0;
-  color: rgba(0, 0, 0, 0.25);
+  color: #bfbfbf;
   font-size: 12px;
 }
 
 .historyTime {
   flex-shrink: 0;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--fw-text-tertiary);
 }
 
 .historyCopyBtn {
   flex-shrink: 0;
-  color: rgba(0, 0, 0, 0.35);
+  color: var(--fw-text-tertiary);
 }
 
 .historyCopyBtn:hover {
-  color: rgba(0, 0, 0, 0.65) !important;
+  color: var(--fw-text-strong) !important;
+}
+
+.statusHint {
+  color: var(--fw-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .editorArea {
+    grid-template-columns: 1fr;
+  }
 }

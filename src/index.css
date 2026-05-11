@@ -1,7 +1,27 @@
 :root {
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   color-scheme: light;
+  --fw-surface: #ffffff;
+  --fw-sidebar-bg: #1e1e1e;
+  --fw-border: #333333;
+  --fw-divider: #eeeeee;
+  --fw-hover: rgba(255, 255, 255, 0.06);
+  --fw-hover-light: #f2f3f5;
+  --fw-selected-bg: rgba(255, 107, 53, 0.16);
+  --fw-accent: #ff7a45;
+  --fw-text-primary: #f5f5f5;
+  --fw-text-secondary: rgba(245, 245, 245, 0.72);
+  --fw-text-muted: rgba(245, 245, 245, 0.32);
+  --fw-text-tertiary: #8c8c8c;
+  --fw-text-strong: #1f1f1f;
+  --fw-text-body: #595959;
+  --fw-panel-muted: #f7f7f8;
+  --fw-panel-subtle: #fbfbfc;
+  --fw-editor-bg: #fbfbfc;
+  --fw-status-bg: #f9f9f9;
+  --fw-status-text: #666666;
+  --fw-panel-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

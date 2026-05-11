@@ -1,9 +1,11 @@
-import { Input, Button, Space, Typography, Tag } from 'antd';
+import { Input, Button, Space, Tag } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import * as Diff from 'diff';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
+import StatusBar from '../../components/StatusBar';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useResizablePanels } from '../../hooks/useResizablePanels';
@@ -192,81 +194,91 @@ export default function TextDiff() {
 
   const addedLines = diffs.filter((d) => d.added).reduce((sum, d) => sum + countLines(d.value), 0);
   const removedLines = diffs.filter((d) => d.removed).reduce((sum, d) => sum + countLines(d.value), 0);
+  const statusText = `${t('label.original')} ${countLines(left)} · ${t('label.modified')} ${countLines(right)}`;
 
   return (
     <ToolLayout title={t('textDiff.title')} description={t('textDiff.description')}>
-      <Space style={{ marginBottom: 12 }}>
-        <Button type="primary" onClick={compare}>{t('action.compare')}</Button>
-        <Button onClick={restore} disabled={!compared}>{t('action.restoreEdit')}</Button>
-        <Button danger onClick={clear}>{t('action.clear')}</Button>
-        {compared && (
-          <>
-            <Tag color="green">+{addedLines} {t('textDiff.added')}</Tag>
-            <Tag color="red">-{removedLines} {t('textDiff.deleted')}</Tag>
-          </>
-        )}
-      </Space>
-
-      <div
-        ref={containerRef}
-        style={{ position: 'relative', height: 'calc(100% - 80px)', userSelect: 'none' }}
-      >
-        {!compared ? (
-          <div style={{ display: 'flex', height: '100%' }}>
-            <div style={{ width: `${leftPercent}%`, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <Typography.Text strong>{t('label.original')}</Typography.Text>
-              <div style={{ flex: 1, marginTop: 8, position: 'relative' }}>
-                <TextArea
-                  value={left}
-                  onChange={(e) => setLeft(e.target.value)}
-                  placeholder={t('textDiff.enterOriginal')}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    resize: 'none',
-                    fontFamily: 'monospace',
-                    fontSize,
-                  }}
-                />
-              </div>
-            </div>
-            <div
-              style={{
-                width: 6,
-                height: '100%',
-                cursor: 'col-resize',
-                background: 'rgba(0,0,0,0.06)',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onMouseDown={onDividerMouseDown}
-            >
-              <div style={{ width: 2, height: 32, background: 'rgba(0,0,0,0.2)', borderRadius: 1 }} />
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <Typography.Text strong>{t('label.modified')}</Typography.Text>
-              <div style={{ flex: 1, marginTop: 8, position: 'relative' }}>
-                <TextArea
-                  value={right}
-                  onChange={(e) => setRight(e.target.value)}
-                  placeholder={t('textDiff.enterModified')}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    resize: 'none',
-                    fontFamily: 'monospace',
-                    fontSize,
-                  }}
-                />
-              </div>
-            </div>
+      <div className="fw-tool-stack">
+        <div className="fw-tool-toolbar">
+          <div className="fw-tool-toolbarMain">
+            <Button type="primary" onClick={compare}>{t('action.compare')}</Button>
+            <Button onClick={restore} disabled={!compared}>{t('action.restoreEdit')}</Button>
           </div>
-        ) : (
-          renderDiff()
-        )}
-        <FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />
+          <Space size={8}>
+            {compared && (
+              <>
+                <Tag color="green">+{addedLines} {t('textDiff.added')}</Tag>
+                <Tag color="red">-{removedLines} {t('textDiff.deleted')}</Tag>
+              </>
+            )}
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              className="fw-tool-iconDangerButton"
+              title={t('action.clear')}
+              aria-label={t('action.clear')}
+              onClick={clear}
+            />
+          </Space>
+        </div>
+
+        <div className="fw-tool-editorShell">
+          <div
+            ref={containerRef}
+            className="fw-tool-split"
+          >
+            {!compared ? (
+              <>
+                <div className="fw-tool-pane" style={{ width: `${leftPercent}%` }}>
+                  <div className="fw-tool-paneLabel">{t('label.original')}</div>
+                  <div className="fw-tool-paneBody">
+                    <TextArea
+                      value={left}
+                      onChange={(e) => setLeft(e.target.value)}
+                      placeholder={t('textDiff.enterOriginal')}
+                      className="fw-tool-mono fw-tool-textarea"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        resize: 'none',
+                        fontSize,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="fw-tool-divider" onMouseDown={onDividerMouseDown}>
+                  <div className="fw-tool-dividerGrip" />
+                </div>
+                <div className="fw-tool-pane" style={{ flex: 1 }}>
+                  <div className="fw-tool-paneLabel">{t('label.modified')}</div>
+                  <div className="fw-tool-paneBody">
+                    <TextArea
+                      value={right}
+                      onChange={(e) => setRight(e.target.value)}
+                      placeholder={t('textDiff.enterModified')}
+                      className="fw-tool-mono fw-tool-textarea"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        resize: 'none',
+                        fontSize,
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{ flex: 1, minHeight: 0, padding: 16, background: 'var(--fw-editor-bg)' }}>
+                {renderDiff()}
+              </div>
+            )}
+          </div>
+          <StatusBar
+            left={<span className="fw-tool-statusHint">{statusText}</span>}
+            right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
+          />
+        </div>
       </div>
     </ToolLayout>
   );

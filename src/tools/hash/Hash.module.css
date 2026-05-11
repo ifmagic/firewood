@@ -3,32 +3,33 @@
 }
 
 .dropZone {
-  border: 2px dashed rgba(128, 128, 128, 0.35);
-  border-radius: 10px;
-  padding: 32px 16px;
+  border: 1px dashed #d0d5dd;
+  border-radius: 12px;
+  padding: 36px 16px;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s, background-color 0.2s;
   user-select: none;
+  background: var(--fw-panel-subtle);
 }
 
 .dropZone:hover {
-  border-color: #1677ff;
+  border-color: var(--fw-accent);
 }
 
 .dropZoneActive {
-  border-color: #1677ff;
-  background-color: rgba(22, 119, 255, 0.04);
+  border-color: var(--fw-accent);
+  background-color: #fff4ef;
 }
 
 .dropIcon {
   font-size: 36px;
-  color: #1677ff;
+  color: var(--fw-accent);
   margin-bottom: 8px;
 }
 
 .dropHint {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--fw-text-tertiary);
   font-size: 13px;
   margin-top: 4px;
 }
@@ -37,9 +38,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
+  padding: 12px 14px;
+  background: var(--fw-panel-subtle);
+  border-radius: 12px;
+  border: 1px solid var(--fw-divider);
   margin-top: 12px;
   font-size: 13px;
 }
@@ -54,7 +56,7 @@
 }
 
 .fileSize {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--fw-text-tertiary);
   flex-shrink: 0;
 }
 
@@ -64,5 +66,5 @@
   justify-content: center;
   gap: 8px;
   padding: 24px 0;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--fw-text-tertiary);
 }

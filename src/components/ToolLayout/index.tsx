@@ -8,16 +8,13 @@ interface Props {
   children: ReactNode;
 }
 
-export default function ToolLayout({ title, description, children }: Props) {
+export default function ToolLayout({ title, children }: Props) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <Typography.Title level={4} className={styles.title}>
-          {title}
-        </Typography.Title>
-        {description && (
-          <Typography.Text type="secondary">{description}</Typography.Text>
-        )}
+        <Typography.Text className={styles.breadcrumb}>
+          Firewood / {title}
+        </Typography.Text>
       </div>
       <div className={styles.content}>{children}</div>
     </div>

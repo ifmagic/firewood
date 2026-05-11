@@ -2,20 +2,209 @@
   display: none !important;
 }
 
+.firewood-notepad-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid var(--fw-divider);
+  border-radius: 12px;
+  background: var(--fw-surface);
+  overflow: hidden;
+}
+
 .firewood-notepad-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--fw-divider);
+  background: var(--fw-surface);
   flex-wrap: wrap;
 }
 
+.firewood-notepad-toolbarActions {
+  gap: 6px !important;
+}
+
+.firewood-notepad-ghostButton.ant-btn {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--fw-text-body);
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 10px;
+}
+
+.firewood-notepad-ghostButton.ant-btn:disabled {
+  color: #bfbfbf;
+  background: transparent;
+}
+
+.firewood-notepad-ghostButton.ant-btn:hover,
+.firewood-notepad-ghostButton.ant-btn:focus-visible {
+  background: var(--fw-hover-light) !important;
+  color: var(--fw-text-strong) !important;
+}
+
+.firewood-notepad-ghostButton.ant-btn .anticon {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.firewood-notepad-ghostButton.ant-btn:hover .anticon,
+.firewood-notepad-ghostButton.ant-btn:focus-visible .anticon {
+  color: var(--fw-accent);
+}
+
+.firewood-notepad-clearButton.ant-btn {
+  border: none;
+  box-shadow: none;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  color: #c65f5f;
+}
+
+.firewood-notepad-clearButton.ant-btn:hover,
+.firewood-notepad-clearButton.ant-btn:focus-visible {
+  background: #fff1f0 !important;
+  color: #d4380d !important;
+}
+
+.firewood-notepad-tabs.ant-tabs {
+  padding: 0 12px;
+  background: var(--fw-surface);
+}
+
+.firewood-notepad-tabs .ant-tabs-nav {
+  margin: 0;
+}
+
+.firewood-notepad-tabs .ant-tabs-nav::before {
+  border-bottom: 1px solid var(--fw-divider);
+}
+
+.firewood-notepad-tabs .ant-tabs-tab {
+  position: relative;
+  border: none !important;
+  border-radius: 8px 8px 0 0 !important;
+  background: var(--fw-panel-muted) !important;
+  color: #8c8c8c;
+  padding: 10px 12px 8px !important;
+  margin: 0 4px 0 0 !important;
+}
+
+.firewood-notepad-tabs .ant-tabs-tab:hover {
+  background: var(--fw-panel-subtle) !important;
+  color: var(--fw-text-body);
+}
+
+.firewood-notepad-tabs .ant-tabs-tab-active {
+  background: var(--fw-editor-bg) !important;
+  color: var(--fw-text-strong) !important;
+}
+
+.firewood-notepad-tabs .ant-tabs-tab-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--fw-accent);
+}
+
+.firewood-notepad-tabs .ant-tabs-tab-btn {
+  color: inherit;
+}
+
+.firewood-notepad-tabs .ant-tabs-tab-remove {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  margin-inline-start: 0 !important;
+  color: #8c8c8c;
+  transition: opacity 0.15s ease, width 0.15s ease, margin 0.15s ease;
+}
+
+.firewood-notepad-tabs .ant-tabs-tab:hover .ant-tabs-tab-remove,
+.firewood-notepad-tabs .ant-tabs-tab-active .ant-tabs-tab-remove {
+  opacity: 1;
+  width: 16px;
+  margin-inline-start: 8px !important;
+}
+
+.firewood-notepad-tabs .ant-tabs-nav-add {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  color: #8c8c8c !important;
+  min-width: 32px;
+  height: 32px;
+}
+
+.firewood-notepad-tabs .ant-tabs-nav-add:hover {
+  background: var(--fw-hover-light) !important;
+  color: var(--fw-text-strong) !important;
+}
+
+.firewood-notepad-tabs .ant-tabs-content-holder {
+  display: none;
+}
+
+.firewood-notepad-workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--fw-editor-bg);
+}
+
+.firewood-notepad-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--fw-editor-bg);
+}
+
+.firewood-notepad-stageEmpty {
+  display: grid;
+  place-items: center;
+}
+
+.firewood-notepad-statusMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.firewood-notepad-statusBadge {
+  color: var(--fw-accent);
+  font-weight: 500;
+}
+
+.firewood-notepad-statusLanguage {
+  color: var(--fw-accent);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
 .firewood-notepad-readerShell {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  border: 1px solid var(--firewood-reader-shell-border, #dccfb5);
+  border: none;
   border-bottom: none;
-  border-radius: 18px 18px 0 0;
+  border-radius: 0;
   background: var(--firewood-reader-shell-background, linear-gradient(180deg, #f7efe1 0%, #efe3ca 100%));
 }
 
@@ -59,6 +248,22 @@
 }
 
 @media (max-width: 768px) {
+  .firewood-notepad-shell {
+    border-radius: 10px;
+  }
+
+  .firewood-notepad-toolbar {
+    padding: 8px;
+  }
+
+  .firewood-notepad-tabs.ant-tabs {
+    padding: 0 8px;
+  }
+
+  .firewood-notepad-statusMeta {
+    gap: 8px;
+  }
+
   .firewood-notepad-readerPaper {
     width: 100%;
     padding: 20px 18px 36px;

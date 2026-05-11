@@ -1,1 +1,316 @@
-/* App-level styles intentionally minimal - Ant Design handles layout */
+body {
+	background: var(--fw-surface);
+	color: var(--fw-text-body);
+}
+
+.ant-btn {
+	border-radius: 8px;
+	box-shadow: none;
+	font-weight: 500;
+}
+
+.ant-btn-default,
+.ant-btn-dashed {
+	border-color: var(--fw-divider);
+	color: var(--fw-text-body);
+	background: var(--fw-surface);
+}
+
+.ant-btn-default:hover,
+.ant-btn-default:focus-visible,
+.ant-btn-dashed:hover,
+.ant-btn-dashed:focus-visible {
+	border-color: var(--fw-accent) !important;
+	background: var(--fw-hover-light) !important;
+	color: var(--fw-text-strong) !important;
+}
+
+.ant-btn-primary {
+	box-shadow: none;
+}
+
+.ant-btn-dangerous.ant-btn-default {
+	border-color: transparent;
+	background: transparent;
+	color: #c65f5f;
+}
+
+.ant-btn-dangerous.ant-btn-default:hover,
+.ant-btn-dangerous.ant-btn-default:focus-visible {
+	border-color: transparent !important;
+	background: #fff1f0 !important;
+	color: #d4380d !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker,
+.ant-input-number,
+.ant-radio-button-wrapper {
+	border-color: var(--fw-divider) !important;
+	border-radius: 8px !important;
+	box-shadow: none !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-picker,
+.ant-input-number,
+.ant-input-outlined,
+.ant-input-textarea .ant-input {
+	background: var(--fw-surface);
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-picker:hover,
+.ant-input-number:hover,
+.ant-select:hover .ant-select-selector,
+.ant-radio-button-wrapper:hover {
+	border-color: #d9d9d9 !important;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper-focused,
+.ant-picker-focused,
+.ant-input-number-focused,
+.ant-select-focused .ant-select-selector,
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+	border-color: var(--fw-accent) !important;
+	box-shadow: 0 0 0 3px rgba(255, 122, 69, 0.12) !important;
+}
+
+.ant-radio-button-wrapper {
+	background: var(--fw-panel-subtle);
+	color: var(--fw-text-body);
+}
+
+.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+	background: #fff4ef;
+	color: #b54a1b;
+}
+
+.ant-tabs-top > .ant-tabs-nav {
+	margin-bottom: 16px;
+}
+
+.ant-tabs .ant-tabs-ink-bar {
+	background: var(--fw-accent);
+}
+
+.ant-tabs .ant-tabs-tab {
+	padding-bottom: 10px;
+}
+
+.ant-tabs .ant-tabs-tab:hover,
+.ant-tabs .ant-tabs-tab-btn:hover {
+	color: var(--fw-text-strong);
+}
+
+.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+	color: var(--fw-text-strong);
+}
+
+.ant-alert {
+	border-radius: 10px;
+}
+
+.ant-tag {
+	border-radius: 999px;
+}
+
+.ant-table-wrapper .ant-table-container {
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th {
+	background: var(--fw-panel-subtle) !important;
+	color: var(--fw-text-tertiary) !important;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td {
+	border-bottom-color: var(--fw-divider) !important;
+}
+
+.fw-tool-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	height: 100%;
+	min-height: 0;
+}
+
+.fw-tool-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 8px 12px;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	background: var(--fw-panel-subtle);
+}
+
+.fw-tool-toolbarMain {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.fw-tool-iconDangerButton.ant-btn {
+	border: none;
+	box-shadow: none;
+	width: 32px;
+	min-width: 32px;
+	height: 32px;
+	padding: 0;
+	border-radius: 8px;
+}
+
+.fw-tool-editorShell {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--fw-surface);
+}
+
+.fw-tool-split {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	position: relative;
+	user-select: none;
+	background: var(--fw-editor-bg);
+}
+
+.fw-tool-pane {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
+.fw-tool-paneLabel {
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--fw-divider);
+	background: var(--fw-panel-subtle);
+	color: var(--fw-text-tertiary);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.fw-tool-paneBody {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+}
+
+.fw-tool-divider {
+	width: 8px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: col-resize;
+	background: var(--fw-panel-muted);
+	border-left: 1px solid var(--fw-divider);
+	border-right: 1px solid var(--fw-divider);
+}
+
+.fw-tool-dividerGrip {
+	width: 2px;
+	height: 32px;
+	border-radius: 999px;
+	background: #d0d5dd;
+}
+
+.fw-tool-panel {
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	background: var(--fw-surface);
+	overflow: hidden;
+}
+
+.fw-tool-panelHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--fw-divider);
+	background: var(--fw-panel-subtle);
+}
+
+.fw-tool-panelTitle {
+	margin: 0;
+	color: var(--fw-text-strong);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.fw-tool-panelBody {
+	padding: 16px;
+}
+
+.fw-tool-grid {
+	display: grid;
+	gap: 16px;
+}
+
+.fw-tool-gridTwo {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fw-tool-mono {
+	font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace !important;
+	letter-spacing: 0.3px;
+}
+
+.fw-tool-textarea.ant-input,
+.fw-tool-textarea {
+	background: var(--fw-panel-subtle);
+}
+
+.fw-tool-formLabel {
+	color: var(--fw-text-tertiary);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.fw-tool-statusHint {
+	color: var(--fw-text-tertiary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+	.fw-tool-gridTwo {
+		grid-template-columns: 1fr;
+	}
+
+	.fw-tool-toolbar {
+		padding: 8px;
+	}
+
+	.fw-tool-panelHeader,
+	.fw-tool-panelBody {
+		padding-left: 12px;
+		padding-right: 12px;
+	}
+}

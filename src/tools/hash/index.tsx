@@ -70,18 +70,33 @@ function TextHash() {
   };
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }}>
-      <TextArea
-        rows={6}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={t('hash.enterText')}
-        style={{ fontFamily: 'monospace' }}
-      />
-      <Space>
-        <Button type="primary" onClick={calculate}>{t('action.calculate')}</Button>
-        <Button danger onClick={() => { setInput(''); setRows([]); }}>{t('action.clear')}</Button>
-      </Space>
+    <div className="fw-tool-stack">
+      <div className="fw-tool-panel">
+        <div className="fw-tool-panelHeader">
+          <h4 className="fw-tool-panelTitle">{t('label.text')}</h4>
+        </div>
+        <div className="fw-tool-panelBody">
+          <TextArea
+            className="fw-tool-textarea fw-tool-mono"
+            rows={8}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={t('hash.enterText')}
+          />
+          <Space style={{ marginTop: 12 }}>
+            <Button type="primary" onClick={calculate}>{t('action.calculate')}</Button>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              className="fw-tool-iconDangerButton"
+              title={t('action.clear')}
+              aria-label={t('action.clear')}
+              onClick={() => { setInput(''); setRows([]); }}
+            />
+          </Space>
+        </div>
+      </div>
       {rows.length > 0 && (
         <Table
           dataSource={rows}
@@ -91,7 +106,7 @@ function TextHash() {
           size="small"
         />
       )}
-    </Space>
+    </div>
   );
 }
 
@@ -147,7 +162,7 @@ function FileHash() {
   };
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }}>
+    <div className="fw-tool-stack">
       <div
         className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ''}`}
         onDrop={handleDrop}
@@ -175,6 +190,8 @@ function FileHash() {
             type="text"
             size="small"
             icon={<DeleteOutlined />}
+            title={t('action.clear')}
+            aria-label={t('action.clear')}
             onClick={clear}
           />
         </div>
@@ -196,7 +213,7 @@ function FileHash() {
           size="small"
         />
       )}
-    </Space>
+    </div>
   );
 }
 

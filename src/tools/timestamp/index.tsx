@@ -118,7 +118,7 @@ export default function Timestamp() {
 
   return (
     <ToolLayout title={t('timestamp.title')} description={t('timestamp.description')}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className={styles.container}>
         {/* Timestamp → Date */}
         <div className={styles.section}>
           <h4 className={styles.sectionTitle}>{t('timestamp.tsToDate')}</h4>
@@ -215,10 +215,10 @@ export default function Timestamp() {
                 danger
                 icon={<DeleteOutlined />}
                 onClick={clearHistory}
-                className={styles.clearBtn}
-              >
-                {t('action.clear')}
-              </Button>
+                className={`${styles.clearBtn} fw-tool-iconDangerButton`}
+                title={t('action.clear')}
+                aria-label={t('action.clear')}
+              />
             )}
           </div>
           {history.length === 0 ? (

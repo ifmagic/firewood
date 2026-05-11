@@ -12,6 +12,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
+import StatusBar from '../../components/StatusBar';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import styles from './Translate.module.css';
 
@@ -220,6 +221,9 @@ export default function Translate() {
     setOutput(input);
   };
 
+  const providerLabel = provider === 'tencent' ? t('translate.tencent') : t('translate.baidu');
+  const statusText = `${providerLabel} · ${getLangLabel(sourceLang, t)} → ${getLangLabel(targetLang, t)}`;
+
   return (
     <ToolLayout title={t('translate.title')} description={t('translate.description')}>
       <div className={styles.container}>
@@ -349,60 +353,70 @@ export default function Translate() {
         )}
 
         {/* Translation panels */}
-        <div className={styles.editorArea} style={{ position: 'relative' }}>
-          <div className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <span className={styles.panelLabel}>{t('translate.sourceText')}</span>
-              <Space size={4}>
-                <Button
-                  type="primary"
-                  size="small"
-                  onClick={handleTranslate}
-                  loading={loading}
-                  disabled={!input.trim()}
-                >
-                  {t('action.translate')}
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => { setInput(''); setOutput(''); }}
-                  disabled={!input && !output}
-                >
-                  {t('action.clear')}
-                </Button>
-              </Space>
+        <div className={styles.editorShell}>
+          <div className={styles.editorArea}>
+            <div className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <span className={styles.panelLabel}>{t('translate.sourceText')}</span>
+                <Space size={4}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={handleTranslate}
+                    loading={loading}
+                    disabled={!input.trim()}
+                  >
+                    {t('action.translate')}
+                  </Button>
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    className="fw-tool-iconDangerButton"
+                    title={t('action.clear')}
+                    aria-label={t('action.clear')}
+                    onClick={() => { setInput(''); setOutput(''); }}
+                    disabled={!input && !output}
+                  />
+                </Space>
+              </div>
+              <TextArea
+                className={styles.editorTextarea}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t('translate.enterText')}
+                style={{ fontSize }}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                    handleTranslate();
+                  }
+                }}
+              />
             </div>
-            <TextArea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t('translate.enterText')}
-              style={{ fontSize }}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                  handleTranslate();
-                }
-              }}
-            />
-          </div>
-          <div className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <span className={styles.panelLabel}>{t('translate.targetText')}</span>
-              <Tooltip title={t('action.copy')}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CopyOutlined />}
-                  disabled={!output}
-                  onClick={() => {
-                    navigator.clipboard.writeText(output);
-                    message.success(t('action.copied'));
-                  }}
-                />
-              </Tooltip>
+            <div className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <span className={styles.panelLabel}>{t('translate.targetText')}</span>
+                <Tooltip title={t('action.copy')}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CopyOutlined />}
+                    disabled={!output}
+                    onClick={() => {
+                      navigator.clipboard.writeText(output);
+                      message.success(t('action.copied'));
+                    }}
+                  />
+                </Tooltip>
+              </div>
+              <TextArea className={styles.editorTextarea} value={output} readOnly placeholder={t('translate.translationResult')} style={{ fontSize }} />
             </div>
-            <TextArea value={output} readOnly placeholder={t('translate.translationResult')} style={{ fontSize }} />
           </div>
-          <FontSizeControl fontSize={fontSize} onIncrease={increaseFontSize} onDecrease={decreaseFontSize} />
+          <StatusBar
+            left={<span className={styles.statusHint}>{statusText}</span>}
+            right={<FontSizeControl fontSize={fontSize} onIncrease={increaseFontSize} onDecrease={decreaseFontSize} />}
+          />
         </div>
 
         {/* Translation history */}
@@ -419,10 +433,10 @@ export default function Translate() {
                 danger
                 icon={<DeleteOutlined />}
                 onClick={clearHistory}
-                className={styles.clearBtn}
-              >
-                {t('action.clear')}
-              </Button>
+                className={`${styles.clearBtn} fw-tool-iconDangerButton`}
+                title={t('action.clear')}
+                aria-label={t('action.clear')}
+              />
             )}
           </div>
           {history.length === 0 ? (

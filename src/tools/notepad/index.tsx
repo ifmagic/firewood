@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import Editor, { type OnMount, type BeforeMount } from '@monaco-editor/react';
 import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
+import { BgColorsOutlined, BookOutlined, DeleteOutlined, EditOutlined, FolderOpenOutlined, SaveOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { useTranslation } from 'react-i18next';
 import FontSizeControl from '../../components/FontSizeControl';
+import StatusBar from '../../components/StatusBar';
 import ToolLayout from '../../components/ToolLayout';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -251,7 +253,6 @@ export default function Notepad() {
   const nameInputRef = useRef<InputRef>(null);
   const { fontSize, increase, decrease } = useEditorFontSize();
   const isMac = navigator.platform.toLowerCase().includes('mac');
-  const [currentLineCharCount, setCurrentLineCharCount] = useState(0);
   const [selectedCharCount, setSelectedCharCount] = useState(0);
   const [readerThemeId, setReaderThemeId] = usePersistentState<ReaderThemeId>(STORAGE_READER_THEME_KEY, 'parchment');
   const activeTab = useMemo(
@@ -587,6 +588,8 @@ export default function Notepad() {
     if (/^(import |export |const |let |var |function |class |=>|\/\/)/.test(trimmed)) return 'javascript';
     return 'plaintext';
   }, [content]);
+  const totalCharCount = useMemo(() => getCharacterCount(content), [content]);
+  const totalLineCount = useMemo(() => (content ? content.split(/\r?\n/).length : 1), [content]);
   const showReaderView = activeTab?.readerVariant === 'abyss' && activeTab.viewMode !== 'editor';
   const readerBlocks = useMemo(
     () => (showReaderView ? buildReaderBlocks(content) : []),
@@ -633,7 +636,7 @@ export default function Notepad() {
         { token: 'type.identifier', foreground: '1D4ED8' },
       ],
       colors: {
-        'editor.background': '#F8FAFC',
+        'editor.background': '#FBFBFC',
         'editor.foreground': '#0F172A',
         'editorCursor.foreground': '#EF4444',
         'editorCursor.background': '#FFFFFF',
@@ -645,7 +648,7 @@ export default function Notepad() {
         'editor.inactiveSelectionBackground': '#E2E8F099',
         'editor.selectionHighlightBackground': '#E2E8F055',
         'editor.selectionHighlightBorder': '#94A3B8',
-        'editor.lineHighlightBackground': '#F1F5F9',
+        'editor.lineHighlightBackground': '#F5F6F8',
         'editorIndentGuide.background1': '#E2E8F0',
       },
     });
@@ -656,15 +659,10 @@ export default function Notepad() {
 
     const updateCursorStats = () => {
       const model = editor.getModel();
-      const position = editor.getPosition();
-      if (!model || !position) {
-        setCurrentLineCharCount(0);
+      if (!model) {
         setSelectedCharCount(0);
         return;
       }
-
-      const currentLineText = model.getLineContent(position.lineNumber);
-      setCurrentLineCharCount(getCharacterCount(currentLineText));
 
       const selections = editor.getSelections() ?? [];
       const selectedLength = selections.reduce((total, selection) => {
@@ -729,6 +727,8 @@ export default function Notepad() {
   const editorOptions = {
     minimap: { enabled: false },
     fontSize,
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
+    letterSpacing: 0.5,
     cursorStyle: 'line' as const,
     cursorWidth: 3,
     cursorBlinking: 'solid' as const,
@@ -743,149 +743,160 @@ export default function Notepad() {
     scrollBeyondLastLine: false,
   };
 
+  const statusMeta = showReaderView ? (
+    <span className="firewood-notepad-statusMeta">
+      <span className="firewood-notepad-statusBadge">{t('notepad.readerBadge')}</span>
+      <span>{activeTab?.name ?? t('notepad.untitled')}</span>
+    </span>
+  ) : (
+    <span className="firewood-notepad-statusMeta">
+      {detectedLanguage !== 'plaintext' && (
+        <span className="firewood-notepad-statusLanguage">{detectedLanguage.toUpperCase()}</span>
+      )}
+      <span>{t('notepad.chars')} {totalCharCount}</span>
+      <span>{t('notepad.line')} {totalLineCount}</span>
+      {selectedCharCount > 0 && <span>{t('notepad.selected')} {selectedCharCount}</span>}
+    </span>
+  );
+
   return (
     <ToolLayout title={t('notepad.title')} description={t('notepad.description')}>
-      <div className="firewood-notepad-toolbar">
-        <Space wrap>
+      <div className="firewood-notepad-shell">
+        <div className="firewood-notepad-toolbar">
+          <Space wrap className="firewood-notepad-toolbarActions">
+            <Button
+              type="text"
+              className="firewood-notepad-ghostButton"
+              icon={<FolderOpenOutlined />}
+              onClick={() => {
+                void handleOpenLocalFile();
+              }}
+            >
+              {t('notepad.openFile')}
+            </Button>
+            <Button
+              type="text"
+              className="firewood-notepad-ghostButton"
+              icon={<SaveOutlined />}
+              onClick={() => {
+                void handleSaveAs();
+              }}
+              disabled={!activeTabId}
+            >
+              {t('notepad.saveAs')}
+            </Button>
+            {activeTab?.readerVariant === 'abyss' && (
+              <>
+                <Button
+                  type="text"
+                  className="firewood-notepad-ghostButton"
+                  icon={showReaderView ? <EditOutlined /> : <BookOutlined />}
+                  onClick={handleToggleReaderView}
+                >
+                  {showReaderView ? t('notepad.sourceView') : t('notepad.readerView')}
+                </Button>
+                <Dropdown
+                  trigger={['click']}
+                  menu={{
+                    selectable: true,
+                    selectedKeys: [readerThemeId],
+                    items: (Object.entries(READER_THEME_CONFIG) as Array<[ReaderThemeId, typeof READER_THEME_CONFIG[ReaderThemeId]]>).map(([themeId, theme]) => ({
+                      key: themeId,
+                      label: t(theme.labelKey),
+                    })),
+                    onClick: ({ key }) => {
+                      setReaderThemeId(key as ReaderThemeId);
+                    },
+                  }}
+                >
+                  <Button
+                    type="text"
+                    className="firewood-notepad-ghostButton"
+                    icon={<BgColorsOutlined />}
+                  >
+                    {t('notepad.readerTheme')}: {t(activeReaderTheme.labelKey)}
+                  </Button>
+                </Dropdown>
+              </>
+            )}
+          </Space>
           <Button
-            onClick={() => {
-              void handleOpenLocalFile();
-            }}
-          >
-            {t('notepad.openFile')}
-          </Button>
-          <Button
-            onClick={() => {
-              void handleSaveAs();
-            }}
-            disabled={!activeTabId}
-          >
-            {t('notepad.saveAs')}
-          </Button>
-          {activeTab?.readerVariant === 'abyss' && (
-            <>
-              <Button type={showReaderView ? 'primary' : 'default'} onClick={handleToggleReaderView}>
-                {showReaderView ? t('notepad.sourceView') : t('notepad.readerView')}
-              </Button>
-              <Dropdown
-                trigger={['click']}
-                menu={{
-                  selectable: true,
-                  selectedKeys: [readerThemeId],
-                  items: (Object.entries(READER_THEME_CONFIG) as Array<[ReaderThemeId, typeof READER_THEME_CONFIG[ReaderThemeId]]>).map(([themeId, theme]) => ({
-                    key: themeId,
-                    label: t(theme.labelKey),
-                  })),
-                  onClick: ({ key }) => {
-                    setReaderThemeId(key as ReaderThemeId);
-                  },
-                }}
-              >
-                <Button>{t('notepad.readerTheme')}: {t(activeReaderTheme.labelKey)}</Button>
-              </Dropdown>
-            </>
-          )}
-          <Button
-            danger
+            type="text"
+            className="firewood-notepad-clearButton"
+            icon={<DeleteOutlined />}
+            title={t('action.clear')}
+            aria-label={t('action.clear')}
             onClick={() => {
               if (!activeTabId) return;
               localStorage.removeItem(getContentKey(activeTabId));
               setContent('');
             }}
             disabled={!activeTabId}
-          >
-            {t('action.clear')}
-          </Button>
-        </Space>
-      </div>
+          />
+        </div>
 
-      <Tabs
-        type="editable-card"
-        hideAdd={false}
-        onEdit={handleEdit}
-        activeKey={effectiveActive}
-        items={tabItems}
-        onChange={setActiveTabId}
-      />
+        <Tabs
+          className="firewood-notepad-tabs"
+          type="editable-card"
+          hideAdd={false}
+          onEdit={handleEdit}
+          activeKey={effectiveActive}
+          items={tabItems}
+          onChange={setActiveTabId}
+        />
 
-      <div style={{ position: 'relative', height: 'calc(100% - 110px)' }}>
-        {activeTabId ? (
-          <>
-            {showReaderView ? (
-              <div className="firewood-notepad-readerShell" style={{ ...readerThemeStyle, height: 'calc(100% - 34px)' }}>
-                <div className="firewood-notepad-readerPaper">
-                  <div className="firewood-notepad-readerBanner">{t('notepad.readerBadge')}</div>
-                  {readerBlocks.length > 0 ? (
-                    readerBlocks.map((block) => (
-                      block.kind === 'heading' ? (
-                        <h3 key={block.key} className="firewood-notepad-readerHeading">
-                          {block.text}
-                        </h3>
-                      ) : (
-                        <p key={block.key} className="firewood-notepad-readerParagraph" style={{ fontSize }}>
-                          {block.text}
-                        </p>
-                      )
-                    ))
-                  ) : (
-                    <Empty
-                      description={t('notepad.readerEmpty')}
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      style={{ marginTop: 36 }}
-                    />
-                  )}
+        <div className="firewood-notepad-workspace">
+          <div className={`firewood-notepad-stage${activeTabId ? '' : ' firewood-notepad-stageEmpty'}`}>
+            {activeTabId ? (
+              showReaderView ? (
+                <div className="firewood-notepad-readerShell" style={readerThemeStyle}>
+                  <div className="firewood-notepad-readerPaper">
+                    <div className="firewood-notepad-readerBanner">{t('notepad.readerBadge')}</div>
+                    {readerBlocks.length > 0 ? (
+                      readerBlocks.map((block) => (
+                        block.kind === 'heading' ? (
+                          <h3 key={block.key} className="firewood-notepad-readerHeading">
+                            {block.text}
+                          </h3>
+                        ) : (
+                          <p key={block.key} className="firewood-notepad-readerParagraph" style={{ fontSize }}>
+                            {block.text}
+                          </p>
+                        )
+                      ))
+                    ) : (
+                      <Empty
+                        description={t('notepad.readerEmpty')}
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        style={{ marginTop: 36 }}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <Editor
+                  height="100%"
+                  language={detectedLanguage}
+                  value={content}
+                  onChange={(value) => onContentChange(value ?? '')}
+                  beforeMount={handleEditorBeforeMount}
+                  onMount={handleEditorMount}
+                  theme="firewood-contrast-light"
+                  options={editorOptions}
+                />
+              )
             ) : (
-              <Editor
-                height="calc(100% - 34px)"
-                language={detectedLanguage}
-                value={content}
-                onChange={(value) => onContentChange(value ?? '')}
-                beforeMount={handleEditorBeforeMount}
-                onMount={handleEditorMount}
-                theme="firewood-contrast-light"
-                options={editorOptions}
+              <Empty
+                description={t('notepad.newTab')}
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             )}
-            <div
-              style={{
-                height: 34,
-                borderTop: '1px solid #e2e8f0',
-                background: '#f1f5f9',
-                color: '#334155',
-                fontSize: 12,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                padding: '0 140px 0 12px',
-              }}
-            >
-              <span>
-                {showReaderView ? (
-                  <>
-                    <span style={{ color: activeReaderTheme.bannerColor, marginRight: 8 }}>{t('notepad.readerBadge')}</span>
-                    {activeTab?.name}
-                  </>
-                ) : (
-                  <>
-                    {detectedLanguage !== 'plaintext' && (
-                      <span style={{ color: '#6366f1', marginRight: 8 }}>{detectedLanguage.toUpperCase()}</span>
-                    )}
-                    {t('notepad.line')}: {currentLineCharCount} {t('notepad.chars')} | {t('notepad.selected')}: {selectedCharCount}
-                  </>
-                )}
-              </span>
-            </div>
-          </>
-        ) : (
-          <Empty
-            description={t('notepad.newTab')}
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            style={{ marginTop: 36 }}
+          </div>
+          <StatusBar
+            left={statusMeta}
+            right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
           />
-        )}
-        <FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />
+        </div>
       </div>
 
       <Modal

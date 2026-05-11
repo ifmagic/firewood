@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Button, Space, Alert } from 'antd';
-import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { Button, Alert } from 'antd';
+import { DeleteOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
 import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
+import StatusBar from '../../components/StatusBar';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useResizablePanels } from '../../hooks/useResizablePanels';
@@ -78,7 +79,12 @@ export default function JsonFormatter() {
     setIsInputCollapsed(false);
   };
 
-  const editorOptions = { minimap: { enabled: false }, fontSize };
+  const editorOptions = {
+    minimap: { enabled: false },
+    fontSize,
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
+    letterSpacing: 0.5,
+  };
   const toggleInputButtonStyle = {
     color: 'rgba(31, 41, 55, 0.9)',
     borderColor: 'rgba(15, 23, 42, 0.14)',
@@ -91,77 +97,87 @@ export default function JsonFormatter() {
 
   return (
     <ToolLayout title={t('jsonFormatter.title')} description={t('jsonFormatter.description')}>
-      <Space style={{ marginBottom: 12 }}>
-        <Button type="primary" onClick={format}>{t('action.format')}</Button>
-        <Button onClick={minify}>{t('action.minify')}</Button>
-        <Button onClick={unescape}>{t('action.unescape')}</Button>
-        {hasCompared && (
-          <Button
-            type="default"
-            onClick={() => setIsInputCollapsed((prev) => !prev)}
-            icon={isInputCollapsed ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-            style={toggleInputButtonStyle}
-          >
-            {isInputCollapsed ? t('action.showOriginalInput') : t('action.hideOriginalInput')}
-          </Button>
-        )}
-        <Button danger onClick={clear}>{t('action.clear')}</Button>
-      </Space>
-
-      {error && (
-        <Alert type="error" message={error} style={{ marginBottom: 12 }} showIcon />
-      )}
-
-      <div
-        ref={containerRef}
-        style={{ display: 'flex', height: 'calc(100% - 80px)', position: 'relative', userSelect: 'none' }}
-      >
-        <div
-          style={{
-            width: isInputCollapsed ? 0 : `${leftPercent}%`,
-            height: '100%',
-            minWidth: 0,
-            opacity: isInputCollapsed ? 0 : 1,
-            overflow: 'hidden',
-            transition: 'width 220ms ease, opacity 220ms ease',
-          }}
-        >
-          <Editor
-            height="100%"
-            language="json"
-            value={input}
-            onChange={(v) => setInput(v ?? '')}
-            theme="vs-dark"
-            options={editorOptions}
-          />
-        </div>
-        {!isInputCollapsed && (
-          <div
-            style={{
-              width: 6,
-              height: '100%',
-              cursor: 'col-resize',
-              background: 'rgba(255,255,255,0.06)',
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onMouseDown={onDividerMouseDown}
-          >
-            <div style={{ width: 2, height: 32, background: 'rgba(255,255,255,0.25)', borderRadius: 1 }} />
+      <div className="fw-tool-stack">
+        <div className="fw-tool-toolbar">
+          <div className="fw-tool-toolbarMain">
+            <Button type="primary" onClick={format}>{t('action.format')}</Button>
+            <Button onClick={minify}>{t('action.minify')}</Button>
+            <Button onClick={unescape}>{t('action.unescape')}</Button>
+            {hasCompared && (
+              <Button
+                type="default"
+                onClick={() => setIsInputCollapsed((prev) => !prev)}
+                icon={isInputCollapsed ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                style={toggleInputButtonStyle}
+              >
+                {isInputCollapsed ? t('action.showOriginalInput') : t('action.hideOriginalInput')}
+              </Button>
+            )}
           </div>
-        )}
-        <div style={{ flex: 1, height: '100%', minWidth: 0 }}>
-          <Editor
-            height="100%"
-            language="json"
-            value={output}
-            theme="vs-dark"
-            options={{ ...editorOptions, readOnly: true }}
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            className="fw-tool-iconDangerButton"
+            title={t('action.clear')}
+            aria-label={t('action.clear')}
+            onClick={clear}
           />
         </div>
-        <FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />
+
+        {error && (
+          <Alert type="error" message={error} showIcon />
+        )}
+
+        <div className="fw-tool-editorShell">
+          <div
+            ref={containerRef}
+            className="fw-tool-split"
+          >
+            <div
+              className="fw-tool-pane"
+              style={{
+                width: isInputCollapsed ? 0 : `${leftPercent}%`,
+                opacity: isInputCollapsed ? 0 : 1,
+                overflow: 'hidden',
+                transition: 'width 220ms ease, opacity 220ms ease',
+              }}
+            >
+              <div className="fw-tool-paneLabel">{t('label.text')}</div>
+              <div className="fw-tool-paneBody">
+                <Editor
+                  height="100%"
+                  language="json"
+                  value={input}
+                  onChange={(v) => setInput(v ?? '')}
+                  theme="vs-light"
+                  options={editorOptions}
+                />
+              </div>
+            </div>
+            {!isInputCollapsed && (
+              <div className="fw-tool-divider" onMouseDown={onDividerMouseDown}>
+                <div className="fw-tool-dividerGrip" />
+              </div>
+            )}
+            <div className="fw-tool-pane" style={{ flex: 1 }}>
+              <div className="fw-tool-paneLabel">{t('label.result')}</div>
+              <div className="fw-tool-paneBody">
+                <Editor
+                  height="100%"
+                  language="json"
+                  value={output}
+                  theme="vs-light"
+                  options={{ ...editorOptions, readOnly: true }}
+                />
+              </div>
+            </div>
+          </div>
+          <StatusBar
+            left={<span className="fw-tool-statusHint">{error || (isInputCollapsed ? t('label.result') : `${t('label.text')} / ${t('label.result')}`)}</span>}
+            right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
+          />
+        </div>
       </div>
     </ToolLayout>
   );

@@ -1,8 +1,9 @@
 .sider {
   height: 100vh;
-  background: #1a1a2e !important;
+  background: var(--fw-sidebar-bg) !important;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--fw-border);
 }
 
 /* Ant Design Sider wraps children in an inner div — propagate flex layout */
@@ -13,12 +14,12 @@
 }
 
 .logo {
-  height: 56px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 14px;
+  border-bottom: 1px solid var(--fw-border);
 }
 
 .logoContent {
@@ -29,32 +30,33 @@
 }
 
 .logoIcon {
-  font-size: 20px;
-  color: #ff6b35;
+  font-size: 18px;
+  color: var(--fw-accent);
 }
 
 .logoText {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #fff;
-  letter-spacing: 1px;
+  color: var(--fw-text-primary);
+  letter-spacing: 0.02em;
 }
 
 .viewButton {
-  color: rgba(255, 255, 255, 0.65) !important;
+  color: var(--fw-text-secondary) !important;
   padding: 4px !important;
   min-width: 32px !important;
   height: 32px !important;
+  border-radius: 8px !important;
 }
 
 .viewButton:hover {
-  color: #fff !important;
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--fw-text-primary) !important;
+  background-color: var(--fw-hover) !important;
 }
 
 .toolList {
   flex: 1;
-  padding: 8px 0;
+  padding: 10px 8px;
   overflow-y: auto;
 }
 
@@ -63,37 +65,50 @@
   align-items: center;
   gap: 10px;
   height: 40px;
-  padding: 0 16px 0 12px;
+  margin: 2px 0;
+  padding: 0 12px;
+  border-radius: 8px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--fw-text-secondary);
   transition: background 0.2s, color 0.15s;
   user-select: none;
 }
 
 .toolItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: var(--fw-hover);
+  color: var(--fw-text-primary);
 }
 
 .toolItemSelected {
-  background: rgba(22, 119, 255, 0.15);
-  color: #1677ff !important;
+  background: var(--fw-selected-bg);
+  color: var(--fw-text-primary) !important;
 }
 
 .toolItemSelected .toolIcon,
 .toolItemSelected .toolName {
-  color: #1677ff;
+  color: var(--fw-text-primary);
 }
 
 .toolItemDragOver {
-  border-top: 2px solid #1677ff;
+  box-shadow: inset 0 2px 0 var(--fw-accent);
+}
+
+.toolItemDragging {
+  opacity: 0.56;
+  background: var(--fw-hover);
 }
 
 .dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 24px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--fw-text-muted);
   cursor: grab;
   flex-shrink: 0;
+  touch-action: none;
 }
 
 .dragHandle:active {
@@ -101,7 +116,7 @@
 }
 
 .toolItem:hover .dragHandle {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--fw-text-secondary);
 }
 
 .toolIcon {
@@ -109,11 +124,11 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--fw-accent);
 }
 
 .toolItem:hover .toolIcon {
-  color: #fff;
+  color: var(--fw-accent);
 }
 
 .toolName {
@@ -124,6 +139,6 @@
 }
 
 .siderFooter {
-  padding: 8px 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 12px;
+  border-top: 1px solid var(--fw-border);
 }

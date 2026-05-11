@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Layout, Button, Dropdown, Checkbox } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FireOutlined, MenuOutlined, HolderOutlined } from '@ant-design/icons';
@@ -24,9 +24,12 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
   const location = useLocation();
   const currentKey = location.pathname.replace('/', '') || tools[0]?.id;
 
-  // Drag state
-  const dragIndexRef = useRef<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const pointerOriginRef = useRef<{ toolId: string; x: number; y: number } | null>(null);
+  const draggingToolIdRef = useRef<string | null>(null);
+  const dragOverToolIdRef = useRef<string | null>(null);
+  const cleanupPointerRef = useRef<(() => void) | null>(null);
+  const [draggingToolId, setDraggingToolId] = useState<string | null>(null);
+  const [dragOverToolId, setDragOverToolId] = useState<string | null>(null);
 
   // Filter visible tools
   const visibleTools = tools.filter((t) => visibility[t.id] ?? true);
@@ -78,42 +81,82 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
     },
   ];
 
-  const handleDragStart = (e: React.DragEvent, visibleIdx: number) => {
-    // Find the index in the full tools array
-    const tool = visibleTools[visibleIdx];
-    const fullIndex = tools.findIndex((t) => t.id === tool.id);
-    dragIndexRef.current = fullIndex;
-    e.dataTransfer.effectAllowed = 'move';
-    // Make drag image slightly transparent
-    if (e.currentTarget instanceof HTMLElement) {
-      e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+  const clearPointerDrag = () => {
+    cleanupPointerRef.current?.();
+    cleanupPointerRef.current = null;
+    pointerOriginRef.current = null;
+    draggingToolIdRef.current = null;
+    dragOverToolIdRef.current = null;
+    setDraggingToolId(null);
+    setDragOverToolId(null);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+  };
+
+  const handlePointerDown = (event: React.PointerEvent, toolId: string) => {
+    if (event.button !== 0) {
+      return;
     }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    clearPointerDrag();
+    pointerOriginRef.current = { toolId, x: event.clientX, y: event.clientY };
+    document.body.style.userSelect = 'none';
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const origin = pointerOriginRef.current;
+      if (!origin) {
+        return;
+      }
+
+      if (!draggingToolIdRef.current) {
+        const deltaX = moveEvent.clientX - origin.x;
+        const deltaY = moveEvent.clientY - origin.y;
+        if (Math.abs(deltaX) + Math.abs(deltaY) <= 4) {
+          return;
+        }
+
+        draggingToolIdRef.current = origin.toolId;
+        setDraggingToolId(origin.toolId);
+        document.body.style.cursor = 'grabbing';
+      }
+
+      const targetElement = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('[data-tool-id]') as HTMLElement | null;
+      const targetToolId = targetElement?.dataset.toolId ?? null;
+      if (dragOverToolIdRef.current !== targetToolId) {
+        dragOverToolIdRef.current = targetToolId;
+        setDragOverToolId(targetToolId);
+      }
+    };
+
+    const handlePointerUp = () => {
+      const fromToolId = draggingToolIdRef.current;
+      const toToolId = dragOverToolIdRef.current;
+
+      if (fromToolId && toToolId && fromToolId !== toToolId) {
+        const fromIndex = tools.findIndex((tool) => tool.id === fromToolId);
+        const toIndex = tools.findIndex((tool) => tool.id === toToolId);
+        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+          onReorder(fromIndex, toIndex);
+        }
+      }
+
+      clearPointerDrag();
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp, { once: true });
+    window.addEventListener('pointercancel', handlePointerUp, { once: true });
+    cleanupPointerRef.current = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
   };
 
-  const handleDragOver = (e: React.DragEvent, visibleIdx: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const tool = visibleTools[visibleIdx];
-    const fullIndex = tools.findIndex((t) => t.id === tool.id);
-    setDragOverIndex(fullIndex);
-  };
-
-  const handleDrop = (e: React.DragEvent, visibleIdx: number) => {
-    e.preventDefault();
-    const from = dragIndexRef.current;
-    const tool = visibleTools[visibleIdx];
-    const to = tools.findIndex((t) => t.id === tool.id);
-    if (from !== null && from !== to) {
-      onReorder(from, to);
-    }
-    dragIndexRef.current = null;
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    dragIndexRef.current = null;
-    setDragOverIndex(null);
-  };
+  useEffect(() => () => clearPointerDrag(), []);
 
   return (
     <Sider width={200} className={styles.sider}>
@@ -136,22 +179,29 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
         </Dropdown>
       </div>
       <div className={styles.toolList}>
-        {visibleTools.map((tool, visibleIdx) => {
-          const fullIndex = tools.findIndex((t) => t.id === tool.id);
+        {visibleTools.map((tool) => {
           const isSelected = tool.id === currentKey;
-          const isDragOver = dragOverIndex === fullIndex;
+          const isDragOver = dragOverToolId === tool.id && draggingToolId !== tool.id;
+          const isDragging = draggingToolId === tool.id;
           return (
             <div
               key={tool.id}
-              className={`${styles.toolItem} ${isSelected ? styles.toolItemSelected : ''} ${isDragOver ? styles.toolItemDragOver : ''}`}
-              draggable
-              onClick={() => navigate(`/${tool.id}`)}
-              onDragStart={(e) => handleDragStart(e, visibleIdx)}
-              onDragOver={(e) => handleDragOver(e, visibleIdx)}
-              onDrop={(e) => handleDrop(e, visibleIdx)}
-              onDragEnd={handleDragEnd}
+              data-tool-id={tool.id}
+              className={`${styles.toolItem} ${isSelected ? styles.toolItemSelected : ''} ${isDragOver ? styles.toolItemDragOver : ''} ${isDragging ? styles.toolItemDragging : ''}`}
+              onClick={() => {
+                if (draggingToolIdRef.current) {
+                  return;
+                }
+                navigate(`/${tool.id}`);
+              }}
             >
-              <HolderOutlined className={styles.dragHandle} />
+              <span
+                className={styles.dragHandle}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(event) => handlePointerDown(event, tool.id)}
+              >
+                <HolderOutlined />
+              </span>
               <span className={styles.toolIcon}>{tool.icon}</span>
               <span className={styles.toolName}>{t(`toolName.${tool.id}`)}</span>
             </div>
