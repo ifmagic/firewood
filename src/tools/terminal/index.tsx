@@ -1,336 +1,251 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Empty,
-  Input,
-  Modal,
-  Select,
-  Space,
-  Tabs,
-  Tag,
-} from 'antd';
-import type { InputRef, TabsProps } from 'antd';
-import {
-  ClearOutlined,
-  CloseCircleOutlined,
-  PlusOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { Input, Button, Spin } from 'antd';
+import type { InputRef } from 'antd';
+import { ConsoleSqlOutlined, SwapRightOutlined, SyncOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import ToolLayout from '../../components/ToolLayout';
-import StatusBar from '../../components/StatusBar';
-import FontSizeControl from '../../components/FontSizeControl';
-import { useEditorFontSize } from '../../hooks/useEditorFontSize';
+import { useTerminal } from './hooks';
 import { TERMINAL_FONT_STACK } from './settings';
-import { useTerminalSessions } from './hooks';
-import type { TerminalSession } from './types';
 import './terminal.css';
-
-function renderSessionLabel(session: TerminalSession, shellLabel: string) {
-  return (
-    <span className="firewood-terminal-tabLabel">
-      <span>{session.title}</span>
-      <span className="firewood-terminal-tabMeta">{shellLabel}</span>
-    </span>
-  );
-}
 
 export default function Terminal() {
   const {
-    sessions,
-    activeSession,
-    activeSessionId,
-    setActiveSessionId,
-    createSession,
-    closeSession,
-    clearSession,
-    setSessionInput,
-    setSessionShell,
-    navigateHistory,
-    runCommand,
-    interruptSession,
+    session,
     availableShells,
-    availableShellIds,
-    availableShellOptions,
-    detectingShells,
-    defaultShellId,
-    setDefaultShellId,
-    shellLookup,
-  } = useTerminalSessions();
-  const { fontSize, increase, decrease } = useEditorFontSize();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const outputRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<InputRef | null>(null);
+    detecting,
+    currentShell,
+    setInput,
+    sendCommand,
+    navigateHistory,
+    clearOutput,
+    changeShell,
+    interruptShell,
+    historyList,
+    selectHistoryCommand,
+  } = useTerminal();
 
-  const activeShellLabel = activeSession ? (shellLookup.get(activeSession.shellId)?.label ?? activeSession.shellId) : '';
-  const activeShellAvailable = activeSession ? availableShellIds.includes(activeSession.shellId) : false;
-
-  useEffect(() => {
-    if (!activeSession) {
-      return;
-    }
-
-    outputRef.current?.scrollTo({
-      top: outputRef.current.scrollHeight,
-      behavior: 'auto',
-    });
-  }, [activeSession]);
+  const outputRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<InputRef>(null);
+  const searchInputRef = useRef<InputRef>(null);
+  const [showShellSelector, setShowShellSelector] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
 
   useEffect(() => {
-    if (!activeSession?.running) {
+    outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight, behavior: 'smooth' });
+  }, [session.output]);
+
+  useEffect(() => {
+    if (!session.running) {
       inputRef.current?.focus();
     }
-  }, [activeSession?.id, activeSession?.running]);
+  }, [session.running]);
 
-  const tabItems = useMemo<TabsProps['items']>(() => sessions.map((session) => {
-    const shellLabel = shellLookup.get(session.shellId)?.label ?? session.shellId;
-    const shellInstalled = availableShellIds.includes(session.shellId);
+  useEffect(() => {
+    if (showHistoryPanel) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [showHistoryPanel]);
 
-    return {
-      key: session.id,
-      closable: sessions.length > 1,
-      label: renderSessionLabel(session, shellLabel),
-      children: (
-        <div className="firewood-terminal-session">
-          {!shellInstalled && (
-            <Alert
-              type="warning"
-              showIcon
-              message={`${shellLabel} is not installed or not available.`}
-            />
-          )}
-          {session.error && (
-            <Alert
-              type="error"
-              showIcon
-              message={session.error}
-            />
-          )}
-          <div
-            ref={session.id === activeSessionId ? outputRef : undefined}
-            className="firewood-terminal-output"
-            style={{ fontSize, fontFamily: TERMINAL_FONT_STACK }}
-            onClick={() => {
-              inputRef.current?.focus();
-            }}
-          >
-            {session.output.length ? session.output.map((entry) => (
-              <div
-                key={entry.id}
-                className={`firewood-terminal-line is-${entry.kind}`}
-              >
-                {entry.text}
-              </div>
-            )) : (
-              <div className="firewood-terminal-empty">
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Terminal is ready."
-                />
-              </div>
-            )}
-          </div>
-          <div className="firewood-terminal-inputRow">
-            <span className="firewood-terminal-prompt">{shellLabel}</span>
-            <Input
-              ref={session.id === activeSessionId ? inputRef : undefined}
-              className="firewood-terminal-input"
-              value={session.input}
-              readOnly={session.running}
-              placeholder={shellInstalled ? 'Enter a command and press Enter' : `Switch to an available shell to continue`}
-              onChange={(event) => {
-                setSessionInput(session.id, event.target.value);
-              }}
-              onKeyDown={(event) => {
-                const isModifierActive = event.ctrlKey || event.metaKey;
-                const key = event.key.toLowerCase();
+  const filteredHistory = useMemo(() => {
+    if (!historySearch.trim()) {
+      return historyList;
+    }
+    const searchTerm = historySearch.toLowerCase();
+    return historyList.filter(cmd => cmd.toLowerCase().includes(searchTerm));
+  }, [historyList, historySearch]);
 
-                if (isModifierActive && key === 'l') {
-                  event.preventDefault();
-                  clearSession(session.id);
-                  return;
-                }
+  const handleSelectHistory = (cmd: string) => {
+    selectHistoryCommand(cmd);
+    setShowHistoryPanel(false);
+    inputRef.current?.focus();
+  };
 
-                if (event.ctrlKey && key === 'c' && session.running) {
-                  event.preventDefault();
-                  void interruptSession(session.id);
-                  return;
-                }
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendCommand(session.input);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateHistory('up');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateHistory('down');
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+      e.preventDefault();
+      clearOutput();
+    } else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+      e.preventDefault();
+      void interruptShell();
+    }
+  };
 
-                if (session.running) {
-                  return;
-                }
-
-                if (event.key === 'ArrowUp') {
-                  event.preventDefault();
-                  navigateHistory(session.id, 'up');
-                  return;
-                }
-
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault();
-                  navigateHistory(session.id, 'down');
-                  return;
-                }
-
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  void runCommand(session.id);
-                }
-              }}
-            />
-            <Button
-              type="default"
-              icon={<CloseCircleOutlined />}
-              disabled={!session.running}
-              onClick={() => {
-                void interruptSession(session.id);
-              }}
-            >
-              Ctrl+C
-            </Button>
-          </div>
-          <StatusBar
-            left={(
-              <Space size={12}>
-                <span>{session.running ? 'Running' : 'Idle'}</span>
-                <span>Shell: {shellLabel}</span>
-                <span>CWD: {session.cwd}</span>
-                {session.lastExitCode !== null && !session.running ? (
-                  <span>Exit: {session.lastExitCode}</span>
-                ) : null}
-              </Space>
-            )}
-            right={(
-              <>
-                <span className="firewood-terminal-shortcuts">Enter run · ↑↓ history · Ctrl+L clear</span>
-                <FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />
-              </>
-            )}
-          />
-        </div>
-      ),
-    };
-  }), [
-    activeSessionId,
-    availableShellIds,
-    clearSession,
-    decrease,
-    fontSize,
-    increase,
-    interruptSession,
-    navigateHistory,
-    runCommand,
-    sessions,
-    setSessionInput,
-    shellLookup,
-  ]);
+  const availableOptions = availableShells
+    .filter(s => s.available)
+    .map(s => ({ value: s.id, label: s.label }));
 
   return (
-    <ToolLayout title="Terminal" description="Embedded local shell terminal">
+    <ToolLayout title="Terminal" description="Embedded shell terminal">
       <div className="firewood-terminal">
-        <div className="firewood-terminal-toolbar">
-          <div className="firewood-terminal-toolbarMeta">
-            <Select
-              value={activeSession?.shellId}
-              className="firewood-terminal-shellSelect"
-              options={availableShellOptions}
-              loading={detectingShells}
-              disabled={!activeSession}
-              onChange={(value) => {
-                if (activeSession) {
-                  setSessionShell(activeSession.id, value);
-                }
-              }}
-            />
-            <div className="firewood-terminal-cwdPill" title={activeSession?.cwd}>
-              {activeSession?.cwd ?? 'Resolving…'}
-            </div>
-            {activeSession ? (
-              <Tag color={activeShellAvailable ? 'orange' : 'default'}>{activeShellLabel}</Tag>
-            ) : null}
+        <div className="firewood-terminal-header">
+          <div className="firewood-terminal-shell-selector" onClick={() => setShowShellSelector(!showShellSelector)}>
+            <span className="firewood-terminal-shell-label">
+              {currentShell?.label || 'Select shell'}
+            </span>
+            <SwapRightOutlined className={`firewood-terminal-chevron ${showShellSelector ? 'rotated' : ''}`} />
+            
+            {showShellSelector && availableOptions.length > 0 && (
+              <div className="firewood-terminal-shell-dropdown">
+                {availableOptions.map(opt => (
+                  <button
+                    key={opt.value}
+                    className={`firewood-terminal-shell-option ${session.shellId === opt.value ? 'active' : ''}`}
+                    onClick={() => {
+                      changeShell(opt.value);
+                      setShowShellSelector(false);
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <Space wrap>
-            <Button icon={<PlusOutlined />} onClick={() => createSession()}>
-              New session
+
+          <div className="firewood-terminal-cwd">
+            {session.cwd}
+          </div>
+
+          <div className="firewood-terminal-actions">
+            <Button
+              icon={<ClockCircleOutlined />}
+              onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+              size="small"
+            >
+              History
             </Button>
             <Button
-              icon={<ClearOutlined />}
-              disabled={!activeSession}
-              onClick={() => {
-                if (activeSession) {
-                  clearSession(activeSession.id);
-                }
-              }}
+              icon={<SyncOutlined />}
+              onClick={clearOutput}
+              size="small"
             >
               Clear
             </Button>
-            <Button icon={<SettingOutlined />} onClick={() => setSettingsOpen(true)}>
-              Settings
-            </Button>
-          </Space>
+          </div>
+
+          {showHistoryPanel && (
+            <div className="firewood-terminal-history-dropdown">
+              <div className="firewood-terminal-history-header">
+                <span>Command History</span>
+                <Button
+                  type="text"
+                  size="small"
+                  onClick={() => setShowHistoryPanel(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              <Input
+                ref={searchInputRef}
+                className="firewood-terminal-history-search"
+                placeholder="Search commands..."
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowHistoryPanel(false);
+                  }
+                }}
+                autoFocus
+              />
+              <div className="firewood-terminal-history-list">
+                {filteredHistory.length === 0 ? (
+                  <div className="firewood-terminal-history-empty">
+                    {historyList.length === 0 
+                      ? 'No commands yet' 
+                      : 'No matching commands'}
+                  </div>
+                ) : (
+                  filteredHistory.map((cmd, idx) => (
+                    <button
+                      key={idx}
+                      className="firewood-terminal-history-item"
+                      onClick={() => handleSelectHistory(cmd)}
+                    >
+                      <span className="firewood-terminal-history-index">#{historyList.length - idx}</span>
+                      <span className="firewood-terminal-history-cmd">{cmd}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="firewood-terminal-shell">
-          <Tabs
-            activeKey={activeSessionId}
-            type="editable-card"
-            hideAdd
-            className="firewood-terminal-tabs"
-            onChange={setActiveSessionId}
-            onEdit={(targetKey, action) => {
-              if (action === 'add') {
-                createSession();
-                return;
-              }
+        <div className="firewood-terminal-body">
+          {detecting ? (
+            <div className="firewood-terminal-loading">
+              <Spin size="large" />
+              <span>Detecting shells...</span>
+            </div>
+          ) : !currentShell?.available ? (
+            <div className="firewood-terminal-no-shell">
+                <ConsoleSqlOutlined className="firewood-terminal-no-shell-icon" />
+              <p>No shell available</p>
+              <p className="firewood-terminal-no-shell-hint">Please install a shell or check your system configuration</p>
+            </div>
+          ) : (
+            <>
+              <div
+                ref={outputRef}
+                className="firewood-terminal-output"
+                style={{ fontFamily: TERMINAL_FONT_STACK }}
+              >
+                {session.output.map(entry => (
+                  <div key={entry.id} className={`firewood-terminal-line firewood-terminal-${entry.kind}`}>
+                    {entry.text}
+                  </div>
+                ))}
+                {session.output.length === 0 && (
+                  <div className="firewood-terminal-welcome">
+                    <p>Welcome to Firewood Terminal</p>
+                    <p className="firewood-terminal-welcome-hint">Type a command and press Enter</p>
+                  </div>
+                )}
+              </div>
 
-              if (action === 'remove' && typeof targetKey === 'string') {
-                closeSession(targetKey);
-              }
-            }}
-            items={tabItems}
-          />
+              <div className="firewood-terminal-input-area">
+                <span className="firewood-terminal-prompt">
+                  {session.cwd.split('/').pop() || session.cwd}
+                </span>
+                <Input
+                  ref={inputRef}
+                  className="firewood-terminal-input"
+                  value={session.input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Enter command..."
+                  disabled={session.running}
+                  style={{ fontFamily: TERMINAL_FONT_STACK }}
+                />
+              </div>
+
+              <div className="firewood-terminal-status">
+                <span className={`firewood-terminal-status-indicator ${session.running ? 'running' : 'idle'}`}>
+                  {session.running ? 'Running' : 'Ready'}
+                </span>
+                <span className="firewood-terminal-status-shell">
+                  Shell: {currentShell.label}
+                </span>
+                {session.lastExitCode !== null && (
+                  <span className={`firewood-terminal-status-exit ${session.lastExitCode === 0 ? 'success' : 'error'}`}>
+                    Exit: {session.lastExitCode}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
-
-      <Modal
-        title="Terminal Settings"
-        open={settingsOpen}
-        onCancel={() => setSettingsOpen(false)}
-        onOk={() => setSettingsOpen(false)}
-        okText="Done"
-        cancelButtonProps={{ style: { display: 'none' } }}
-      >
-        <div className="firewood-terminal-settings">
-          <div className="firewood-terminal-settingsSection">
-            <div className="firewood-terminal-settingsLabel">Default shell</div>
-            <Select
-              value={defaultShellId}
-              className="firewood-terminal-settingsSelect"
-              options={availableShellOptions}
-              onChange={(value) => setDefaultShellId(value)}
-            />
-          </div>
-          <div className="firewood-terminal-settingsSection">
-            <div className="firewood-terminal-settingsLabel">Detected shells</div>
-            <div className="firewood-terminal-shellGrid">
-              {availableShells.map((shell) => (
-                <div key={shell.id} className="firewood-terminal-shellCard">
-                  <div className="firewood-terminal-shellCardHeader">
-                    <span>{shell.label}</span>
-                    <Tag color={shell.available ? 'orange' : 'default'}>
-                      {shell.available ? 'Available' : 'Missing'}
-                    </Tag>
-                  </div>
-                  <div className="firewood-terminal-shellCardBody">
-                    {shell.available ? `Ready to use: ${shell.commandPath}` : shell.error || 'Not found on this system.'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Modal>
     </ToolLayout>
   );
 }
