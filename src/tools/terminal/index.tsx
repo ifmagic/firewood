@@ -1,249 +1,273 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
-import { Input, Button, Spin } from 'antd';
-import type { InputRef } from 'antd';
-import { ConsoleSqlOutlined, SwapRightOutlined, SyncOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { Terminal } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import ToolLayout from '../../components/ToolLayout';
-import { useTerminal } from './hooks';
-import { TERMINAL_FONT_STACK } from './settings';
 import './terminal.css';
+import '@xterm/xterm/css/xterm.css';
 
-export default function Terminal() {
-  const {
-    session,
-    availableShells,
-    detecting,
-    currentShell,
-    setInput,
-    sendCommand,
-    navigateHistory,
-    clearOutput,
-    changeShell,
-    interruptShell,
-    historyList,
-    selectHistoryCommand,
-  } = useTerminal();
+interface PtyInfo {
+  id: string;
+  pid: number;
+  cwd: string;
+}
 
-  const outputRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<InputRef>(null);
-  const searchInputRef = useRef<InputRef>(null);
-  const [showShellSelector, setShowShellSelector] = useState(false);
-  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
-  const [historySearch, setHistorySearch] = useState('');
+interface PtyOutput {
+  id: string;
+  data: string;
+}
+
+export default function TerminalPage() {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const terminalInstance = useRef<Terminal | null>(null);
+  const fitAddon = useRef<FitAddon | null>(null);
+  const ptyIdRef = useRef<string | null>(null);
+  const unlistenRef = useRef<UnlistenFn | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  const [isConnected, setIsConnected] = useState(false);
+  const [cwd, setCwd] = useState('~');
+  const [shell, setShell] = useState('Terminal');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const initTerminal = useCallback(async () => {
+    if (!terminalRef.current || terminalInstance.current) return;
+
+    try {
+      const term = new Terminal({
+        fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace",
+        fontSize: 14,
+        lineHeight: 1.2,
+        cursorBlink: true,
+        cursorStyle: 'bar',
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#d4d4d4',
+          cursor: '#ffffff',
+          cursorAccent: '#1e1e1e',
+          selectionBackground: '#264f78',
+          black: '#1e1e1e',
+          red: '#f44747',
+          green: '#6a9955',
+          yellow: '#dcdcaa',
+          blue: '#569cd6',
+          magenta: '#c586c0',
+          cyan: '#4ec9b0',
+          white: '#d4d4d4',
+          brightBlack: '#808080',
+          brightRed: '#f44747',
+          brightGreen: '#6a9955',
+          brightYellow: '#dcdcaa',
+          brightBlue: '#569cd6',
+          brightMagenta: '#c586c0',
+          brightCyan: '#4ec9b0',
+          brightWhite: '#ffffff',
+        },
+        scrollback: 10000,
+        allowProposedApi: true,
+      });
+
+      const fit = new FitAddon();
+      const webLinks = new WebLinksAddon();
+
+      term.loadAddon(fit);
+      term.loadAddon(webLinks);
+
+      term.open(terminalRef.current);
+      fit.fit();
+
+      terminalInstance.current = term;
+      fitAddon.current = fit;
+
+      setIsConnected(true);
+    } catch (err) {
+      console.error('Failed to initialize terminal:', err);
+      setError(`Failed to initialize terminal: ${err}`);
+    }
+  }, []);
+
+  const connectPty = useCallback(async () => {
+    if (!terminalInstance.current) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const ptyInfo: PtyInfo = await invoke('create_pty_session', {
+        shell: null,
+        cwd: null,
+      });
+
+      ptyIdRef.current = ptyInfo.id;
+      setCwd(ptyInfo.cwd);
+
+      const defaultShell = await invoke<string>('get_default_shell');
+      setShell(defaultShell.split('/').pop() || 'Terminal');
+
+      const term = terminalInstance.current;
+
+      term.onData((data) => {
+        if (ptyIdRef.current) {
+          invoke('write_pty', { id: ptyIdRef.current, data }).catch((err) => {
+            console.error('Write error:', err);
+          });
+        }
+      });
+
+      term.onResize(({ cols, rows }) => {
+        if (ptyIdRef.current) {
+          invoke('resize_pty', { id: ptyIdRef.current, rows, cols }).catch((err) => {
+            console.error('Resize error:', err);
+          });
+        }
+      });
+
+      const unlisten = await listen<PtyOutput>(`pty:data:${ptyInfo.id}`, (event) => {
+        term.write(event.payload.data);
+      });
+
+      unlistenRef.current = unlisten;
+
+      await invoke('start_pty_reader', { id: ptyInfo.id });
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to connect PTY:', err);
+      setError(`Failed to connect PTY: ${err}`);
+      setIsLoading(false);
+    }
+  }, []);
+
+  const disconnectPty = useCallback(async () => {
+    if (ptyIdRef.current) {
+      try {
+        await invoke('close_pty_session', { id: ptyIdRef.current });
+      } catch (err) {
+        console.error('Error closing PTY session:', err);
+      }
+      ptyIdRef.current = null;
+    }
+
+    if (unlistenRef.current) {
+      unlistenRef.current();
+      unlistenRef.current = null;
+    }
+
+    setIsConnected(false);
+  }, []);
+
+  const reconnectPty = useCallback(async () => {
+    await disconnectPty();
+    if (terminalInstance.current) {
+      terminalInstance.current.clear();
+      terminalInstance.current.write('\x1b[1;1H\x1b[2J');
+    }
+    await connectPty();
+  }, [connectPty, disconnectPty]);
 
   useEffect(() => {
-    outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight, behavior: 'smooth' });
-  }, [session.output]);
+    initTerminal().then(() => {
+      connectPty();
+    });
+
+    return () => {
+      disconnectPty();
+      if (terminalInstance.current) {
+        terminalInstance.current.dispose();
+        terminalInstance.current = null;
+      }
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
+  }, [initTerminal, connectPty, disconnectPty]);
 
   useEffect(() => {
-    if (!session.running) {
-      inputRef.current?.focus();
+    if (terminalRef.current && fitAddon.current) {
+      resizeObserverRef.current = new ResizeObserver(() => {
+        try {
+          fitAddon.current?.fit();
+          if (ptyIdRef.current && terminalInstance.current) {
+            const { cols, rows } = terminalInstance.current;
+            invoke('resize_pty', { id: ptyIdRef.current, rows, cols }).catch(console.error);
+          }
+        } catch (e) {
+          console.error('Fit error:', e);
+        }
+      });
+
+      resizeObserverRef.current.observe(terminalRef.current);
     }
-  }, [session.running]);
 
-  useEffect(() => {
-    if (showHistoryPanel) {
-      setTimeout(() => searchInputRef.current?.focus(), 100);
+    return () => {
+      resizeObserverRef.current?.disconnect();
+    };
+  }, [isConnected]);
+
+  const handleClear = useCallback(() => {
+    if (terminalInstance.current) {
+      terminalInstance.current.clear();
+      terminalInstance.current.write('\x1b[1;1H\x1b[2J');
     }
-  }, [showHistoryPanel]);
-
-  const filteredHistory = useMemo(() => {
-    if (!historySearch.trim()) {
-      return historyList;
-    }
-    const searchTerm = historySearch.toLowerCase();
-    return historyList.filter(cmd => cmd.toLowerCase().includes(searchTerm));
-  }, [historyList, historySearch]);
-
-  const handleSelectHistory = (cmd: string) => {
-    selectHistoryCommand(cmd);
-    setShowHistoryPanel(false);
-    inputRef.current?.focus();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendCommand(session.input);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      navigateHistory('up');
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      navigateHistory('down');
-    } else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-      e.preventDefault();
-      clearOutput();
-    } else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-      e.preventDefault();
-      void interruptShell();
-    }
-  };
-
-  const availableOptions = availableShells
-    .filter(s => s.available)
-    .map(s => ({ value: s.id, label: s.label }));
+  }, []);
 
   return (
-    <ToolLayout title="Terminal" description="Embedded shell terminal">
+    <ToolLayout title="Terminal" description="Integrated terminal with PTY support">
       <div className="firewood-terminal">
         <div className="firewood-terminal-header">
-          <div className="firewood-terminal-shell-selector" onClick={() => setShowShellSelector(!showShellSelector)}>
-            <span className="firewood-terminal-shell-label">
-              {currentShell?.label || 'Select shell'}
-            </span>
-            <SwapRightOutlined className={`firewood-terminal-chevron ${showShellSelector ? 'rotated' : ''}`} />
-            
-            {showShellSelector && availableOptions.length > 0 && (
-              <div className="firewood-terminal-shell-dropdown">
-                {availableOptions.map(opt => (
-                  <button
-                    key={opt.value}
-                    className={`firewood-terminal-shell-option ${session.shellId === opt.value ? 'active' : ''}`}
-                    onClick={() => {
-                      changeShell(opt.value);
-                      setShowShellSelector(false);
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="firewood-terminal-info">
+            <span className="firewood-terminal-shell-name">{shell}</span>
+            <span className="firewood-terminal-cwd">{cwd}</span>
           </div>
-
-          <div className="firewood-terminal-cwd">
-            {session.cwd}
-          </div>
-
           <div className="firewood-terminal-actions">
-            <Button
-              icon={<ClockCircleOutlined />}
-              onClick={() => setShowHistoryPanel(!showHistoryPanel)}
-              size="small"
+            <button
+              className="firewood-terminal-btn"
+              onClick={reconnectPty}
+              title="Reconnect"
             >
-              History
-            </Button>
-            <Button
-              icon={<SyncOutlined />}
-              onClick={clearOutput}
-              size="small"
+              ↻
+            </button>
+            <button
+              className="firewood-terminal-btn"
+              onClick={handleClear}
+              title="Clear"
             >
-              Clear
-            </Button>
+              ✕
+            </button>
           </div>
-
-          {showHistoryPanel && (
-            <div className="firewood-terminal-history-dropdown">
-              <div className="firewood-terminal-history-header">
-                <span>Command History</span>
-                <Button
-                  type="text"
-                  size="small"
-                  onClick={() => setShowHistoryPanel(false)}
-                >
-                  ×
-                </Button>
-              </div>
-              <Input
-                ref={searchInputRef}
-                className="firewood-terminal-history-search"
-                placeholder="Search commands..."
-                value={historySearch}
-                onChange={e => setHistorySearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setShowHistoryPanel(false);
-                  }
-                }}
-                autoFocus
-              />
-              <div className="firewood-terminal-history-list">
-                {filteredHistory.length === 0 ? (
-                  <div className="firewood-terminal-history-empty">
-                    {historyList.length === 0 
-                      ? 'No commands yet' 
-                      : 'No matching commands'}
-                  </div>
-                ) : (
-                  filteredHistory.map((cmd, idx) => (
-                    <button
-                      key={idx}
-                      className="firewood-terminal-history-item"
-                      onClick={() => handleSelectHistory(cmd)}
-                    >
-                      <span className="firewood-terminal-history-index">#{historyList.length - idx}</span>
-                      <span className="firewood-terminal-history-cmd">{cmd}</span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="firewood-terminal-body">
-          {detecting ? (
-            <div className="firewood-terminal-loading">
-              <Spin size="large" />
-              <span>Detecting shells...</span>
+          {isLoading && (
+            <div className="firewood-terminal-overlay">
+              <div className="firewood-terminal-spinner" />
+              <span>Connecting to shell...</span>
             </div>
-          ) : !currentShell?.available ? (
-            <div className="firewood-terminal-no-shell">
-                <ConsoleSqlOutlined className="firewood-terminal-no-shell-icon" />
-              <p>No shell available</p>
-              <p className="firewood-terminal-no-shell-hint">Please install a shell or check your system configuration</p>
-            </div>
-          ) : (
-            <>
-              <div
-                ref={outputRef}
-                className="firewood-terminal-output"
-                style={{ fontFamily: TERMINAL_FONT_STACK }}
-              >
-                {session.output.map(entry => (
-                  <div key={entry.id} className={`firewood-terminal-line firewood-terminal-${entry.kind}`}>
-                    {entry.text}
-                  </div>
-                ))}
-                {session.output.length === 0 && (
-                  <div className="firewood-terminal-welcome">
-                    <p>Welcome to Firewood Terminal</p>
-                    <p className="firewood-terminal-welcome-hint">Type a command and press Enter</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="firewood-terminal-input-area">
-                <span className="firewood-terminal-prompt">
-                  {session.cwd.split('/').pop() || session.cwd}
-                </span>
-                <Input
-                  ref={inputRef}
-                  className="firewood-terminal-input"
-                  value={session.input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter command..."
-                  disabled={session.running}
-                  style={{ fontFamily: TERMINAL_FONT_STACK }}
-                />
-              </div>
-
-              <div className="firewood-terminal-status">
-                <span className={`firewood-terminal-status-indicator ${session.running ? 'running' : 'idle'}`}>
-                  {session.running ? 'Running' : 'Ready'}
-                </span>
-                <span className="firewood-terminal-status-shell">
-                  Shell: {currentShell.label}
-                </span>
-                {session.lastExitCode !== null && (
-                  <span className={`firewood-terminal-status-exit ${session.lastExitCode === 0 ? 'success' : 'error'}`}>
-                    Exit: {session.lastExitCode}
-                  </span>
-                )}
-              </div>
-            </>
           )}
+
+          {error && (
+            <div className="firewood-terminal-error-overlay">
+              <div className="firewood-terminal-error-icon">!</div>
+              <span>{error}</span>
+              <button onClick={reconnectPty} className="firewood-terminal-retry-btn">
+                Retry
+              </button>
+            </div>
+          )}
+
+          <div ref={terminalRef} className="firewood-terminal-container" />
+        </div>
+
+        <div className="firewood-terminal-footer">
+          <span className={`firewood-terminal-status ${isConnected ? 'connected' : 'disconnected'}`}>
+            {isConnected ? '● Connected' : '○ Disconnected'}
+          </span>
+          <span className="firewood-terminal-hint">
+            Tip: Use Ctrl+Click to open links, scroll to navigate history
+          </span>
         </div>
       </div>
     </ToolLayout>
