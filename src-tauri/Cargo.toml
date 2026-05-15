@@ -35,6 +35,7 @@ tauri-plugin-shell = "2.3.5"
 rustix = { version = "0.38", features = ["std", "termios"] }
 parking_lot = "0.12"
 libc = "0.2"
+font-kit = "0.14.3"
 
 [profile.release]
 strip = true

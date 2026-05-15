@@ -62,6 +62,40 @@ fn start_pty_reader(
     pty_manager.read_output(&id, app);
 }
 
+#[tauri::command]
+fn list_shells() -> Vec<String> {
+    let candidates = vec![
+        "/bin/zsh",
+        "/bin/bash",
+        "/bin/sh",
+        "/usr/local/bin/fish",
+        "/opt/homebrew/bin/fish",
+    ];
+    candidates
+        .into_iter()
+        .filter(|p| std::path::Path::new(p).exists())
+        .map(|p| p.to_string())
+        .collect()
+}
+
+#[tauri::command]
+fn get_home_dir() -> String {
+    std::env::var("HOME").unwrap_or_else(|_| "/".to_string())
+}
+
+#[tauri::command]
+fn list_system_fonts() -> Vec<String> {
+    use font_kit::source::SystemSource;
+    match SystemSource::new().all_families() {
+        Ok(families) => {
+            let mut sorted = families;
+            sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+            sorted
+        }
+        Err(_) => vec!["monospace".to_string()],
+    }
+}
+
 fn show_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -90,6 +124,9 @@ fn main() {
             close_pty_session,
             get_default_shell,
             start_pty_reader,
+            list_shells,
+            get_home_dir,
+            list_system_fonts,
         ]);
 
     #[cfg(not(debug_assertions))]
@@ -147,7 +184,7 @@ fn main() {
 
             #[cfg(target_os = "macos")]
             {
-                use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
+                use tauri::menu::{PredefinedMenuItem, SubmenuBuilder};
                 
                 let app_submenu = SubmenuBuilder::new(app, "Firewood")
                     .item(&PredefinedMenuItem::hide(app, None)?)
