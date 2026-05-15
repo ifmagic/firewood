@@ -10,6 +10,18 @@
     "fs:default",
     "opener:default",
     "process:default",
+    {
+      "identifier": "core:event:allow-emit",
+      "allow": [
+        { "event": "pty:*" }
+      ]
+    },
+    {
+      "identifier": "core:event:allow-listen",
+      "allow": [
+        { "event": "pty:*" }
+      ]
+    },
     "updater:default",
     {
       "identifier": "fs:allow-write-text-file",

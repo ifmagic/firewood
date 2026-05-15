@@ -1,13 +1,100 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod pty;
 mod translate;
 
+use pty::create_pty_manager;
+use std::sync::Arc;
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder},
+    menu::{MenuBuilder, MenuItemBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager,
+    Emitter, Manager, State,
 };
+
+#[tauri::command]
+fn create_pty_session(
+    pty_manager: State<'_, Arc<pty::PtyManager>>,
+    shell: Option<String>,
+    cwd: Option<String>,
+) -> Result<pty::PtyInfo, String> {
+    pty_manager.create_session(shell.as_deref(), cwd.as_deref())
+}
+
+#[tauri::command]
+fn write_pty(
+    pty_manager: State<'_, Arc<pty::PtyManager>>,
+    id: String,
+    data: String,
+) -> Result<(), String> {
+    pty_manager.write(&id, &data)
+}
+
+#[tauri::command]
+fn resize_pty(
+    pty_manager: State<'_, Arc<pty::PtyManager>>,
+    id: String,
+    rows: u16,
+    cols: u16,
+) -> Result<(), String> {
+    pty_manager.resize(&id, rows, cols)
+}
+
+#[tauri::command]
+fn close_pty_session(
+    pty_manager: State<'_, Arc<pty::PtyManager>>,
+    id: String,
+) -> Result<(), String> {
+    pty_manager.close_session(&id)
+}
+
+#[tauri::command]
+fn get_default_shell() -> String {
+    pty::PtyManager::get_default_shell()
+}
+
+#[tauri::command]
+fn start_pty_reader(
+    app: tauri::AppHandle,
+    pty_manager: State<'_, Arc<pty::PtyManager>>,
+    id: String,
+) {
+    pty_manager.read_output(&id, app);
+}
+
+#[tauri::command]
+fn list_shells() -> Vec<String> {
+    let candidates = vec![
+        "/bin/zsh",
+        "/bin/bash",
+        "/bin/sh",
+        "/usr/local/bin/fish",
+        "/opt/homebrew/bin/fish",
+    ];
+    candidates
+        .into_iter()
+        .filter(|p| std::path::Path::new(p).exists())
+        .map(|p| p.to_string())
+        .collect()
+}
+
+#[tauri::command]
+fn get_home_dir() -> String {
+    std::env::var("HOME").unwrap_or_else(|_| "/".to_string())
+}
+
+#[tauri::command]
+fn list_system_fonts() -> Vec<String> {
+    use font_kit::source::SystemSource;
+    match SystemSource::new().all_families() {
+        Ok(families) => {
+            let mut sorted = families;
+            sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+            sorted
+        }
+        Err(_) => vec!["monospace".to_string()],
+    }
+}
 
 fn show_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -18,31 +105,43 @@ fn show_window(app: &tauri::AppHandle) {
 }
 
 fn main() {
+    let pty_manager = create_pty_manager();
+
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_updater::Builder::new().build());
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(pty_manager)
+        .invoke_handler(tauri::generate_handler![
+            translate::baidu_translate,
+            translate::tencent_translate,
+            create_pty_session,
+            write_pty,
+            resize_pty,
+            close_pty_session,
+            get_default_shell,
+            start_pty_reader,
+            list_shells,
+            get_home_dir,
+            list_system_fonts,
+        ]);
+
     #[cfg(not(debug_assertions))]
     let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
         show_window(app);
     }));
 
     builder
-        .invoke_handler(tauri::generate_handler![
-            translate::baidu_translate,
-            translate::tencent_translate,
-        ])
         .setup(|app| {
-            // ── Tray icon ──
             let show_item =
                 MenuItemBuilder::with_id("show", "Show Window").build(app)?;
             let check_updates_tray =
                 MenuItemBuilder::with_id("check_for_updates", "Check for Updates…")
                     .build(app)?;
-            let quit_item =
-                MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
             let tray_menu = MenuBuilder::new(app)
                 .item(&show_item)
                 .separator()
@@ -52,7 +151,9 @@ fn main() {
                 .build()?;
 
             TrayIconBuilder::new()
-                .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png"))?)
+                .icon(tauri::image::Image::from_bytes(include_bytes!(
+                    "../icons/tray-icon.png"
+                ))?)
                 .icon_as_template(false)
                 .menu(&tray_menu)
                 .show_menu_on_left_click(false)
@@ -81,9 +182,10 @@ fn main() {
                 })
                 .build(app)?;
 
-            // ── macOS application menu ──
             #[cfg(target_os = "macos")]
             {
+                use tauri::menu::{PredefinedMenuItem, SubmenuBuilder};
+                
                 let app_submenu = SubmenuBuilder::new(app, "Firewood")
                     .item(&PredefinedMenuItem::hide(app, None)?)
                     .item(&PredefinedMenuItem::hide_others(app, None)?)
@@ -119,9 +221,9 @@ fn main() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let app = window.app_handle();
                 #[cfg(target_os = "macos")]
                 {
+                    let app = window.app_handle();
                     let _ = app.hide();
                 }
                 #[cfg(not(target_os = "macos"))]

@@ -23,6 +23,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
   const navigate = useNavigate();
   const location = useLocation();
   const currentKey = location.pathname.replace('/', '') || tools[0]?.id;
+  const getToolLabel = (tool: ToolMeta) => t(`toolName.${tool.id}`, { defaultValue: tool.name });
 
   const pointerOriginRef = useRef<{ toolId: string; x: number; y: number } | null>(null);
   const draggingToolIdRef = useRef<string | null>(null);
@@ -50,7 +51,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
             onChange={() => onToggleToolVisibility(tool.id)}
           />
           {tool.icon}
-          <span>{t(`toolName.${tool.id}`)}</span>
+          <span>{getToolLabel(tool)}</span>
         </div>
       ),
     })),
@@ -203,7 +204,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
                 <HolderOutlined />
               </span>
               <span className={styles.toolIcon}>{tool.icon}</span>
-              <span className={styles.toolName}>{t(`toolName.${tool.id}`)}</span>
+              <span className={styles.toolName}>{getToolLabel(tool)}</span>
             </div>
           );
         })}
