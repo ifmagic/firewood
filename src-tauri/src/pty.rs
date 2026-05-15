@@ -161,7 +161,8 @@ impl PtyManager {
                     1,
                 );
 
-                let args = [shell_cstr.as_ptr(), std::ptr::null()];
+                let login_flag = CString::new("-l").unwrap();
+                let args = [shell_cstr.as_ptr(), login_flag.as_ptr(), std::ptr::null()];
                 execvp(shell_cstr.as_ptr(), args.as_ptr());
                 libc::_exit(1);
             }

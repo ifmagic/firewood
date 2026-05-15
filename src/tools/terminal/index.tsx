@@ -74,7 +74,6 @@ let _shellPath: string | null = null;
 let _onData: IDisposable | null = null;
 let _onResize: IDisposable | null = null;
 
-let _ptyListen: UnlistenFn | null = null;
 let _ptyListenReady: Promise<UnlistenFn> | null = null;
 
 let _buffer: string[] = [];
@@ -159,6 +158,9 @@ function mountTerminal(container: HTMLElement, fontSize: number, fontFamily: str
   term.options.fontSize = fontSize;
   term.options.fontFamily = fontFamily;
   fit.fit();
+
+  // Auto-focus when switching back to terminal
+  setTimeout(() => term.focus(), 50);
 }
 
 function unmountTerminal() {
@@ -209,10 +211,6 @@ async function ensurePty(shell?: string): Promise<void> {
       }
     }
   });
-
-  _ptyListenReady.then((unlisten) => {
-    _ptyListen = unlisten;
-  });
 }
 
 async function destroyPty() {
@@ -222,7 +220,6 @@ async function destroyPty() {
       unlisten();
     } catch {}
     _ptyListenReady = null;
-    _ptyListen = null;
   }
 
   if (_ptyId) {
