@@ -1,16 +1,24 @@
+#[cfg(unix)]
 use libc::{
-    self, c_char, c_int, close, dup2, execvp, fork, ioctl, poll, pollfd, setsid, winsize,
-    POLLIN, TIOCSCTTY, TIOCSWINSZ,
+    self, c_char, close, dup2, execvp, fork, ioctl, poll, pollfd, setsid, winsize, POLLIN,
+    TIOCSCTTY, TIOCSWINSZ,
 };
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+#[cfg(unix)]
 use std::ffi::CString;
+#[cfg(unix)]
 use std::os::fd::RawFd;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
-use tauri::{AppHandle, Emitter};
+use tauri::AppHandle;
+#[cfg(unix)]
+use tauri::Emitter;
+
+#[cfg(not(unix))]
+type RawFd = i32;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PtyInfo {
@@ -26,6 +34,7 @@ pub struct PtyOutput {
 }
 
 struct PtySession {
+    #[cfg(unix)]
     master_fd: RawFd,
     running: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<()>>,
@@ -42,14 +51,15 @@ impl PtyManager {
         }
     }
 
+    #[cfg(unix)]
     fn errno() -> i32 {
         std::io::Error::last_os_error()
             .raw_os_error()
             .unwrap_or_default()
     }
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    fn open_pty() -> Result<(c_int, c_int), String> {
+    #[cfg(unix)]
+    fn open_pty() -> Result<(RawFd, RawFd), String> {
         unsafe {
             let master_fd = libc::posix_openpt(libc::O_RDWR | libc::O_NOCTTY);
             if master_fd < 0 {
@@ -82,11 +92,12 @@ impl PtyManager {
         }
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    fn open_pty() -> Result<(c_int, c_int), String> {
-        Err("PTY not supported on this platform".to_string())
+    #[cfg(not(unix))]
+    fn unsupported_error() -> String {
+        "Terminal sessions are not supported on this platform yet".to_string()
     }
 
+    #[cfg(unix)]
     pub fn create_session(
         &self,
         shell: Option<&str>,
@@ -194,6 +205,17 @@ impl PtyManager {
         })
     }
 
+    #[cfg(not(unix))]
+    pub fn create_session(
+        &self,
+        shell: Option<&str>,
+        cwd: Option<&str>,
+    ) -> Result<PtyInfo, String> {
+        let _ = (shell, cwd);
+        Err(Self::unsupported_error())
+    }
+
+    #[cfg(unix)]
     pub fn write(&self, id: &str, data: &str) -> Result<(), String> {
         let master_fd = {
             let sessions = self.sessions.lock();
@@ -233,6 +255,13 @@ impl PtyManager {
         Ok(())
     }
 
+    #[cfg(not(unix))]
+    pub fn write(&self, id: &str, data: &str) -> Result<(), String> {
+        let _ = (id, data);
+        Err(Self::unsupported_error())
+    }
+
+    #[cfg(unix)]
     pub fn resize(&self, id: &str, rows: u16, cols: u16) -> Result<(), String> {
         let master_fd = {
             let sessions = self.sessions.lock();
@@ -256,6 +285,13 @@ impl PtyManager {
         Ok(())
     }
 
+    #[cfg(not(unix))]
+    pub fn resize(&self, id: &str, rows: u16, cols: u16) -> Result<(), String> {
+        let _ = (id, rows, cols);
+        Err(Self::unsupported_error())
+    }
+
+    #[cfg(unix)]
     pub fn read_output(&self, id: &str, app: AppHandle) {
         let (master_fd, running) = {
             let sessions = self.sessions.lock();
@@ -332,6 +368,12 @@ impl PtyManager {
         }
     }
 
+    #[cfg(not(unix))]
+    pub fn read_output(&self, id: &str, app: AppHandle) {
+        let _ = (id, app);
+    }
+
+    #[cfg(unix)]
     pub fn close_session(&self, id: &str) -> Result<(), String> {
         let (master_fd, running, handle) = {
             let mut sessions = self.sessions.lock();
@@ -353,6 +395,12 @@ impl PtyManager {
         }
 
         Ok(())
+    }
+
+    #[cfg(not(unix))]
+    pub fn close_session(&self, id: &str) -> Result<(), String> {
+        let _ = id;
+        Err(Self::unsupported_error())
     }
 
     pub fn get_default_shell() -> String {
