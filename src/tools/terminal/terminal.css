@@ -64,24 +64,15 @@
 
 .firewood-terminal-container {
   flex: 1;
-  padding: 8px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .firewood-terminal-container .xterm {
   height: 100%;
-  font-family: 'JetBrainsMono Nerd Font', 'Cascadia Code NF', 'Cascadia Code', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-}
-
-.firewood-terminal-container .xterm-viewport {
-  overflow-y: auto !important;
-}
-
-.firewood-terminal-container .xterm-screen {
-  height: 100%;
 }
 
 .firewood-terminal-overlay {
