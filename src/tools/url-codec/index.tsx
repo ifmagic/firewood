@@ -31,7 +31,7 @@ export default function UrlCodec() {
   }, [input, mode, setOutput, t]);
 
   return (
-    <ToolLayout title={t('urlCodec.title')} description={t('urlCodec.description')}>
+    <ToolLayout title={t('urlCodec.title')}>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">

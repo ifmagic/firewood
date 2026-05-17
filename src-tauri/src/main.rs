@@ -79,11 +79,6 @@ fn list_shells() -> Vec<String> {
 }
 
 #[tauri::command]
-fn get_home_dir() -> String {
-    std::env::var("HOME").unwrap_or_else(|_| "/".to_string())
-}
-
-#[tauri::command]
 fn list_system_fonts() -> Vec<String> {
     use font_kit::source::SystemSource;
     match SystemSource::new().all_families() {
@@ -125,7 +120,6 @@ fn main() {
             get_default_shell,
             start_pty_reader,
             list_shells,
-            get_home_dir,
             list_system_fonts,
         ]);
 

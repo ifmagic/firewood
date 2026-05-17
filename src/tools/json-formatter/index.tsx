@@ -82,7 +82,7 @@ export default function JsonFormatter() {
   };
 
   return (
-    <ToolLayout title={t('jsonFormatter.title')} description={t('jsonFormatter.description')}>
+    <ToolLayout title={t('jsonFormatter.title')}>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">

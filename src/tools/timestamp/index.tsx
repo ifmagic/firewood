@@ -117,7 +117,7 @@ export default function Timestamp() {
   ];
 
   return (
-    <ToolLayout title={t('timestamp.title')} description={t('timestamp.description')}>
+    <ToolLayout title={t('timestamp.title')}>
       <div className={styles.container}>
         {/* Timestamp → Date */}
         <div className={styles.section}>

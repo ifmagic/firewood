@@ -1219,7 +1219,7 @@ export default function Notepad() {
   );
 
   return (
-    <ToolLayout title={t('notepad.title')} description={t('notepad.description')}>
+    <ToolLayout title={t('notepad.title')}>
       <div className="firewood-notepad-shell">
         <div className="firewood-notepad-toolbar">
           <Space wrap className="firewood-notepad-toolbarActions">

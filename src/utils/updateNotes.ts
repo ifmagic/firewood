@@ -27,17 +27,7 @@ export function cacheUpdateNotes(data: UpdateNotesCache) {
   }
 }
 
-export function readUpdateNotesCache(): UpdateNotesCache | null {
-  try {
-    const raw = localStorage.getItem(UPDATE_NOTES_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as UpdateNotesCache;
-    if (!parsed.version || !parsed.body) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
+
 
 /**
  * Parse the release body from the raw build.yml content.

@@ -38,7 +38,7 @@ export default function Base64Codec() {
   };
 
   return (
-    <ToolLayout title={t('base64.title')} description={t('base64.description')}>
+    <ToolLayout title={t('base64.title')}>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">

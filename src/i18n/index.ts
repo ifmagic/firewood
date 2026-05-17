@@ -25,14 +25,6 @@ function detectLanguage(): string {
   return 'en';
 }
 
-export function getStoredLanguage(): string | null {
-  try {
-    return localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
 export function setStoredLanguage(lang: string) {
   try {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);

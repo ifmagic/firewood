@@ -431,7 +431,7 @@ export default function TerminalPage() {
   // ── Render ──
 
   return (
-    <ToolLayout title="Terminal" description="Integrated terminal with PTY support">
+    <ToolLayout title="Terminal">
       <div className="firewood-terminal">
         <div className="firewood-terminal-header">
           <div className="firewood-terminal-actions">

@@ -4,7 +4,6 @@ import styles from './ToolLayout.module.css';
 
 interface Props {
   title: string;
-  description?: string;
   children: ReactNode;
 }
 

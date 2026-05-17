@@ -220,7 +220,7 @@ function FileHash() {
 export default function HashCalculator() {
   const { t } = useTranslation();
   return (
-    <ToolLayout title={t('hash.title')} description={t('hash.description')}>
+    <ToolLayout title={t('hash.title')}>
       <Tabs
         className={styles.tabs}
         defaultActiveKey="file"

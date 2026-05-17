@@ -355,7 +355,7 @@ export default function ImgToPdf() {
   const hasImages = items.length > 0;
 
   return (
-    <ToolLayout title={t('imgToPdf.title')} description={t('imgToPdf.description')}>
+    <ToolLayout title={t('imgToPdf.title')}>
       <div className={styles.mainLayout}>
         {/* ── Left control panel ── */}
         <div className={styles.controlPanel}>
