@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -28,18 +28,27 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: context.ref.replace('refs/tags/', ''),
-              name: `Firewood v0.7.2`,
-              body: `## 🐛 Bug Fixes
+              name: `Firewood v0.7.3`,
+              body: `## ✨ Features
 
-            - Fix Windows release builds by limiting the PTY backend to Unix targets.
-            - Add non-Unix terminal fallbacks so unsupported platforms fail gracefully instead of breaking CI.
+            - Add JSONC parsing support to the JSON formatter and include jsonc-parser type definitions.
+            - Reset the formatter editor viewport more reliably and improve editor mount handling.
+            - Improve terminal resilience with better PTY error handling and font size/family controls.
+
+            ## 🐛 Bug Fixes
+
+            - Remove conflicting CSS overrides that broke xterm.js scroll rendering.
+
+            ## 🔧 Chore / Updates
+
+            - Remove unused code, dependencies, and dead props across the app.
 
             ---
 
             ## Download
 
-            - **macOS (Apple Silicon)**: Download \\\`firewood_0.7.2_aarch64.dmg\\\`
-            - **macOS (Intel)**: Download \\\`firewood_0.7.2_x64.dmg\\\`
+            - **macOS (Apple Silicon)**: Download \\\`firewood_0.7.3_aarch64.dmg\\\`
+            - **macOS (Intel)**: Download \\\`firewood_0.7.3_x64.dmg\\\`
             - **Windows**: Download the \\\`.exe\\\` installer
 
             ## macOS Installation Guide
@@ -65,14 +74,14 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-            rust-targets: 'aarch64-apple-darwin'
+            args: "--target aarch64-apple-darwin"
+            rust-targets: "aarch64-apple-darwin"
           - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-            rust-targets: 'x86_64-apple-darwin'
+            args: "--target x86_64-apple-darwin"
+            rust-targets: "x86_64-apple-darwin"
           - platform: windows-latest
-            args: ''
-            rust-targets: ''
+            args: ""
+            rust-targets: ""
 
     runs-on: ${{ matrix.platform }}
 
@@ -94,7 +103,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
 
       - name: Install frontend dependencies
         run: npm ci
