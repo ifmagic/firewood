@@ -44,6 +44,79 @@ pub struct PtyManager {
     sessions: Mutex<HashMap<String, PtySession>>,
 }
 
+#[cfg(unix)]
+fn decode_utf8_stream_chunk(pending: &mut Vec<u8>, chunk: &[u8]) -> Option<String> {
+    pending.extend_from_slice(chunk);
+
+    let mut decoded = String::new();
+    let mut consumed = 0usize;
+
+    while consumed < pending.len() {
+        match std::str::from_utf8(&pending[consumed..]) {
+            Ok(valid) => {
+                decoded.push_str(valid);
+                consumed = pending.len();
+                break;
+            }
+            Err(err) => {
+                let valid_up_to = err.valid_up_to();
+                if valid_up_to > 0 {
+                    let valid_end = consumed + valid_up_to;
+                    decoded.push_str(std::str::from_utf8(&pending[consumed..valid_end]).unwrap());
+                    consumed = valid_end;
+                }
+
+                match err.error_len() {
+                    Some(invalid_len) => {
+                        decoded.push('\u{FFFD}');
+                        consumed += invalid_len;
+                    }
+                    None => break,
+                }
+            }
+        }
+    }
+
+    if consumed > 0 {
+        pending.drain(..consumed);
+    }
+
+    if decoded.is_empty() {
+        None
+    } else {
+        Some(decoded)
+    }
+}
+
+#[cfg(unix)]
+fn flush_pending_utf8(pending: &mut Vec<u8>) -> Option<String> {
+    if pending.is_empty() {
+        return None;
+    }
+
+    let decoded = String::from_utf8_lossy(pending).to_string();
+    pending.clear();
+
+    if decoded.is_empty() {
+        None
+    } else {
+        Some(decoded)
+    }
+}
+
+#[cfg(unix)]
+fn emit_pty_data(app: &AppHandle, id: &str, data: String) {
+    if data.is_empty() {
+        return;
+    }
+
+    let output = PtyOutput {
+        id: id.to_string(),
+        data,
+    };
+    let _ = app.emit(&format!("pty:data:{}", id), output);
+}
+
 impl PtyManager {
     pub fn new() -> Self {
         Self {
@@ -306,6 +379,9 @@ impl PtyManager {
 
         let handle = thread::spawn(move || {
             let mut buf = [0u8; 8192];
+            // PTY reads can split a single UTF-8 code point across buffers.
+            // Keep the trailing partial bytes and decode them together with the next chunk.
+            let mut utf8_pending = Vec::new();
             let mut pfd = pollfd {
                 fd: master_fd,
                 events: POLLIN,
@@ -332,6 +408,9 @@ impl PtyManager {
                     unsafe { libc::read(master_fd, buf.as_mut_ptr().cast(), buf.len()) };
 
                 if read_result == 0 {
+                    if let Some(data) = flush_pending_utf8(&mut utf8_pending) {
+                        emit_pty_data(&app_clone, &id_clone, data);
+                    }
                     let _ = app_clone.emit(&format!("pty:exit:{}", id_clone), ());
                     break;
                 }
@@ -343,21 +422,23 @@ impl PtyManager {
                     }
 
                     if err.kind() != std::io::ErrorKind::WouldBlock {
-                        let output = PtyOutput {
-                            id: id_clone.clone(),
-                            data: format!("\r\n[Read error: {}]\r\n", err),
-                        };
-                        let _ = app_clone.emit(&format!("pty:data:{}", id_clone), output);
+                        if let Some(data) = flush_pending_utf8(&mut utf8_pending) {
+                            emit_pty_data(&app_clone, &id_clone, data);
+                        }
+                        emit_pty_data(
+                            &app_clone,
+                            &id_clone,
+                            format!("\r\n[Read error: {}]\r\n", err),
+                        );
                     }
                     break;
                 }
 
-                let data = String::from_utf8_lossy(&buf[..read_result as usize]).to_string();
-                let output = PtyOutput {
-                    id: id_clone.clone(),
-                    data,
-                };
-                let _ = app_clone.emit(&format!("pty:data:{}", id_clone), output);
+                if let Some(data) =
+                    decode_utf8_stream_chunk(&mut utf8_pending, &buf[..read_result as usize])
+                {
+                    emit_pty_data(&app_clone, &id_clone, data);
+                }
             }
         });
 
@@ -438,4 +519,36 @@ impl PtyManager {
 
 pub fn create_pty_manager() -> Arc<PtyManager> {
     Arc::new(PtyManager::new())
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::{decode_utf8_stream_chunk, flush_pending_utf8};
+
+    #[test]
+    fn keeps_split_utf8_until_the_character_is_complete() {
+        let mut pending = Vec::new();
+
+        assert_eq!(decode_utf8_stream_chunk(&mut pending, &[0xE4, 0xBD]), None);
+        assert_eq!(
+            decode_utf8_stream_chunk(&mut pending, &[0xA0, 0xE5, 0xA5]),
+            Some("你".to_string())
+        );
+        assert_eq!(
+            decode_utf8_stream_chunk(&mut pending, &[0xBD]),
+            Some("好".to_string())
+        );
+        assert_eq!(flush_pending_utf8(&mut pending), None);
+    }
+
+    #[test]
+    fn replaces_invalid_utf8_without_dropping_following_text() {
+        let mut pending = Vec::new();
+
+        assert_eq!(
+            decode_utf8_stream_chunk(&mut pending, &[b'f', b'o', 0x80, b'o']),
+            Some("fo\u{FFFD}o".to_string())
+        );
+        assert_eq!(flush_pending_utf8(&mut pending), None);
+    }
 }

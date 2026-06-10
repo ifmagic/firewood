@@ -218,12 +218,18 @@ async function destroyPty() {
     try {
       const unlisten = await _ptyListenReady;
       unlisten();
-    } catch {}
+    } catch (err) {
+      console.error('Failed to remove PTY listener', err);
+    }
     _ptyListenReady = null;
   }
 
   if (_ptyId) {
-    try { await invoke('close_pty_session', { id: _ptyId }); } catch {}
+    try {
+      await invoke('close_pty_session', { id: _ptyId });
+    } catch (err) {
+      console.error('Failed to close PTY session', err);
+    }
     _ptyId = null;
     _shellPath = null;
   }
@@ -266,6 +272,30 @@ export default function TerminalPage() {
   const [selectedShell, setSelectedShell] = useState('');
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  const applyFontSize = useCallback((size: number) => {
+    const clamped = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, size));
+    setFontSize(clamped);
+    setFontInput(String(clamped));
+    if (_term) {
+      _term.options.fontSize = clamped;
+      _fit?.fit();
+    }
+  }, [setFontSize]);
+
+  const applyFontFamily = useCallback((family: string) => {
+    setFontFamily(family);
+    if (_term) {
+      _term.options.fontFamily = family;
+      _fit?.fit();
+    }
+  }, [setFontFamily]);
+
+  const handleFontInputCommit = useCallback(() => {
+    const parsed = parseInt(fontInput, 10);
+    if (!isNaN(parsed)) applyFontSize(parsed);
+    else setFontInput(String(fontSizeRef.current));
+  }, [fontInput, applyFontSize]);
+
   // ── Mount / Unmount ──
 
   useEffect(() => {
@@ -305,7 +335,9 @@ export default function TerminalPage() {
         if (_ptyId && _term) {
           invoke('resize_pty', { id: _ptyId, rows: _term.rows, cols: _term.cols }).catch(console.error);
         }
-      } catch {}
+      } catch (err) {
+        console.error('Failed to resize terminal', err);
+      }
     });
 
     resizeRef.current.observe(container);
@@ -364,32 +396,6 @@ export default function TerminalPage() {
     return () => el.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // ── Handlers ──
-
-  const applyFontSize = useCallback((size: number) => {
-    const clamped = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, size));
-    setFontSize(clamped);
-    setFontInput(String(clamped));
-    if (_term) {
-      _term.options.fontSize = clamped;
-      _fit?.fit();
-    }
-  }, [setFontSize]);
-
-  const applyFontFamily = useCallback((family: string) => {
-    setFontFamily(family);
-    if (_term) {
-      _term.options.fontFamily = family;
-      _fit?.fit();
-    }
-  }, [setFontFamily]);
-
-  const handleFontInputCommit = useCallback(() => {
-    const parsed = parseInt(fontInput, 10);
-    if (!isNaN(parsed)) applyFontSize(parsed);
-    else setFontInput(String(fontSizeRef.current));
-  }, [fontInput, applyFontSize]);
-
   const handleShellChange = useCallback((value: string) => {
     setSelectedShell(value);
     const shell = value === defaultShell ? null : value;
@@ -440,7 +446,8 @@ export default function TerminalPage() {
               className="firewood-terminal-btn firewood-terminal-menu-trigger"
               onClick={(e) => {
                 e.stopPropagation();
-                showMenu ? setShowMenu(false) : openMenu();
+                if (showMenu) setShowMenu(false);
+                else openMenu();
               }}
               title="Settings"
             >
