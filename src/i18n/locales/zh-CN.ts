@@ -74,7 +74,6 @@ const zhCN = {
     title: 'JSON',
     description: 'JSON 格式化、压缩与去除转义',
     emptyHint: '粘贴 JSON 或转义文本，然后执行格式化、压缩或去除转义',
-    emptyError: '请先输入 JSON 内容',
   },
 
   // Timestamp

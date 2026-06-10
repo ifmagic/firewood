@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Button, Empty, Tooltip, message } from 'antd';
+import { Button, Empty, Tooltip, message } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import Editor, { type OnMount } from '@monaco-editor/react';
+import { format as formatJsonc, type EditOperation } from 'monaco-editor/esm/external/jsonc-parser/lib/esm/main.js';
 import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
@@ -9,10 +10,26 @@ import StatusBar from '../../components/StatusBar';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
 
+const jsoncFormatOptions = {
+  tabSize: 2,
+  insertSpaces: true,
+  eol: '\n',
+  keepLines: false,
+} as const;
+
+function applyJsoncEdits(text: string, edits: EditOperation[]) {
+  return edits
+    .slice()
+    .sort((left, right) => right.offset - left.offset)
+    .reduce(
+      (current, edit) => `${current.slice(0, edit.offset)}${edit.content}${current.slice(edit.offset + edit.length)}`,
+      text,
+    );
+}
+
 export default function JsonFormatter() {
   const { t } = useTranslation();
   const [content, setContent] = usePersistentState('tool:json-formatter:input', '');
-  const [error, setError] = usePersistentState('tool:json-formatter:error', '');
   const [viewportResetVersion, setViewportResetVersion] = useState(0);
   const { fontSize, increase, decrease } = useEditorFontSize();
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
@@ -45,24 +62,30 @@ export default function JsonFormatter() {
 
   const applyTransform = (transform: (text: string) => string) => {
     if (!content.trim()) {
-      setError(t('jsonFormatter.emptyError'));
       return;
     }
 
     try {
       const nextContent = transform(content);
-      setContent(nextContent);
-      setError('');
-      requestViewportReset();
-    } catch (e) {
-      setError((e as Error).message);
+      if (nextContent !== content) {
+        setContent(nextContent);
+        requestViewportReset();
+      }
+    } catch {
+      return;
     }
   };
 
   const format = () => {
     applyTransform((text) => {
-      const parsed = JSON.parse(text);
-      return JSON.stringify(parsed, null, 2);
+      try {
+        return JSON.stringify(JSON.parse(text), null, 2);
+      } catch {
+        return applyJsoncEdits(
+          text,
+          formatJsonc(text, undefined, jsoncFormatOptions),
+        );
+      }
     });
   };
 
@@ -94,14 +117,12 @@ export default function JsonFormatter() {
 
   const clear = () => {
     setContent('');
-    setError('');
     requestViewportReset();
   };
 
   const handleContentChange = (value?: string) => {
     const nextValue = value ?? '';
     setContent(nextValue);
-    setError('');
   };
 
   const handleEditorMount = useCallback<OnMount>((editor) => {
@@ -152,10 +173,6 @@ export default function JsonFormatter() {
           </div>
         </div>
 
-        {error && (
-          <Alert type="error" message={error} showIcon />
-        )}
-
         <div className="fw-tool-editorShell">
           <div className="fw-tool-pane" style={{ flex: 1 }}>
             <div className="fw-tool-paneBody">
@@ -189,7 +206,6 @@ export default function JsonFormatter() {
             </div>
           </div>
           <StatusBar
-            left={error ? <span className="fw-tool-statusHint">{error}</span> : undefined}
             right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
           />
         </div>

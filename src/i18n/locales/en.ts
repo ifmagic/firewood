@@ -74,7 +74,6 @@ const en = {
     title: 'JSON',
     description: 'Format, minify & unescape JSON',
     emptyHint: 'Paste JSON or escaped text, then format, minify, or unescape it here',
-    emptyError: 'Paste or enter JSON content first',
   },
 
   // Timestamp
