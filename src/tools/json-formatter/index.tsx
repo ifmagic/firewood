@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Button, Empty, Tooltip, message } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
-import Editor from '@monaco-editor/react';
+import Editor, { type OnMount } from '@monaco-editor/react';
 import { useTranslation } from 'react-i18next';
 import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
@@ -12,7 +13,35 @@ export default function JsonFormatter() {
   const { t } = useTranslation();
   const [content, setContent] = usePersistentState('tool:json-formatter:input', '');
   const [error, setError] = usePersistentState('tool:json-formatter:error', '');
+  const [viewportResetVersion, setViewportResetVersion] = useState(0);
   const { fontSize, increase, decrease } = useEditorFontSize();
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+
+  const requestViewportReset = useCallback(() => {
+    setViewportResetVersion((version) => version + 1);
+  }, []);
+
+  useEffect(() => {
+    if (viewportResetVersion === 0) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const editor = editorRef.current;
+      if (!editor) {
+        return;
+      }
+
+      const startPosition = { lineNumber: 1, column: 1 };
+      editor.setPosition(startPosition);
+      editor.setScrollPosition({ scrollTop: 0, scrollLeft: 0 });
+      editor.revealPosition(startPosition);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [viewportResetVersion]);
 
   const applyTransform = (transform: (text: string) => string) => {
     if (!content.trim()) {
@@ -24,6 +53,7 @@ export default function JsonFormatter() {
       const nextContent = transform(content);
       setContent(nextContent);
       setError('');
+      requestViewportReset();
     } catch (e) {
       setError((e as Error).message);
     }
@@ -65,6 +95,7 @@ export default function JsonFormatter() {
   const clear = () => {
     setContent('');
     setError('');
+    requestViewportReset();
   };
 
   const handleContentChange = (value?: string) => {
@@ -72,6 +103,10 @@ export default function JsonFormatter() {
     setContent(nextValue);
     setError('');
   };
+
+  const handleEditorMount = useCallback<OnMount>((editor) => {
+    editorRef.current = editor;
+  }, []);
 
   const editorOptions = {
     minimap: { enabled: false },
@@ -147,6 +182,7 @@ export default function JsonFormatter() {
                 language="json"
                 value={content}
                 onChange={handleContentChange}
+                onMount={handleEditorMount}
                 theme="vs-light"
                 options={editorOptions}
               />
