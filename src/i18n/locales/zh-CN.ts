@@ -106,6 +106,10 @@ const zhCN = {
     deleted: '删除',
     foldLines: '显示 {{count}} 行未变化内容',
     unfoldLines: '收起 {{count}} 行未变化内容',
+    expandAllUnchanged: '一键展开未变动内容',
+    collapseAllUnchanged: '收起未变动内容',
+    hiddenLines: '已收起 {{count}} 行未变化内容',
+    noDifferences: '没有差异内容',
   },
 
   // Notepad

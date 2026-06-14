@@ -106,6 +106,10 @@ const en = {
     deleted: 'deleted',
     foldLines: 'Show {{count}} unchanged lines',
     unfoldLines: 'Collapse {{count}} unchanged lines',
+    expandAllUnchanged: 'Expand all unchanged',
+    collapseAllUnchanged: 'Collapse unchanged',
+    hiddenLines: '{{count}} unchanged lines hidden',
+    noDifferences: 'No differences found',
   },
 
   // Notepad

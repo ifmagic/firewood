@@ -16,7 +16,7 @@
 | Terminal | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
 | JSON Formatter | Monaco-based editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content |
 | Timestamp | Unix timestamp/date conversion, seconds/milliseconds toggle, quick current time/date actions, copy support, and persisted history |
-| Diffchecker | Editable two-pane compare view with line and word highlights, collapsible unchanged chunks, resizable panels, and persisted inputs |
+| Diffchecker | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs |
 | Notepad | Multi-tab local notes and file editing with Monaco, local open/save, JSON formatting, and persisted tab state |
 | Base64 Codec | Encode/decode workflow with mode switch, swap action, and persisted input/output |
 | URL Codec | Encode/decode workflow with live conversion and persisted input/output |
