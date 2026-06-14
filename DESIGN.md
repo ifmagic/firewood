@@ -2,182 +2,206 @@
 
 ## 1. Overview
 
-**Firewood** is a cross-platform desktop toolbox for developers.
+**Firewood** is a local-first desktop utility suite for common developer workflows.
 
-- **Cross-platform**: macOS, Windows, Linux
-- **Lightweight**: Tauri + system WebView, no embedded Chromium
-- **Extensible**: Tool modules register via unified interface, no core changes needed
-
----
+- **Desktop-native**: built with Tauri and system WebView, with Rust for native capabilities
+- **Modular**: each tool is registered through a shared `ToolMeta` contract
+- **Stateful**: tool state, ordering, visibility, and preferences are persisted locally
+- **Practical**: combines terminal, text/code utilities, note taking, image export, and translation
 
 ## 2. Implemented Tools
 
-| Tool | Description |
-|------|-------------|
-| Terminal | Embedded local shell (PTY), persistent sessions across tool switches, custom font selection (system fonts), Unicode 11 support, font size control, shell selection (zsh/bash/sh/fish), login shell mode (sources ~/.zprofile), auto-focus on switch |
-| JSON Formatter | Format, minify, unescape & validate with Monaco Editor; collapsible original input |
-| Timestamp | Unix timestamp ↔ date conversion, seconds/milliseconds toggle, history (50 records, persisted) |
-| Text Diff | Side-by-side line-by-line diff, resizable panels |
-| Notepad | Multi-tab editing, localStorage persistence, Monaco Editor (light theme, line numbers, folding), right-click JSON formatting, char count status bar, mouse wheel font resize |
-| Base64 Codec | Base64 encode & decode |
-| URL Codec | URL encode & decode |
-| Hash | MD5 / SHA-1 / SHA-256 for text and file drag-and-drop |
-| Image to PDF | Multi-image layout (1–4 per page), vertical/horizontal arrangement, thumbnail reorder, live preview, A4 PDF export |
-| Translate | Tencent Cloud / Baidu API, 13 languages, Rust backend signing, API key config panel, history (50 records, persisted) |
-
----
+| Tool | Current implementation |
+|------|------------------------|
+| Terminal | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
+| JSON Formatter | Monaco-based editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content |
+| Timestamp | Unix timestamp/date conversion, seconds/milliseconds toggle, quick current time/date actions, copy support, and persisted history |
+| Diffchecker | Editable two-pane compare view with line and word highlights, collapsible unchanged chunks, resizable panels, and persisted inputs |
+| Notepad | Multi-tab local notes and file editing with Monaco, open/save, reader mode for long-form text, bookmarks, themes, and persisted tab state |
+| Base64 Codec | Encode/decode workflow with mode switch, swap action, and persisted input/output |
+| URL Codec | Encode/decode workflow with live conversion and persisted input/output |
+| Hash | Text and file hashing for MD5 / SHA-1 / SHA-256, including drag-and-drop file support |
+| Image to PDF | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration |
+| Translate | Tencent Cloud / Baidu translation with Rust-side signing, 13 language pairs, provider settings, history, and adjustable reading size |
 
 ## 3. Tech Stack
 
-### 3.1 Core Framework
+### 3.1 Core
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Desktop | Tauri | 2.x |
-| Frontend | React | 19.x |
-| Language | TypeScript | 5.x |
-| Build | Vite | 8.x |
-| Routing | React Router DOM | 7.x |
+| Layer | Technology |
+|-------|------------|
+| Desktop runtime | Tauri 2 |
+| Frontend | React 19 + TypeScript 5 |
+| Build tool | Vite 8 |
+| Routing | React Router DOM 7 |
 
-### 3.2 UI & Styling
-
-| Library | Purpose |
-|---------|---------|
-| Ant Design 6.x | Primary UI components |
-| @ant-design/icons | Icons |
-| CSS Modules | Component style isolation |
-
-### 3.3 Feature Libraries
+### 3.2 UI and shared libraries
 
 | Library | Purpose |
 |---------|---------|
-| `@monaco-editor/react` | Code editor |
-| `@xterm/xterm` | Terminal emulator |
-| `@xterm/addon-fit` | Terminal auto-resize |
-| `@xterm/addon-web-links` | Clickable links in terminal |
-| `@xterm/addon-unicode11` | Unicode 11 character width |
-| `diff` | Text diff algorithm |
-| `js-base64` | Base64 |
-| `dayjs` | Timestamp formatting |
-| `spark-md5` / `js-sha1` / `js-sha256` | Hash computation |
+| Ant Design 6 | Main UI components |
+| CSS Modules | Component-scoped styling |
+| `@monaco-editor/react` | Code and note editing |
+| `@xterm/xterm` + addons | Terminal rendering, fit, links, Unicode 11 |
+| `diff` | Text diffing |
+| `js-base64` | Base64 conversion |
+| `dayjs` | Time handling |
+| `spark-md5` / `js-sha1` / `js-sha256` | Hashing |
 | `jspdf` | PDF generation |
-| `react-markdown` | Markdown rendering |
-| `i18next` + `react-i18next` | i18n |
+| `react-markdown` | Release note rendering |
+| `i18next` + `react-i18next` | Internationalization |
 
-### 3.4 Rust Dependencies
+### 3.3 Rust-side dependencies
 
-| Crate | Purpose |
-|-------|---------|
-| `reqwest` | HTTP client (translation APIs) |
-| `hmac` + `sha2` | TC3-HMAC-SHA256 signing (Tencent Cloud) |
-| `md-5` | MD5 signing (Baidu) |
-| `font-kit` | System font enumeration |
-| `serde` + `serde_json` | JSON serialization |
-| `libc` | PTY / POSIX system calls |
-| `parking_lot` | Concurrent state management |
-| `tauri-plugin-single-instance` | Single-instance enforcement |
+| Crate / plugin | Purpose |
+|----------------|---------|
+| `reqwest` | Translation API requests |
+| `hmac` + `sha2` | Tencent Cloud request signing |
+| `md-5` | Baidu request signing |
+| `font-kit` | System font discovery |
+| `libc` | PTY and process integration |
+| `parking_lot` | PTY manager synchronization |
+| `tauri-plugin-updater` | App updates |
+| `tauri-plugin-single-instance` | Single-instance behavior in release builds |
+| `tauri-plugin-dialog`, `fs`, `opener`, `process`, `shell` | Native file/system integrations |
 
----
+## 4. Architecture
 
-## 4. Project Structure
+### 4.1 Frontend shell
 
-```
+- `src/App.tsx` wires the theme, router, sidebar, updater, and about dialog
+- `src/components/Sidebar/` owns navigation, visibility toggles, and drag reorder
+- `src/components/SettingsMenuButton/` exposes language switching, update checks, and About entry
+- `src/components/ToolLayout/`, `StatusBar/`, and `FontSizeControl/` provide shared tool chrome
+
+### 4.2 Tool registry and shared state
+
+- `src/router/tools.tsx` is the single source of truth for tool registration
+- `src/types/tool.ts` defines the `ToolMeta` contract used by every tool
+- Shared hooks:
+  - `usePersistentState` for localStorage-backed state
+  - `useToolOrder` for persisted tool ordering
+  - `useToolVisibility` for sidebar visibility
+  - `useResizablePanels` for split-pane tools
+  - `useEditorFontSize` for shared editor font controls
+
+### 4.3 Native bridge
+
+- `src-tauri/src/main.rs` registers commands, tray behavior, updater integration, and macOS menu wiring
+- `src-tauri/src/pty.rs` manages terminal session lifecycle, IO, and resizing
+- `src-tauri/src/translate.rs` signs and sends Tencent Cloud / Baidu translation requests
+
+### 4.4 Release-note flow
+
+- `src/components/Updater/` checks for updates, renders changelog snippets, downloads installs, and restarts
+- `src/utils/updateNotes.ts` extracts changelog content from release bodies and caches update notes locally
+- `src/components/AboutDialog/` reads the bundled `.github/workflows/build.yml` release body to show local release notes for the current version
+
+## 5. Project Structure
+
+```text
 firewood/
+├── .github/
+│   └── workflows/
+│       └── build.yml
 ├── src-tauri/
-│   ├── src/
-│   │   ├── main.rs             # Entry, menu, tray, Tauri commands
-│   │   ├── pty.rs              # PTY manager (create/read/write/resize/close)
-│   │   └── translate.rs        # Translation API signing
 │   ├── Cargo.toml
-│   └── tauri.conf.json
+│   ├── tauri.conf.json
+│   └── src/
+│       ├── main.rs
+│       ├── pty.rs
+│       └── translate.rs
 ├── src/
-│   ├── main.tsx                # Entry
-│   ├── App.tsx                 # Root (routing, layout)
-│   ├── i18n/
-│   │   ├── index.ts
-│   │   └── locales/ (en.ts, zh-CN.ts)
-│   ├── router/
-│   │   └── tools.tsx           # Tool registry (ToolMeta list)
-│   ├── types/
-│   │   └── tool.ts             # ToolMeta interface
-│   ├── tools/
-│   │   ├── terminal/           # PTY terminal (xterm.js)
-│   │   ├── json-formatter/
-│   │   ├── timestamp/
-│   │   ├── text-diff/
-│   │   ├── notepad/
-│   │   ├── base64-codec/
-│   │   ├── url-codec/
-│   │   ├── hash/
-│   │   ├── img-to-pdf/
-│   │   └── translate/
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── assets/
 │   ├── components/
-│   │   ├── Sidebar/
-│   │   ├── ToolLayout/
-│   │   ├── TitleBar/
 │   │   ├── AboutDialog/
-│   │   ├── SettingsDialog/
+│   │   ├── FontSizeControl/
+│   │   ├── SettingsMenuButton/
+│   │   ├── Sidebar/
+│   │   ├── StatusBar/
+│   │   ├── ToolLayout/
 │   │   └── Updater/
 │   ├── hooks/
+│   │   ├── useEditorFontSize.ts
 │   │   ├── usePersistentState.ts
 │   │   ├── useResizablePanels.ts
-│   │   ├── useEditorFontSize.ts
-│   │   ├── useToolVisibility.ts
-│   │   └── useToolOrder.ts
-│   └── styles/
+│   │   ├── useToolOrder.ts
+│   │   └── useToolVisibility.ts
+│   ├── i18n/
+│   │   ├── index.ts
+│   │   └── locales/
+│   ├── router/
+│   │   └── tools.tsx
+│   ├── tools/
+│   │   ├── base64-codec/
+│   │   ├── hash/
+│   │   ├── img-to-pdf/
+│   │   ├── json-formatter/
+│   │   ├── notepad/
+│   │   ├── terminal/
+│   │   ├── text-diff/
+│   │   ├── timestamp/
+│   │   ├── translate/
+│   │   └── url-codec/
+│   ├── types/
+│   │   └── tool.ts
+│   ├── utils/
+│   │   └── updateNotes.ts
+│   └── jsonc-parser.d.ts
 ├── DESIGN.md
 ├── README.md
 └── README.zh-CN.md
 ```
 
----
+## 6. Extension Model
 
-## 5. Tool Extension
+Each tool is registered through `ToolMeta`:
 
-Each tool registers via `ToolMeta`:
-
-```typescript
+```ts
 export interface ToolMeta {
-  id: string;                                   // Unique ID, used as route path
-  name: string;                                 // Sidebar display name
-  icon: ReactNode;                              // Sidebar icon
-  description: string;                          // Brief description
-  component: LazyExoticComponent<FC>;           // Lazy-loaded component
+  id: string;
+  name: string;
+  icon: ReactNode;
+  description: string;
+  component: LazyExoticComponent<FC>;
+  visible?: boolean;
 }
 ```
 
-Steps:
-1. Create `src/tools/<tool-id>/` with default export component
-2. Add `ToolMeta` entry in `src/router/tools.tsx`
+To add a new tool:
 
----
+1. Create `src/tools/<tool-id>/index.tsx` and export the tool component
+2. Register the tool in `src/router/tools.tsx`
+3. Add i18n labels if the tool needs localized names or text
 
-## 6. App Features
+## 7. Runtime Features
 
-### Auto Update
+### Sidebar customization
 
-Tauri updater → GitHub Releases `latest.json`. Checks 3s after launch, then every 5h. Shows release notes + download progress via Ant Design notification. Tray and macOS menu support "Check for Updates".
+Users can reorder tools and toggle visibility from the sidebar menu. Both order and visibility are persisted locally.
 
-### About Dialog
+### Persistence
 
-Listens for `app://about-firewood` event from Rust macOS menu. Shows version + tech stack. Version notes parsed from local `build.yml` (inlined at build time).
+Most tools store working state locally, including note tabs, translation settings, editor font sizes, diff inputs, timestamp history, and cached update notes.
 
-### State Persistence
+### Updates
 
-`usePersistentState` hook wraps `localStorage`. Used for: notepad tabs, editor font sizes, terminal font settings, translation config, tool order.
+The updater checks once shortly after launch and then every 5 hours. Manual checks are available from both the tray menu and the in-app settings menu.
 
-### Single Instance
+### About and release notes
 
-`tauri-plugin-single-instance`. Repeat launches focus existing window.
+The About dialog opens from the sidebar settings menu, shows the app version, links to the GitHub repository, and displays bundled release notes for the current build.
 
-### System Tray
+### Tray and window lifecycle
 
-Show window, check updates, quit. Close hides to tray, doesn't quit.
+The app provides a tray icon with show, update, and quit actions. Closing the window hides the app instead of quitting.
 
-### Sidebar Reorder
+### Language support
 
-`useToolOrder` hook, HTML5 Drag & Drop, order persisted to localStorage.
+English and Simplified Chinese are built in. The initial language is auto-detected, and users can switch languages from the settings menu.
 
-### i18n
+### Single-instance release behavior
 
-`i18next` + `react-i18next`. English and Simplified Chinese. Auto-detect on first launch, manual switch in settings.
+In non-debug builds, re-launching the app focuses the existing window instead of opening a second instance.
