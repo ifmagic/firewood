@@ -28,21 +28,22 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: context.ref.replace('refs/tags/', ''),
-              name: `Firewood v0.7.4`,
+              name: `Firewood v0.7.5`,
               body: `## ✨ Features
 
-            - Enhance the terminal interface with a cleaner tab layout and improved styling.
+            - Add dedicated Firewood and Diffchecker pages with richer UI components.
 
             ## 🔧 Chore / Updates
 
-            - Refresh the README and DESIGN documentation for clearer wording and more consistent structure.
+            - Simplify the Notepad stylesheet by removing unused CSS and tightening the layout.
+            - Clean up Playwright configuration files and refresh .gitignore entries.
 
             ---
 
             ## Download
 
-            - **macOS (Apple Silicon)**: Download \\\`firewood_0.7.4_aarch64.dmg\\\`
-            - **macOS (Intel)**: Download \\\`firewood_0.7.4_x64.dmg\\\`
+            - **macOS (Apple Silicon)**: Download \\\`firewood_0.7.5_aarch64.dmg\\\`
+            - **macOS (Intel)**: Download \\\`firewood_0.7.5_x64.dmg\\\`
             - **Windows**: Download the \\\`.exe\\\` installer
 
             ## macOS Installation Guide
