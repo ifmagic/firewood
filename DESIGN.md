@@ -17,7 +17,7 @@
 | JSON Formatter | Monaco-based editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content |
 | Timestamp | Unix timestamp/date conversion, seconds/milliseconds toggle, quick current time/date actions, copy support, and persisted history |
 | Diffchecker | Editable two-pane compare view with line and word highlights, collapsible unchanged chunks, resizable panels, and persisted inputs |
-| Notepad | Multi-tab local notes and file editing with Monaco, open/save, reader mode for long-form text, bookmarks, themes, and persisted tab state |
+| Notepad | Multi-tab local notes and file editing with Monaco, local open/save, JSON formatting, and persisted tab state |
 | Base64 Codec | Encode/decode workflow with mode switch, swap action, and persisted input/output |
 | URL Codec | Encode/decode workflow with live conversion and persisted input/output |
 | Hash | Text and file hashing for MD5 / SHA-1 / SHA-256, including drag-and-drop file support |
