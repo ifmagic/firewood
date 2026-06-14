@@ -1,7 +1,8 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
+import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import { Terminal, type IDisposable } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -10,8 +11,6 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import ToolLayout from '../../components/ToolLayout';
 import './terminal.css';
 import '@xterm/xterm/css/xterm.css';
-
-// ── Types ──
 
 interface PtyInfo {
   id: string;
@@ -24,14 +23,41 @@ interface PtyOutput {
   data: string;
 }
 
-// ── Constants ──
+type TerminalTabStatus = 'loading' | 'ready' | 'error';
+
+interface TerminalTabState {
+  id: string;
+  title: string;
+  shellPath: string | null;
+  term: Terminal | null;
+  fit: FitAddon | null;
+  div: HTMLDivElement | null;
+  ptyId: string | null;
+  onData: IDisposable | null;
+  onResize: IDisposable | null;
+  ptyListenReady: Promise<UnlistenFn> | null;
+  ptyExitListenReady: Promise<UnlistenFn> | null;
+  bufferedOutput: string[];
+  bufferedChars: number;
+  mounted: boolean;
+  status: TerminalTabStatus;
+  error: string | null;
+  disposed: boolean;
+  sessionVersion: number;
+}
+
+interface TerminalTabView {
+  id: string;
+  title: string;
+  shellPath: string | null;
+  status: TerminalTabStatus;
+  error: string | null;
+}
 
 const DEFAULT_FONT_SIZE = 14;
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 32;
 const MAX_BUFFER_CHARS = 100_000;
-
-// 默认字体 fallback：优先 Nerd Font，兜底普通等宽
 const DEFAULT_FONT_FAMILY = "'Hack Nerd Font Mono', 'Hack Nerd Font', 'Cascadia Code NF', 'Cascadia Code', Menlo, Consolas, monospace";
 
 const THEME = {
@@ -59,44 +85,111 @@ const THEME = {
   brightWhite: '#ffffff',
 };
 
-// ════════════════════════════════════════════════════════════════
-//  Module-level persistent state — survives React mount/unmount
-// ════════════════════════════════════════════════════════════════
-
-let _term: Terminal | null = null;
-let _fit: FitAddon | null = null;
-let _div: HTMLDivElement | null = null;
 let _fontsReady: Promise<void> | null = null;
+let _fontsReadyKey = '';
+let _terminalTabs: TerminalTabState[] = [];
+let _activeTerminalTabId: string | null = null;
+let _nextTerminalTabNumber = 1;
 
-let _ptyId: string | null = null;
-let _shellPath: string | null = null;
+function ensureActiveTabSelection() {
+  if (_activeTerminalTabId && _terminalTabs.some((tab) => tab.id === _activeTerminalTabId)) {
+    return;
+  }
+  _activeTerminalTabId = _terminalTabs[0]?.id ?? null;
+}
 
-let _onData: IDisposable | null = null;
-let _onResize: IDisposable | null = null;
+function getTabState(id: string | null) {
+  return id ? _terminalTabs.find((tab) => tab.id === id) ?? null : null;
+}
 
-let _ptyListenReady: Promise<UnlistenFn> | null = null;
+function getTabsSnapshot(): TerminalTabView[] {
+  return _terminalTabs.map((tab) => ({
+    id: tab.id,
+    title: tab.title,
+    shellPath: tab.shellPath,
+    status: tab.status,
+    error: tab.error,
+  }));
+}
 
-let _buffer: string[] = [];
-let _mounted = false;
+function createTabId() {
+  return `terminal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
-// ════════════════════════════════════════════════════════════════
-//  Terminal lifecycle
-// ════════════════════════════════════════════════════════════════
+function createTerminalHost() {
+  const div = document.createElement('div');
+  div.style.width = '100%';
+  div.style.height = '100%';
+  return div;
+}
+
+function createTerminalTabState(shellPath: string | null): TerminalTabState {
+  return {
+    id: createTabId(),
+    title: `Terminal ${_nextTerminalTabNumber++}`,
+    shellPath,
+    term: null,
+    fit: null,
+    div: null,
+    ptyId: null,
+    onData: null,
+    onResize: null,
+    ptyListenReady: null,
+    ptyExitListenReady: null,
+    bufferedOutput: [],
+    bufferedChars: 0,
+    mounted: false,
+    status: 'loading',
+    error: null,
+    disposed: false,
+    sessionVersion: 0,
+  };
+}
+
+function getShellDisplayName(shellPath: string | null, defaultShell: string) {
+  const target = shellPath || defaultShell;
+  if (!target) return 'Shell';
+  return target.split(/[\\/]/).pop() || target;
+}
 
 function ensureFontsReady(fontFamily: string): Promise<void> {
-  if (!_fontsReady) {
+  if (!_fontsReady || _fontsReadyKey !== fontFamily) {
+    _fontsReadyKey = fontFamily;
     _fontsReady = document.fonts.ready.then(() => document.fonts.load(`16px ${fontFamily}`)).then(() => {});
   }
   return _fontsReady;
 }
 
-function getTerminal(fontSize: number, fontFamily: string): { term: Terminal; fit: FitAddon } {
-  if (_term && _fit) return { term: _term, fit: _fit };
+function appendBufferedOutput(tab: TerminalTabState, data: string) {
+  if (!data) return;
+  tab.bufferedOutput.push(data);
+  tab.bufferedChars += data.length;
 
-  if (!_div) {
-    _div = document.createElement('div');
-    _div.style.width = '100%';
-    _div.style.height = '100%';
+  while (tab.bufferedChars > MAX_BUFFER_CHARS && tab.bufferedOutput.length > 0) {
+    const removed = tab.bufferedOutput.shift() ?? '';
+    tab.bufferedChars -= removed.length;
+  }
+}
+
+function clearBufferedOutput(tab: TerminalTabState) {
+  tab.bufferedOutput = [];
+  tab.bufferedChars = 0;
+}
+
+function detachTabInput(tab: TerminalTabState) {
+  tab.onData?.dispose();
+  tab.onData = null;
+  tab.onResize?.dispose();
+  tab.onResize = null;
+}
+
+function getOrCreateTerminal(tab: TerminalTabState, fontSize: number, fontFamily: string) {
+  if (tab.term && tab.fit) {
+    return { term: tab.term, fit: tab.fit };
+  }
+
+  if (!tab.div) {
+    tab.div = createTerminalHost();
   }
 
   const term = new Terminal({
@@ -124,307 +217,381 @@ function getTerminal(fontSize: number, fontFamily: string): { term: Terminal; fi
   term.loadAddon(unicode11);
   term.unicode.activeVersion = '11';
 
-  term.open(_div);
+  term.open(tab.div);
   fit.fit();
 
-  _term = term;
-  _fit = fit;
+  tab.term = term;
+  tab.fit = fit;
   return { term, fit };
 }
 
-function mountTerminal(container: HTMLElement, fontSize: number, fontFamily: string) {
-  const { term, fit } = getTerminal(fontSize, fontFamily);
+function fitTerminalTab(tab: TerminalTabState) {
+  if (!tab.term || !tab.fit) return;
 
-  if (_div!.parentElement !== container) {
-    _div!.style.display = '';
-    container.appendChild(_div!);
+  tab.fit.fit();
+  if (tab.ptyId) {
+    invoke('resize_pty', { id: tab.ptyId, rows: tab.term.rows, cols: tab.term.cols }).catch(console.error);
+  }
+}
+
+function mountTerminalTab(tab: TerminalTabState, container: HTMLElement, fontSize: number, fontFamily: string) {
+  const { term } = getOrCreateTerminal(tab, fontSize, fontFamily);
+
+  if (tab.div && tab.div.parentElement !== container) {
+    tab.div.style.display = '';
+    container.appendChild(tab.div);
   }
 
-  _mounted = true;
+  tab.mounted = true;
 
-  if (_buffer.length > 0) {
-    term.write(_buffer.join(''));
-    _buffer = [];
+  if (tab.bufferedOutput.length > 0) {
+    term.write(tab.bufferedOutput.join(''));
+    clearBufferedOutput(tab);
   }
 
-  detachInput();
-  _onData = term.onData((data) => {
-    if (_ptyId) invoke('write_pty', { id: _ptyId, data }).catch(console.error);
+  detachTabInput(tab);
+  tab.onData = term.onData((data) => {
+    if (tab.ptyId) {
+      invoke('write_pty', { id: tab.ptyId, data }).catch(console.error);
+    }
   });
-  _onResize = term.onResize(({ cols, rows }) => {
-    if (_ptyId) invoke('resize_pty', { id: _ptyId, rows, cols }).catch(console.error);
+  tab.onResize = term.onResize(() => {
+    if (tab.ptyId) {
+      invoke('resize_pty', { id: tab.ptyId, rows: term.rows, cols: term.cols }).catch(console.error);
+    }
   });
 
   term.options.fontSize = fontSize;
   term.options.fontFamily = fontFamily;
-  fit.fit();
+  fitTerminalTab(tab);
 
-  // Auto-focus when switching back to terminal
   setTimeout(() => term.focus(), 50);
 }
 
-function unmountTerminal() {
-  detachInput();
-  _mounted = false;
+function unmountTerminalTab(tab: TerminalTabState) {
+  detachTabInput(tab);
+  tab.mounted = false;
 
-  if (_div && _div.parentElement) {
-    _div.style.display = 'none';
-    if (_div.parentElement !== document.body) {
-      document.body.appendChild(_div);
+  if (tab.div && tab.div.parentElement) {
+    tab.div.style.display = 'none';
+    if (tab.div.parentElement !== document.body) {
+      document.body.appendChild(tab.div);
     }
   }
 }
 
-function detachInput() {
-  _onData?.dispose();
-  _onData = null;
-  _onResize?.dispose();
-  _onResize = null;
-}
-
-// ════════════════════════════════════════════════════════════════
-//  PTY lifecycle
-// ════════════════════════════════════════════════════════════════
-
-async function ensurePty(shell?: string): Promise<void> {
-  if (_ptyId && (!shell || shell === _shellPath)) return;
-
-  await destroyPty();
-
-  const info: PtyInfo = await invoke('create_pty_session', {
-    shell: shell || null,
-    cwd: null,
-  });
-
-  _ptyId = info.id;
-  _shellPath = shell || null;
-
-  await invoke('start_pty_reader', { id: info.id });
-
-  _ptyListenReady = listen<PtyOutput>(`pty:data:${info.id}`, (event) => {
-    if (_mounted && _term) {
-      _term.write(event.payload.data);
-    } else {
-      _buffer.push(event.payload.data);
-      if (_buffer.length > MAX_BUFFER_CHARS) {
-        _buffer = _buffer.slice(-MAX_BUFFER_CHARS / 2);
-      }
-    }
-  });
-}
-
-async function destroyPty() {
-  if (_ptyListenReady) {
+async function destroyTabPty(tab: TerminalTabState) {
+  if (tab.ptyListenReady) {
     try {
-      const unlisten = await _ptyListenReady;
+      const unlisten = await tab.ptyListenReady;
       unlisten();
     } catch (err) {
-      console.error('Failed to remove PTY listener', err);
+      console.error('Failed to remove PTY data listener', err);
     }
-    _ptyListenReady = null;
+    tab.ptyListenReady = null;
   }
 
-  if (_ptyId) {
+  if (tab.ptyExitListenReady) {
     try {
-      await invoke('close_pty_session', { id: _ptyId });
+      const unlisten = await tab.ptyExitListenReady;
+      unlisten();
+    } catch (err) {
+      console.error('Failed to remove PTY exit listener', err);
+    }
+    tab.ptyExitListenReady = null;
+  }
+
+  const ptyId = tab.ptyId;
+  tab.ptyId = null;
+
+  if (ptyId) {
+    try {
+      await invoke('close_pty_session', { id: ptyId });
     } catch (err) {
       console.error('Failed to close PTY session', err);
     }
-    _ptyId = null;
-    _shellPath = null;
+  }
+}
+
+async function disposeTerminalTab(tab: TerminalTabState) {
+  unmountTerminalTab(tab);
+  clearBufferedOutput(tab);
+  await destroyTabPty(tab);
+  tab.term?.dispose();
+  tab.term = null;
+  tab.fit = null;
+  if (tab.div?.parentElement) {
+    tab.div.parentElement.removeChild(tab.div);
+  }
+  tab.div = null;
+}
+
+async function startTabSession(tab: TerminalTabState, shellPath: string | null) {
+  const sessionVersion = ++tab.sessionVersion;
+  tab.status = 'loading';
+  tab.error = null;
+  tab.shellPath = shellPath;
+  clearBufferedOutput(tab);
+  tab.term?.clear();
+
+  await destroyTabPty(tab);
+
+  if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+    return;
   }
 
-  _buffer = [];
+  try {
+    const info: PtyInfo = await invoke('create_pty_session', {
+      shell: shellPath,
+      cwd: null,
+    });
+
+    if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+      await invoke('close_pty_session', { id: info.id }).catch(console.error);
+      return;
+    }
+
+    tab.ptyId = info.id;
+
+    await invoke('start_pty_reader', { id: info.id });
+
+    if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+      await invoke('close_pty_session', { id: info.id }).catch(console.error);
+      tab.ptyId = null;
+      return;
+    }
+
+    tab.ptyListenReady = listen<PtyOutput>(`pty:data:${info.id}`, (event) => {
+      if (tab.disposed || tab.ptyId !== info.id) return;
+      if (tab.mounted && tab.term) {
+        tab.term.write(event.payload.data);
+      } else {
+        appendBufferedOutput(tab, event.payload.data);
+      }
+    });
+
+    tab.ptyExitListenReady = listen(`pty:exit:${info.id}`, () => {
+      if (tab.disposed || tab.ptyId !== info.id) return;
+
+      tab.ptyId = null;
+      void invoke('close_pty_session', { id: info.id }).catch(() => {});
+
+      const exitMessage = '\r\n[Shell exited]\r\n';
+      if (tab.mounted && tab.term) {
+        tab.term.write(exitMessage);
+      } else {
+        appendBufferedOutput(tab, exitMessage);
+      }
+    });
+
+    tab.status = 'ready';
+    tab.error = null;
+  } catch (err) {
+    await destroyTabPty(tab);
+    throw err;
+  }
 }
 
-async function switchShell(newShell: string | null) {
-  await destroyPty();
-  _term?.clear();
-  await ensurePty(newShell || undefined);
+function applyTerminalAppearance(fontSize: number, fontFamily: string) {
+  _terminalTabs.forEach((tab) => {
+    if (!tab.term) return;
+    tab.term.options.fontSize = fontSize;
+    tab.term.options.fontFamily = fontFamily;
+    if (tab.mounted) {
+      fitTerminalTab(tab);
+    }
+  });
 }
 
-// ════════════════════════════════════════════════════════════════
-//  React Component
-// ════════════════════════════════════════════════════════════════
+function buildShellOptions(defaultShell: string, availableShells: string[], currentShell: string) {
+  return [...new Set([defaultShell, ...availableShells, currentShell].filter(Boolean))];
+}
+
+function toShellOverride(selectedShell: string, defaultShell: string) {
+  return selectedShell === defaultShell ? null : selectedShell;
+}
 
 export default function TerminalPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<ResizeObserver | null>(null);
+  const mountedRef = useRef(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
-  // Persisted settings
   const [fontSize, setFontSize] = usePersistentState('firewood-terminal-fontsize', DEFAULT_FONT_SIZE);
   const fontSizeRef = useRef(fontSize);
-  useEffect(() => { fontSizeRef.current = fontSize; }, [fontSize]);
+  useEffect(() => {
+    fontSizeRef.current = fontSize;
+  }, [fontSize]);
 
   const [fontFamily, setFontFamily] = usePersistentState('firewood-terminal-fontfamily', DEFAULT_FONT_FAMILY);
   const fontFamilyRef = useRef(fontFamily);
-  useEffect(() => { fontFamilyRef.current = fontFamily; }, [fontFamily]);
+  useEffect(() => {
+    fontFamilyRef.current = fontFamily;
+  }, [fontFamily]);
 
-  // UI state
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [tabs, setTabs] = useState<TerminalTabView[]>(() => getTabsSnapshot());
+  const [activeTabId, setActiveTabId] = useState(() => _activeTerminalTabId ?? '');
+  const [editingTabId, setEditingTabId] = useState('');
+  const [tabNameDraft, setTabNameDraft] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [availableShells, setAvailableShells] = useState<string[]>([]);
   const [systemFonts, setSystemFonts] = useState<string[]>([]);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [fontInput, setFontInput] = useState(String(fontSize));
   const [defaultShell, setDefaultShell] = useState('');
-  const [selectedShell, setSelectedShell] = useState('');
-  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const refreshFromStore = useCallback(() => {
+    if (!mountedRef.current) return;
+    ensureActiveTabSelection();
+    setTabs(getTabsSnapshot());
+    setActiveTabId(_activeTerminalTabId ?? '');
+  }, []);
+
+  const runTabSession = useCallback((tab: TerminalTabState, shellPath: string | null, failurePrefix: string) => {
+    tab.status = 'loading';
+    tab.error = null;
+    refreshFromStore();
+
+    void startTabSession(tab, shellPath).then(() => {
+      if (!tab.disposed) {
+        refreshFromStore();
+      }
+    }).catch((err) => {
+      if (!tab.disposed) {
+        tab.status = 'error';
+        tab.error = `${failurePrefix}: ${String(err)}`;
+      }
+      refreshFromStore();
+    });
+  }, [refreshFromStore]);
 
   const applyFontSize = useCallback((size: number) => {
     const clamped = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, size));
     setFontSize(clamped);
     setFontInput(String(clamped));
-    if (_term) {
-      _term.options.fontSize = clamped;
-      _fit?.fit();
-    }
   }, [setFontSize]);
 
   const applyFontFamily = useCallback((family: string) => {
     setFontFamily(family);
-    if (_term) {
-      _term.options.fontFamily = family;
-      _fit?.fit();
-    }
   }, [setFontFamily]);
 
   const handleFontInputCommit = useCallback(() => {
     const parsed = parseInt(fontInput, 10);
-    if (!isNaN(parsed)) applyFontSize(parsed);
-    else setFontInput(String(fontSizeRef.current));
-  }, [fontInput, applyFontSize]);
+    if (!Number.isNaN(parsed)) {
+      applyFontSize(parsed);
+    } else {
+      setFontInput(String(fontSizeRef.current));
+    }
+  }, [applyFontSize, fontInput]);
 
-  // ── Mount / Unmount ──
+  const handleCreateTab = useCallback((shellPath: string | null) => {
+    const tab = createTerminalTabState(shellPath);
+    _terminalTabs = [..._terminalTabs, tab];
+    _activeTerminalTabId = tab.id;
+    refreshFromStore();
+    runTabSession(tab, shellPath, 'Failed to connect PTY');
+  }, [refreshFromStore, runTabSession]);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const handleActivateTab = useCallback((tabId: string) => {
+    if (_activeTerminalTabId === tabId) return;
+    _activeTerminalTabId = tabId;
+    refreshFromStore();
+  }, [refreshFromStore]);
 
-    let cancelled = false;
+  const handleStartRenameTab = useCallback((tabId: string) => {
+    const tab = getTabState(tabId);
+    if (!tab) return;
 
-    ensureFontsReady(fontFamilyRef.current).then(() => {
-      if (cancelled) return;
-      mountTerminal(containerRef.current!, fontSizeRef.current, fontFamilyRef.current);
-      return ensurePty();
-    }).then(() => {
-      if (!cancelled) setIsLoading(false);
-    }).catch((err) => {
-      if (!cancelled) {
-        setError(`Failed to connect PTY: ${err}`);
-        setIsLoading(false);
-      }
-    });
+    if (_activeTerminalTabId !== tabId) {
+      _activeTerminalTabId = tabId;
+      refreshFromStore();
+    }
 
-    return () => {
-      cancelled = true;
-      unmountTerminal();
-      resizeRef.current?.disconnect();
-    };
+    setEditingTabId(tabId);
+    setTabNameDraft(tab.title);
+  }, [refreshFromStore]);
+
+  const handleCancelRenameTab = useCallback(() => {
+    setEditingTabId('');
+    setTabNameDraft('');
   }, []);
 
-  // ── Resize observer (runs once) ──
+  const handleCommitRenameTab = useCallback(() => {
+    if (!editingTabId) return;
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const tab = getTabState(editingTabId);
+    const nextTitle = tabNameDraft.trim();
+    if (tab && nextTitle) {
+      tab.title = nextTitle;
+      refreshFromStore();
+    }
 
-    resizeRef.current = new ResizeObserver(() => {
-      try {
-        _fit?.fit();
-        if (_ptyId && _term) {
-          invoke('resize_pty', { id: _ptyId, rows: _term.rows, cols: _term.cols }).catch(console.error);
-        }
-      } catch (err) {
-        console.error('Failed to resize terminal', err);
-      }
-    });
+    setEditingTabId('');
+    setTabNameDraft('');
+  }, [editingTabId, refreshFromStore, tabNameDraft]);
 
-    resizeRef.current.observe(container);
-    return () => { resizeRef.current?.disconnect(); resizeRef.current = null; };
-  }, []);
+  const handleCloseTab = useCallback((tabId: string) => {
+    const currentIndex = _terminalTabs.findIndex((tab) => tab.id === tabId);
+    if (currentIndex < 0) return;
 
-  // ── Shell list + system fonts (runs once) ──
+    const tab = _terminalTabs[currentIndex];
+    const remainingTabs = _terminalTabs.filter((item) => item.id !== tabId);
+    tab.disposed = true;
 
-  useEffect(() => {
-    Promise.all([
-      invoke<string>('get_default_shell'),
-      invoke<string[]>('list_shells'),
-      invoke<string[]>('list_system_fonts').catch(() => [] as string[]),
-    ]).then(([def, shells, fonts]) => {
-      setDefaultShell(def);
-      setSelectedShell(_shellPath || def);
-      setAvailableShells(shells);
-      setSystemFonts(fonts);
-    }).catch(console.error);
-  }, []);
+    if (_activeTerminalTabId === tabId) {
+      const fallback = remainingTabs[currentIndex] ?? remainingTabs[currentIndex - 1] ?? null;
+      _activeTerminalTabId = fallback?.id ?? null;
+    }
 
-  // ── Close menu on outside click ──
+    _terminalTabs = remainingTabs;
+    if (editingTabId === tabId) {
+      setEditingTabId('');
+      setTabNameDraft('');
+    }
+    refreshFromStore();
+    void disposeTerminalTab(tab);
+  }, [editingTabId, refreshFromStore]);
 
-  useEffect(() => {
-    if (!showMenu) return;
-    const handleClick = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest('.firewood-terminal-menu-panel')) {
-        setShowMenu(false);
-      }
-    };
-    const id = setTimeout(() => document.addEventListener('click', handleClick), 0);
-    return () => { clearTimeout(id); document.removeEventListener('click', handleClick); };
-  }, [showMenu]);
+  const handleRetryActiveTab = useCallback(() => {
+    const tab = getTabState(_activeTerminalTabId);
+    if (!tab) return;
+    runTabSession(tab, tab.shellPath, 'Failed to connect PTY');
+  }, [runTabSession]);
 
-  // ── Cmd+/- font size (runs once) ──
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!e.metaKey && !e.ctrlKey) return;
-      if (e.key === '=' || e.key === '+') {
-        e.preventDefault();
-        applyFontSize(fontSizeRef.current + 1);
-      } else if (e.key === '-') {
-        e.preventDefault();
-        applyFontSize(fontSizeRef.current - 1);
-      } else if (e.key === '0') {
-        e.preventDefault();
-        applyFontSize(DEFAULT_FONT_SIZE);
-      }
-    };
-
-    el.addEventListener('keydown', handleKeyDown);
-    return () => el.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  const activeTabMeta = tabs.find((tab) => tab.id === activeTabId) ?? null;
+  const activeTabState = getTabState(activeTabId);
+  const currentShell = activeTabState?.shellPath ?? defaultShell;
+  const shellOptions = buildShellOptions(defaultShell, availableShells, currentShell);
+  const selectedShellValue = currentShell || shellOptions[0] || '';
 
   const handleShellChange = useCallback((value: string) => {
-    setSelectedShell(value);
-    const shell = value === defaultShell ? null : value;
-    setIsLoading(true);
-    switchShell(shell).then(() => {
-      setIsLoading(false);
-    }).catch((err) => {
-      setError(`Failed to switch shell: ${err}`);
-      setIsLoading(false);
-    });
-  }, [defaultShell]);
+    const tab = getTabState(_activeTerminalTabId);
+    if (!tab) return;
 
-  const handleBrowseShell = useCallback(async () => {
-    const dir = selectedShell.split('/').slice(0, -1).join('/') || '/bin';
+    const shellOverride = toShellOverride(value, defaultShell);
+    if (tab.shellPath === shellOverride) return;
+
+    runTabSession(tab, shellOverride, 'Failed to switch shell');
+  }, [defaultShell, runTabSession]);
+
+  const handleBrowseShell = async () => {
+    const tab = getTabState(_activeTerminalTabId);
+    if (!tab) return;
+
+    const baseShell = selectedShellValue || defaultShell || '/bin/zsh';
+    const dir = baseShell.split('/').slice(0, -1).join('/') || '/bin';
     const file = await open({
       title: 'Select Shell Executable',
       directory: false,
       multiple: false,
       defaultPath: dir,
     });
-    if (file) {
-      setSelectedShell(file);
-      setIsLoading(true);
-      switchShell(file).then(() => setIsLoading(false)).catch((err) => {
-        setError(`Failed to switch shell: ${err}`);
-        setIsLoading(false);
-      });
+
+    if (typeof file === 'string' && file) {
+      runTabSession(tab, toShellOverride(file, defaultShell), 'Failed to switch shell');
     }
-  }, [selectedShell]);
+  };
 
   const openMenu = useCallback(() => {
     if (triggerRef.current) {
@@ -434,22 +601,230 @@ export default function TerminalPage() {
     setShowMenu(true);
   }, []);
 
-  // ── Render ──
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (_terminalTabs.length > 0) return;
+    const timerId = setTimeout(() => handleCreateTab(null), 0);
+    return () => clearTimeout(timerId);
+  }, [handleCreateTab]);
+
+  useEffect(() => {
+    if (!editingTabId) return;
+
+    const frameId = requestAnimationFrame(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [editingTabId]);
+
+  useEffect(() => {
+    Promise.all([
+      invoke<string>('get_default_shell'),
+      invoke<string[]>('list_shells'),
+      invoke<string[]>('list_system_fonts').catch(() => [] as string[]),
+    ]).then(([detectedDefaultShell, shells, fonts]) => {
+      setDefaultShell(detectedDefaultShell);
+      setAvailableShells(shells);
+      setSystemFonts(fonts);
+    }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClick = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest('.firewood-terminal-menu-panel')) {
+        setShowMenu(false);
+      }
+    };
+    const timerId = setTimeout(() => document.addEventListener('click', handleClick), 0);
+    return () => {
+      clearTimeout(timerId);
+      document.removeEventListener('click', handleClick);
+    };
+  }, [showMenu]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const tab = getTabState(activeTabId);
+    if (!container || !tab) return;
+
+    let cancelled = false;
+
+    void ensureFontsReady(fontFamilyRef.current).then(() => {
+      if (cancelled || tab.disposed) return;
+      mountTerminalTab(tab, container, fontSizeRef.current, fontFamilyRef.current);
+    }).catch((err) => {
+      if (cancelled || tab.disposed) return;
+      tab.status = 'error';
+      tab.error = `Failed to render terminal: ${String(err)}`;
+      refreshFromStore();
+    });
+
+    return () => {
+      cancelled = true;
+      unmountTerminalTab(tab);
+    };
+  }, [activeTabId, refreshFromStore]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    resizeRef.current = new ResizeObserver(() => {
+      const tab = getTabState(_activeTerminalTabId);
+      if (!tab) return;
+
+      try {
+        fitTerminalTab(tab);
+      } catch (err) {
+        console.error('Failed to resize terminal', err);
+      }
+    });
+
+    resizeRef.current.observe(container);
+    return () => {
+      resizeRef.current?.disconnect();
+      resizeRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    void ensureFontsReady(fontFamily).then(() => {
+      applyTerminalAppearance(fontSize, fontFamily);
+    }).catch(console.error);
+  }, [fontFamily, fontSize]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.metaKey && !event.ctrlKey) return;
+      if (event.key === '=' || event.key === '+') {
+        event.preventDefault();
+        applyFontSize(fontSizeRef.current + 1);
+      } else if (event.key === '-') {
+        event.preventDefault();
+        applyFontSize(fontSizeRef.current - 1);
+      } else if (event.key === '0') {
+        event.preventDefault();
+        applyFontSize(DEFAULT_FONT_SIZE);
+      }
+    };
+
+    el.addEventListener('keydown', handleKeyDown);
+    return () => el.removeEventListener('keydown', handleKeyDown);
+  }, [applyFontSize]);
 
   return (
     <ToolLayout title="Terminal">
       <div className="firewood-terminal">
         <div className="firewood-terminal-header">
+          <div className="firewood-terminal-tabStrip">
+            <div className="firewood-terminal-tabs" role="tablist" aria-label="Terminal tabs">
+              {tabs.map((tab) => {
+                const isActive = tab.id === activeTabId;
+                const isEditing = editingTabId === tab.id;
+                const shellLabel = getShellDisplayName(tab.shellPath, defaultShell);
+
+                return (
+                  <div
+                    key={tab.id}
+                    className={`firewood-terminal-tab${isActive ? ' is-active' : ''}`}
+                    title={isActive ? `${tab.title} · ${shellLabel} · Double-click to rename` : `${tab.title} · ${shellLabel}`}
+                  >
+                    {isEditing ? (
+                      <div className="firewood-terminal-tabEditor">
+                        <span className={`firewood-terminal-tabStatus firewood-terminal-tabStatus-${tab.status}`} />
+                        <input
+                          ref={renameInputRef}
+                          className="firewood-terminal-tabRenameInput"
+                          value={tabNameDraft}
+                          onChange={(event) => setTabNameDraft(event.target.value)}
+                          onBlur={handleCommitRenameTab}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              handleCommitRenameTab();
+                            } else if (event.key === 'Escape') {
+                              event.preventDefault();
+                              handleCancelRenameTab();
+                            }
+                          }}
+                          aria-label={`Rename ${tab.title}`}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="firewood-terminal-tabButton"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => handleActivateTab(tab.id)}
+                        onDoubleClick={() => {
+                          if (isActive) {
+                            handleStartRenameTab(tab.id);
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'F2' && isActive) {
+                            event.preventDefault();
+                            handleStartRenameTab(tab.id);
+                          }
+                        }}
+                      >
+                        <span className={`firewood-terminal-tabStatus firewood-terminal-tabStatus-${tab.status}`} />
+                        <span className="firewood-terminal-tabTitle">{tab.title}</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="firewood-terminal-tabClose"
+                      title={`Close ${tab.title}`}
+                      aria-label={`Close ${tab.title}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleCloseTab(tab.id);
+                      }}
+                    >
+                      <CloseOutlined />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              className="firewood-terminal-btn firewood-terminal-addTab"
+              onClick={() => handleCreateTab(activeTabState?.shellPath ?? null)}
+              title="New Terminal"
+              aria-label="New Terminal"
+            >
+              <PlusOutlined />
+            </button>
+          </div>
+
           <div className="firewood-terminal-actions">
             <button
+              type="button"
               ref={triggerRef}
               className="firewood-terminal-btn firewood-terminal-menu-trigger"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 if (showMenu) setShowMenu(false);
                 else openMenu();
               }}
               title="Settings"
+              aria-label="Settings"
             >
               ⋮
             </button>
@@ -460,7 +835,7 @@ export default function TerminalPage() {
           <div
             className="firewood-terminal-menu-panel"
             style={{ top: menuPos.top, right: menuPos.right }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="firewood-terminal-menu-section">
               <div className="firewood-terminal-menu-label">Font family</div>
@@ -468,16 +843,16 @@ export default function TerminalPage() {
                 <select
                   className="firewood-terminal-menu-select"
                   value={fontFamily}
-                  onChange={(e) => applyFontFamily(e.target.value)}
-                  style={{ fontFamily: fontFamily, fontSize: 11 }}
+                  onChange={(event) => applyFontFamily(event.target.value)}
+                  style={{ fontFamily, fontSize: 11 }}
                 >
                   <option value={DEFAULT_FONT_FAMILY} style={{ fontFamily: DEFAULT_FONT_FAMILY }}>
                     System Default
                   </option>
                   {systemFonts.length > 0 && <option disabled>──────────</option>}
-                  {systemFonts.map((f) => (
-                    <option key={f} value={`'${f}', monospace`} style={{ fontFamily: `'${f}'` }}>
-                      {f}
+                  {systemFonts.map((family) => (
+                    <option key={family} value={`'${family}', monospace`} style={{ fontFamily: `'${family}'` }}>
+                      {family}
                     </option>
                   ))}
                 </select>
@@ -491,23 +866,29 @@ export default function TerminalPage() {
               <div className="firewood-terminal-menu-row">
                 <div className="firewood-terminal-menu-input-group">
                   <button
+                    type="button"
                     className="firewood-terminal-menu-stepper"
                     onClick={() => applyFontSize(fontSize - 1)}
                     disabled={fontSize <= MIN_FONT_SIZE}
-                  >−</button>
+                  >
+                    −
+                  </button>
                   <input
                     className="firewood-terminal-menu-input"
                     type="text"
                     value={fontInput}
-                    onChange={(e) => setFontInput(e.target.value)}
+                    onChange={(event) => setFontInput(event.target.value)}
                     onBlur={handleFontInputCommit}
-                    onKeyDown={(e) => e.key === 'Enter' && handleFontInputCommit()}
+                    onKeyDown={(event) => event.key === 'Enter' && handleFontInputCommit()}
                   />
                   <button
+                    type="button"
                     className="firewood-terminal-menu-stepper"
                     onClick={() => applyFontSize(fontSize + 1)}
                     disabled={fontSize >= MAX_FONT_SIZE}
-                  >+</button>
+                  >
+                    +
+                  </button>
                   <span className="firewood-terminal-menu-unit">px</span>
                 </div>
               </div>
@@ -520,37 +901,67 @@ export default function TerminalPage() {
               <div className="firewood-terminal-menu-row">
                 <select
                   className="firewood-terminal-menu-select"
-                  value={selectedShell}
-                  onChange={(e) => handleShellChange(e.target.value)}
+                  value={selectedShellValue}
+                  onChange={(event) => handleShellChange(event.target.value)}
+                  disabled={!activeTabState || shellOptions.length === 0}
                 >
-                  {defaultShell && <option value={defaultShell}>{defaultShell}</option>}
-                  {availableShells.filter((s) => s !== defaultShell).map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                  {shellOptions.map((shell) => (
+                    <option key={shell} value={shell}>
+                      {shell}
+                    </option>
                   ))}
                 </select>
                 <button
+                  type="button"
                   className="firewood-terminal-menu-stepper firewood-terminal-menu-browse"
-                  onClick={handleBrowseShell}
+                  onClick={() => {
+                    void handleBrowseShell();
+                  }}
                   title="Browse for shell executable"
-                >📁</button>
+                  disabled={!activeTabState}
+                >
+                  📁
+                </button>
               </div>
             </div>
           </div>
         )}
 
         <div className="firewood-terminal-body">
-          {isLoading && (
+          {tabs.length === 0 && (
+            <div className="firewood-terminal-emptyState">
+              <div className="firewood-terminal-emptyTitle">No terminals open</div>
+              <button
+                type="button"
+                className="firewood-terminal-emptyAction"
+                onClick={() => handleCreateTab(null)}
+              >
+                Create Terminal
+              </button>
+            </div>
+          )}
+
+          {activeTabMeta?.status === 'loading' && (
             <div className="firewood-terminal-overlay">
               <div className="firewood-terminal-spinner" />
               <span>Connecting to shell...</span>
             </div>
           )}
-          {error && (
+
+          {activeTabMeta?.error && activeTabMeta.status !== 'loading' && (
             <div className="firewood-terminal-error-overlay">
               <div className="firewood-terminal-error-icon">!</div>
-              <span>{error}</span>
+              <span>{activeTabMeta.error}</span>
+              <button
+                type="button"
+                className="firewood-terminal-retry-btn"
+                onClick={handleRetryActiveTab}
+              >
+                Retry
+              </button>
             </div>
           )}
+
           <div ref={containerRef} className="firewood-terminal-container" />
         </div>
 

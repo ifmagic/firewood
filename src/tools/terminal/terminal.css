@@ -10,23 +10,174 @@
 
 .firewood-terminal-header {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 6px 12px;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
   background: #252526;
   border-bottom: 1px solid #3c3c3c;
   flex-shrink: 0;
+  min-height: 38px;
+}
+
+.firewood-terminal-tabStrip {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+}
+
+.firewood-terminal-tabs {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.firewood-terminal-tab {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 220px;
+  height: 37px;
+  background: transparent;
+  border-right: 1px solid #2d2d2d;
+  color: #9b9b9b;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.firewood-terminal-tab:hover {
+  background: #2d2d2d;
+  color: #d4d4d4;
+}
+
+.firewood-terminal-tab.is-active {
+  background: #1e1e1e;
+  color: #ffffff;
+}
+
+.firewood-terminal-tabButton {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 12px;
+  cursor: pointer;
+}
+
+.firewood-terminal-tabButton:focus-visible,
+.firewood-terminal-tabClose:focus-visible,
+.firewood-terminal-btn:focus-visible,
+.firewood-terminal-emptyAction:focus-visible,
+.firewood-terminal-retry-btn:focus-visible,
+.firewood-terminal-menu-stepper:focus-visible,
+.firewood-terminal-menu-input:focus-visible,
+.firewood-terminal-menu-select:focus-visible {
+  outline: 1px solid #0e639c;
+  outline-offset: -1px;
+}
+
+.firewood-terminal-tabStatus {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(212, 212, 212, 0.28);
+  flex-shrink: 0;
+}
+
+.firewood-terminal-tab.is-active .firewood-terminal-tabStatus {
+  background: #73c991;
+  box-shadow: 0 0 0 3px rgba(115, 201, 145, 0.18);
+}
+
+.firewood-terminal-tabStatus-loading,
+.firewood-terminal-tab.is-active .firewood-terminal-tabStatus-loading {
+  background: #0e639c;
+  box-shadow: 0 0 0 3px rgba(14, 99, 156, 0.18);
+}
+
+.firewood-terminal-tabStatus-error,
+.firewood-terminal-tab.is-active .firewood-terminal-tabStatus-error {
+  background: #f48771;
+  box-shadow: 0 0 0 3px rgba(244, 135, 113, 0.14);
+}
+
+.firewood-terminal-tabTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.firewood-terminal-tabEditor {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 12px;
+}
+
+.firewood-terminal-tabRenameInput {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  border: 1px solid #0e639c;
+  background: #1e1e1e;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 0 6px;
+  outline: none;
+}
+
+.firewood-terminal-tabClose {
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.firewood-terminal-tab:hover .firewood-terminal-tabClose,
+.firewood-terminal-tab.is-active .firewood-terminal-tabClose {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.firewood-terminal-tabClose:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .firewood-terminal-actions {
   display: flex;
+  align-items: center;
   gap: 4px;
+  padding: 0 8px 0 0;
   flex-shrink: 0;
 }
 
 .firewood-terminal-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: transparent;
   border-radius: 4px;
@@ -37,6 +188,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.12s ease;
+  flex-shrink: 0;
 }
 
 .firewood-terminal-btn:hover {
@@ -46,6 +198,11 @@
 
 .firewood-terminal-btn:active {
   background: #505050;
+}
+
+.firewood-terminal-addTab {
+  align-self: center;
+  margin-left: 2px;
 }
 
 .firewood-terminal-menu-trigger {
@@ -75,16 +232,48 @@
   text-rendering: optimizeLegibility;
 }
 
-.firewood-terminal-overlay {
+.firewood-terminal-emptyState,
+.firewood-terminal-overlay,
+.firewood-terminal-error-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(30, 30, 30, 0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
   z-index: 10;
+  text-align: center;
+  padding: 20px;
+}
+
+.firewood-terminal-emptyState {
+  background: linear-gradient(180deg, rgba(30, 30, 30, 0.92), rgba(30, 30, 30, 0.98));
+  color: #a8a8a8;
+}
+
+.firewood-terminal-emptyTitle {
+  font-size: 14px;
+  color: #d4d4d4;
+}
+
+.firewood-terminal-emptyAction {
+  padding: 8px 18px;
+  border: 1px solid #3c3c3c;
+  background: #252526;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.firewood-terminal-emptyAction:hover {
+  background: #313131;
+  border-color: #4b4b4b;
+}
+
+.firewood-terminal-overlay {
+  background: rgba(30, 30, 30, 0.9);
   color: #cccccc;
   font-size: 14px;
 }
@@ -99,23 +288,15 @@
 }
 
 @keyframes firewood-terminal-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .firewood-terminal-error-overlay {
-  position: absolute;
-  inset: 0;
   background: rgba(30, 30, 30, 0.95);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  z-index: 10;
   color: #f48771;
   font-size: 14px;
-  padding: 20px;
-  text-align: center;
 }
 
 .firewood-terminal-error-icon {
@@ -142,8 +323,13 @@
   transition: background 0.15s ease;
 }
 
-.firewood-terminal-retry-btn:hover { background: #1177bb; }
-.firewood-terminal-retry-btn:active { background: #0d5a8c; }
+.firewood-terminal-retry-btn:hover {
+  background: #1177bb;
+}
+
+.firewood-terminal-retry-btn:active {
+  background: #0d5a8c;
+}
 
 .firewood-terminal-footer {
   display: flex;
@@ -160,8 +346,6 @@
   color: #6e6e6e;
 }
 
-/* ─── Settings panel (fixed position, escapes overflow:hidden) ─── */
-
 .firewood-terminal-menu-panel {
   position: fixed;
   min-width: 280px;
@@ -175,8 +359,15 @@
 }
 
 @keyframes firewood-menu-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .firewood-terminal-menu-section {
@@ -198,19 +389,11 @@
   margin: 4px 10px;
 }
 
-/* Font row: label + stepper input group */
 .firewood-terminal-menu-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 4px 14px;
-}
-
-.firewood-terminal-menu-row-label {
-  font-size: 12px;
-  color: #aaaaaa;
-  min-width: 32px;
-  flex-shrink: 0;
 }
 
 .firewood-terminal-menu-input-group {
@@ -261,14 +444,6 @@
   border-color: #0e639c;
 }
 
-.firewood-terminal-menu-input-wide {
-  width: 140px;
-  text-align: left;
-  padding: 0 6px;
-  font-family: 'SF Mono', 'Menlo', monospace;
-  font-size: 11px;
-}
-
 .firewood-terminal-menu-select {
   flex: 1;
   height: 28px;
@@ -292,6 +467,11 @@
   border-color: #0e639c;
 }
 
+.firewood-terminal-menu-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .firewood-terminal-menu-select option {
   background: #1e1e1e;
   color: #cccccc;
@@ -308,10 +488,12 @@
   margin-left: 2px;
 }
 
-
-
 @media (max-width: 600px) {
   .firewood-terminal-hint {
     display: none;
+  }
+
+  .firewood-terminal-tab {
+    max-width: 160px;
   }
 }
