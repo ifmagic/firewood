@@ -139,9 +139,6 @@ const zhCN = {
     fileSaved: '已保存「{{name}}」',
     openFailed: '打开文件失败：{{error}}',
     saveFailed: '保存文件失败：{{error}}',
-    linkHint: '{{shortcut}}+点击可打开链接',
-    openHint: '{{shortcut}}+O 打开本地文件',
-    saveHint: '{{shortcut}}+S 另存为',
   },
 
   // Base64

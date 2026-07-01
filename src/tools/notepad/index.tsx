@@ -1,19 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Editor, { type BeforeMount, type OnMount } from '@monaco-editor/react';
-import { DeleteOutlined, FolderOpenOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
-import type { InputRef } from 'antd';
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
-import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
-import { useTranslation } from 'react-i18next';
-import FontSizeControl from '../../components/FontSizeControl';
-import StatusBar from '../../components/StatusBar';
-import ToolLayout from '../../components/ToolLayout';
-import { useEditorFontSize } from '../../hooks/useEditorFontSize';
-import { usePersistentState } from '../../hooks/usePersistentState';
-import i18n from '../../i18n';
-import './notepad.css';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Editor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
+import {
+  DeleteOutlined,
+  FolderOpenOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Dropdown,
+  Empty,
+  Form,
+  Input,
+  Modal,
+  Space,
+  Tabs,
+  message,
+} from "antd";
+import type { InputRef } from "antd";
+import type * as Monaco from "monaco-editor";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { openUrl as openExternal } from "@tauri-apps/plugin-opener";
+import { useTranslation } from "react-i18next";
+import FontSizeControl from "../../components/FontSizeControl";
+import StatusBar from "../../components/StatusBar";
+import ToolLayout from "../../components/ToolLayout";
+import { useEditorFontSize } from "../../hooks/useEditorFontSize";
+import { usePersistentState } from "../../hooks/usePersistentState";
+import "./notepad.css";
 
 interface NoteTab {
   id: string;
@@ -22,10 +36,33 @@ interface NoteTab {
   sourceName?: string;
 }
 
-const STORAGE_TABS_KEY = 'tool:notepad:tabs';
-const STORAGE_ACTIVE_KEY = 'tool:notepad:active';
+interface EditorStats {
+  chars: number;
+  lines: number;
+  selected: number;
+}
+
+const STORAGE_TABS_KEY = "tool:notepad:tabs";
+const STORAGE_ACTIVE_KEY = "tool:notepad:active";
 const MAX_TABS = 8;
-const LOCAL_TEXT_EXTENSIONS = ['txt', 'md', 'markdown', 'json', 'log', 'csv', 'yml', 'yaml', 'xml', 'html', 'js', 'ts', 'tsx', 'jsx', 'css'];
+const PERSIST_DEBOUNCE_MS = 250;
+const LOCAL_TEXT_EXTENSIONS = [
+  "txt",
+  "md",
+  "markdown",
+  "json",
+  "log",
+  "csv",
+  "yml",
+  "yaml",
+  "xml",
+  "html",
+  "js",
+  "ts",
+  "tsx",
+  "jsx",
+  "css",
+];
 
 function getContentKey(tabId: string) {
   return `tool:notepad:content:${tabId}`;
@@ -47,25 +84,12 @@ function getPreferredSaveName(tab: NoteTab | null, fallbackName: string) {
   return tab?.name?.trim() || fallbackName.trim();
 }
 
-const DEFAULT_NAME_POOL = [
-  'Draft', 'Notes', 'Memo', 'Scratch', 'Snippet',
-  'Ideas', 'Tasks', 'Journal', 'Log', 'Quick Note',
-  'Thoughts', 'Review', 'Summary', 'Reference',
-];
-
-function randomDefaultName() {
-  const pool = (i18n.t('notepadNames', { returnObjects: true }) as string[]) || DEFAULT_NAME_POOL;
-  const base = pool[Math.floor(Math.random() * pool.length)];
-  const suffix = Math.random().toString(36).slice(2, 5);
-  return `${base}-${suffix}`;
-}
-
 function getUrlAtColumn(line: string, column: number) {
   const urlRegex = /(https?:\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+)/g;
   let match = urlRegex.exec(line);
   while (match) {
     const start = match.index + 1;
-    const end = start + match[0].length;
+    const end = start + match[0].length - 1;
     if (column >= start && column <= end) {
       return match[0];
     }
@@ -75,8 +99,34 @@ function getUrlAtColumn(line: string, column: number) {
 }
 
 function normalizeUrl(raw: string) {
-  const trimmed = raw.trim().replace(/[),.;:!?\]}]+$/g, '');
-  return trimmed.startsWith('www.') ? `https://${trimmed}` : trimmed;
+  const trimmed = raw.trim().replace(/[),.;:!?\]}]+$/g, "");
+  return trimmed.startsWith("www.") ? `https://${trimmed}` : trimmed;
+}
+
+function detectLanguage(text: string) {
+  const trimmed = text.trimStart();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) return "json";
+  if (
+    /^<(!doctype|html|div|span|head|body|p\b|ul|ol|li|table|form|a\b|img|section|article|nav|header|footer)/i.test(
+      trimmed,
+    )
+  )
+    return "html";
+  if (
+    /^(import |export |const |let |var |function |class |=>|\/\/)/.test(trimmed)
+  )
+    return "javascript";
+  return "plaintext";
+}
+
+function countCodePoints(text: string) {
+  let count = 0;
+  for (let i = 0; i < text.length; ) {
+    const code = text.charCodeAt(i);
+    i += code >= 0xd800 && code <= 0xdbff ? 2 : 1;
+    count++;
+  }
+  return count;
 }
 
 /**
@@ -93,11 +143,11 @@ function bestEffortFormatJson(text: string): string {
     // fall through
   }
 
-  let result = '';
+  let result = "";
   let depth = 0;
   let inString = false;
   let escaped = false;
-  const indent = () => '  '.repeat(depth);
+  const indent = () => "  ".repeat(depth);
 
   for (let i = 0; i < trimmed.length; i++) {
     const ch = trimmed[i];
@@ -108,7 +158,7 @@ function bestEffortFormatJson(text: string): string {
       continue;
     }
 
-    if (ch === '\\' && inString) {
+    if (ch === "\\" && inString) {
       result += ch;
       escaped = true;
       continue;
@@ -127,17 +177,17 @@ function bestEffortFormatJson(text: string): string {
 
     if (/\s/.test(ch)) continue;
 
-    if (ch === '{' || ch === '[') {
+    if (ch === "{" || ch === "[") {
       result += ch;
       depth++;
-      result += '\n' + indent();
-    } else if (ch === '}' || ch === ']') {
+      result += "\n" + indent();
+    } else if (ch === "}" || ch === "]") {
       depth = Math.max(0, depth - 1);
-      result += '\n' + indent() + ch;
-    } else if (ch === ',') {
-      result += ',\n' + indent();
-    } else if (ch === ':') {
-      result += ': ';
+      result += "\n" + indent() + ch;
+    } else if (ch === ",") {
+      result += ",\n" + indent();
+    } else if (ch === ":") {
+      result += ": ";
     } else {
       result += ch;
     }
@@ -146,29 +196,48 @@ function bestEffortFormatJson(text: string): string {
   return result;
 }
 
-function getCharacterCount(text: string) {
-  return Array.from(text).length;
-}
-
-function getCharacterCountWithoutLineBreaks(text: string) {
-  return getCharacterCount(text.replace(/\r?\n/g, ''));
-}
-
 export default function Notepad() {
   const { t } = useTranslation();
   const [tabs, setTabs] = usePersistentState<NoteTab[]>(STORAGE_TABS_KEY, [
-    { id: 'default', name: t('notepad.untitled') },
+    { id: "default", name: t("notepad.untitled") },
   ]);
-  const [activeTabId, setActiveTabId] = usePersistentState(STORAGE_ACTIVE_KEY, 'default');
-  const [content, setContent] = useState('');
-  const [dialogMode, setDialogMode] = useState<'create' | 'rename' | null>(null);
+  const [activeTabId, setActiveTabId] = usePersistentState(
+    STORAGE_ACTIVE_KEY,
+    "default",
+  );
+  const [dialogMode, setDialogMode] = useState<"create" | "rename" | null>(
+    null,
+  );
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [submittingDialog, setSubmittingDialog] = useState(false);
   const [form] = Form.useForm<{ name: string }>();
   const nameInputRef = useRef<InputRef>(null);
   const { fontSize, increase, decrease } = useEditorFontSize();
-  const isMac = navigator.platform.toLowerCase().includes('mac');
-  const [selectedCharCount, setSelectedCharCount] = useState(0);
+  const isMac = navigator.platform.toLowerCase().includes("mac");
+  const [stats, setStats] = useState<EditorStats>({
+    chars: 0,
+    lines: 1,
+    selected: 0,
+  });
+  const [activeLanguage, setActiveLanguage] = useState("plaintext");
+
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const activeTabIdRef = useRef(activeTabId);
+  const activeContentRef = useRef("");
+  const persistTimerRef = useRef<number | null>(null);
+  const persistPayloadRef = useRef<{ id: string; value: string }>({
+    id: "",
+    value: "",
+  });
+  const statsRafRef = useRef<number | null>(null);
+
+  const [initialContent] = useState(() => {
+    const saved = activeTabId
+      ? (localStorage.getItem(getContentKey(activeTabId)) ?? "")
+      : "";
+    activeContentRef.current = saved;
+    return saved;
+  });
 
   const activeTab = useMemo(
     () => tabs.find((tab) => tab.id === activeTabId) ?? null,
@@ -176,36 +245,142 @@ export default function Notepad() {
   );
 
   useEffect(() => {
-    document.body.classList.add('firewood-notepad-active');
+    document.body.classList.add("firewood-notepad-active");
 
     return () => {
-      document.body.classList.remove('firewood-notepad-active');
+      document.body.classList.remove("firewood-notepad-active");
     };
   }, []);
 
+  const flushPersist = useCallback(() => {
+    if (persistTimerRef.current !== null) {
+      window.clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+      const { id, value } = persistPayloadRef.current;
+      if (id) {
+        try {
+          localStorage.setItem(getContentKey(id), value);
+        } catch {
+          // Ignore storage failures and keep the in-memory state usable.
+        }
+      }
+    }
+  }, []);
+
+  const schedulePersist = useCallback((id: string, value: string) => {
+    if (persistTimerRef.current !== null) {
+      window.clearTimeout(persistTimerRef.current);
+    }
+    persistPayloadRef.current = { id, value };
+    persistTimerRef.current = window.setTimeout(() => {
+      persistTimerRef.current = null;
+      try {
+        localStorage.setItem(getContentKey(id), value);
+      } catch {
+        // Ignore storage failures and keep the in-memory state usable.
+      }
+    }, PERSIST_DEBOUNCE_MS);
+  }, []);
+
+  const updateStats = useCallback(() => {
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    const value = model?.getValue() ?? "";
+    const selections = editor?.getSelections() ?? [];
+    let selected = 0;
+    if (model) {
+      for (const selection of selections) {
+        if (selection.isEmpty()) {
+          continue;
+        }
+        selected += countCodePoints(
+          model.getValueInRange(selection).replace(/\r?\n/g, ""),
+        );
+      }
+    }
+    setStats({
+      chars: countCodePoints(value),
+      lines: model?.getLineCount() ?? 1,
+      selected,
+    });
+  }, []);
+
+  const scheduleStatsUpdate = useCallback(() => {
+    if (statsRafRef.current !== null) {
+      return;
+    }
+    statsRafRef.current = requestAnimationFrame(() => {
+      statsRafRef.current = null;
+      updateStats();
+    });
+  }, [updateStats]);
+
+  // Resolve activeTabId when it becomes invalid (tab deleted / list emptied).
   useEffect(() => {
     if (tabs.length === 0) {
-      setActiveTabId('');
-      setContent('');
+      if (activeTabId !== "") {
+        setActiveTabId("");
+      }
       return;
     }
 
-    const hasActive = tabs.some((tab) => tab.id === activeTabId);
-    const resolvedActive = hasActive ? activeTabId : tabs[0].id;
-    if (resolvedActive !== activeTabId) {
-      setActiveTabId(resolvedActive);
+    if (!tabs.some((tab) => tab.id === activeTabId)) {
+      setActiveTabId(tabs[0].id);
+    }
+  }, [tabs, activeTabId, setActiveTabId]);
+
+  // Load content into the editor whenever the active tab changes.
+  useEffect(() => {
+    activeTabIdRef.current = activeTabId;
+    flushPersist();
+
+    if (!activeTabId) {
+      activeContentRef.current = "";
+      scheduleStatsUpdate();
       return;
     }
 
-    const saved = localStorage.getItem(getContentKey(resolvedActive));
-    setContent(saved ?? '');
-  }, [activeTabId, setActiveTabId, tabs]);
+    const saved = localStorage.getItem(getContentKey(activeTabId)) ?? "";
+    activeContentRef.current = saved;
+    setActiveLanguage(detectLanguage(saved));
+    const editor = editorRef.current;
+    if (editor && editor.getValue() !== saved) {
+      editor.setValue(saved);
+    }
+    scheduleStatsUpdate();
+  }, [activeTabId, flushPersist, scheduleStatsUpdate]);
+
+  // Flush pending writes and cancel the stats rAF on unmount.
+  useEffect(
+    () => () => {
+      flushPersist();
+      if (statsRafRef.current !== null) {
+        cancelAnimationFrame(statsRafRef.current);
+      }
+    },
+    [flushPersist],
+  );
+
+  const onContentChange = useCallback(
+    (value: string | undefined) => {
+      const text = value ?? "";
+      activeContentRef.current = text;
+      const id = activeTabIdRef.current;
+      if (id) {
+        schedulePersist(id, text);
+      }
+      scheduleStatsUpdate();
+    },
+    [schedulePersist, scheduleStatsUpdate],
+  );
 
   const handleOpenLocalFile = useCallback(async () => {
     const selected = await open({
       multiple: false,
       directory: false,
-      filters: [{ name: t('notepad.textFiles'), extensions: LOCAL_TEXT_EXTENSIONS }],
+      filters: [
+        { name: t("notepad.textFiles"), extensions: LOCAL_TEXT_EXTENSIONS },
+      ],
     });
 
     if (!selected || Array.isArray(selected)) {
@@ -217,31 +392,36 @@ export default function Notepad() {
       const fileName = getFileNameFromPath(selected);
       const existingTab = tabs.find((tab) => tab.sourcePath === selected);
       const successMessage = existingTab
-        ? t('notepad.fileReloaded', { name: fileName })
-        : t('notepad.fileOpened', { name: fileName });
+        ? t("notepad.fileReloaded", { name: fileName })
+        : t("notepad.fileOpened", { name: fileName });
 
       if (existingTab) {
-        setTabs((currentTabs) => currentTabs.map((tab) => {
-          if (tab.id !== existingTab.id) {
-            return tab;
-          }
+        setTabs((currentTabs) =>
+          currentTabs.map((tab) => {
+            if (tab.id !== existingTab.id) {
+              return tab;
+            }
 
-          return {
-            id: tab.id,
-            name: fileName,
-            sourcePath: selected,
-            sourceName: fileName,
-          };
-        }));
+            return {
+              id: tab.id,
+              name: fileName,
+              sourcePath: selected,
+              sourceName: fileName,
+            };
+          }),
+        );
         localStorage.setItem(getContentKey(existingTab.id), fileText);
+        activeContentRef.current = fileText;
+        if (editorRef.current) {
+          editorRef.current.setValue(fileText);
+        }
         setActiveTabId(existingTab.id);
-        setContent(fileText);
         message.success(successMessage);
         return;
       }
 
       if (tabs.length >= MAX_TABS) {
-        message.warning(t('notepad.maxTabs', { count: MAX_TABS }));
+        message.warning(t("notepad.maxTabs", { count: MAX_TABS }));
         return;
       }
 
@@ -254,14 +434,15 @@ export default function Notepad() {
       };
 
       setTabs((currentTabs) => [...currentTabs, nextTab]);
-      setActiveTabId(id);
       localStorage.setItem(getContentKey(id), fileText);
-      setContent(fileText);
+      setActiveTabId(id);
       message.success(successMessage);
     } catch (error) {
-      message.error(t('notepad.openFailed', {
-        error: error instanceof Error ? error.message : String(error),
-      }));
+      message.error(
+        t("notepad.openFailed", {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
     }
   }, [setActiveTabId, setTabs, t, tabs]);
 
@@ -270,7 +451,10 @@ export default function Notepad() {
       return;
     }
 
-    const suggestedName = getPreferredSaveName(activeTab, t('notepad.untitled'));
+    const suggestedName = getPreferredSaveName(
+      activeTab,
+      t("notepad.untitled"),
+    );
     const targetPath = await save({
       defaultPath: activeTab?.sourcePath ?? suggestedName,
     });
@@ -280,29 +464,33 @@ export default function Notepad() {
     }
 
     try {
-      await writeTextFile(targetPath, content);
+      await writeTextFile(targetPath, activeContentRef.current);
       const fileName = getFileNameFromPath(targetPath);
 
-      setTabs((currentTabs) => currentTabs.map((tab) => {
-        if (tab.id !== activeTabId) {
-          return tab;
-        }
+      setTabs((currentTabs) =>
+        currentTabs.map((tab) => {
+          if (tab.id !== activeTabId) {
+            return tab;
+          }
 
-        return {
-          id: tab.id,
-          name: fileName,
-          sourcePath: targetPath,
-          sourceName: fileName,
-        };
-      }));
+          return {
+            id: tab.id,
+            name: fileName,
+            sourcePath: targetPath,
+            sourceName: fileName,
+          };
+        }),
+      );
 
-      message.success(t('notepad.fileSaved', { name: fileName }));
+      message.success(t("notepad.fileSaved", { name: fileName }));
     } catch (error) {
-      message.error(t('notepad.saveFailed', {
-        error: error instanceof Error ? error.message : String(error),
-      }));
+      message.error(
+        t("notepad.saveFailed", {
+          error: error instanceof Error ? error.message : String(error),
+        }),
+      );
     }
-  }, [activeTab, activeTabId, content, setTabs, t]);
+  }, [activeTab, activeTabId, setTabs, t]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -312,21 +500,21 @@ export default function Notepad() {
       }
 
       const key = event.key.toLowerCase();
-      if (key === 'o') {
+      if (key === "o") {
         event.preventDefault();
         void handleOpenLocalFile();
         return;
       }
 
-      if (key === 's') {
+      if (key === "s") {
         event.preventDefault();
         void handleSaveAs();
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [handleOpenLocalFile, handleSaveAs, isMac]);
 
@@ -336,13 +524,13 @@ export default function Notepad() {
         key: tab.id,
         label: (
           <Dropdown
-            trigger={['contextMenu']}
+            trigger={["contextMenu"]}
             menu={{
-              items: [{ key: 'rename', label: t('action.rename') }],
+              items: [{ key: "rename", label: t("action.rename") }],
               onClick: () => {
                 setEditingTabId(tab.id);
                 form.setFieldsValue({ name: tab.name });
-                setDialogMode('rename');
+                setDialogMode("rename");
               },
             }}
           >
@@ -350,7 +538,7 @@ export default function Notepad() {
               onDoubleClick={() => {
                 setEditingTabId(tab.id);
                 form.setFieldsValue({ name: tab.name });
-                setDialogMode('rename');
+                setDialogMode("rename");
               }}
             >
               {tab.name}
@@ -374,20 +562,11 @@ export default function Notepad() {
       const values = await form.validateFields();
       const name = values.name.trim();
 
-      if (dialogMode === 'rename' && editingTabId) {
-        setTabs(
-          tabs.map((tab) => {
-            if (tab.id !== editingTabId) {
-              return tab;
-            }
-
-            return {
-              id: tab.id,
-              name,
-              sourcePath: tab.sourcePath,
-              sourceName: tab.sourceName,
-            };
-          }),
+      if (dialogMode === "rename" && editingTabId) {
+        setTabs((currentTabs) =>
+          currentTabs.map((tab) =>
+            tab.id === editingTabId ? { ...tab, name } : tab,
+          ),
         );
         form.resetFields();
         setEditingTabId(null);
@@ -396,17 +575,14 @@ export default function Notepad() {
       }
 
       if (tabs.length >= MAX_TABS) {
-        message.warning(t('notepad.maxTabs', { count: MAX_TABS }));
+        message.warning(t("notepad.maxTabs", { count: MAX_TABS }));
         return;
       }
 
       const id = createTabId();
-
-      const nextTabs = [...tabs, { id, name }];
-      setTabs(nextTabs);
+      localStorage.setItem(getContentKey(id), "");
+      setTabs((currentTabs) => [...currentTabs, { id, name }]);
       setActiveTabId(id);
-      localStorage.setItem(getContentKey(id), '');
-      setContent('');
 
       form.resetFields();
       setEditingTabId(null);
@@ -414,73 +590,84 @@ export default function Notepad() {
     } finally {
       setSubmittingDialog(false);
     }
-  }, [dialogMode, editingTabId, form, setActiveTabId, setTabs, submittingDialog, t, tabs]);
+  }, [
+    dialogMode,
+    editingTabId,
+    form,
+    setActiveTabId,
+    setTabs,
+    submittingDialog,
+    t,
+    tabs,
+  ]);
 
-  const handleRemoveTab = useCallback((targetKey: string) => {
-    const currentIndex = tabs.findIndex((tab) => tab.id === targetKey);
-    if (currentIndex < 0) {
-      return;
-    }
-
-    const nextTabs = tabs.filter((tab) => tab.id !== targetKey);
-    setTabs(nextTabs);
-    localStorage.removeItem(getContentKey(targetKey));
-
-    if (activeTabId === targetKey) {
-      const fallback = nextTabs[currentIndex] ?? nextTabs[currentIndex - 1];
-      setActiveTabId(fallback?.id ?? '');
-      setContent('');
-    }
-  }, [activeTabId, setActiveTabId, setTabs, tabs]);
-
-  const handleEdit = (targetKey: string | React.MouseEvent | React.KeyboardEvent, action: 'add' | 'remove') => {
-    if (action === 'add') {
-      if (tabs.length >= MAX_TABS) {
-        message.warning(t('notepad.maxTabs', { count: MAX_TABS }));
+  const handleRemoveTab = useCallback(
+    (targetKey: string) => {
+      flushPersist();
+      const currentIndex = tabs.findIndex((tab) => tab.id === targetKey);
+      if (currentIndex < 0) {
         return;
       }
-      setEditingTabId(null);
-      form.setFieldsValue({ name: randomDefaultName() });
-      setDialogMode('create');
+
+      const nextTabs = tabs.filter((tab) => tab.id !== targetKey);
+      setTabs(nextTabs);
+      localStorage.removeItem(getContentKey(targetKey));
+
+      if (activeTabId === targetKey) {
+        const fallback = nextTabs[currentIndex] ?? nextTabs[currentIndex - 1];
+        setActiveTabId(fallback?.id ?? "");
+      }
+    },
+    [activeTabId, flushPersist, setActiveTabId, setTabs, tabs],
+  );
+
+  const handleEdit = (
+    targetKey: string | React.MouseEvent | React.KeyboardEvent,
+    action: "add" | "remove",
+  ) => {
+    if (action === "add") {
+      if (tabs.length >= MAX_TABS) {
+        message.warning(t("notepad.maxTabs", { count: MAX_TABS }));
+        return;
+      }
+      const pool =
+        (t("notepadNames", { returnObjects: true }) as string[] | null) ?? [];
+      const base = pool.length
+        ? pool[Math.floor(Math.random() * pool.length)]
+        : "Note";
+      const suffix = Math.random().toString(36).slice(2, 5);
+      form.setFieldsValue({ name: `${base}-${suffix}` });
+      setDialogMode("create");
       return;
     }
 
-    if (typeof targetKey === 'string') {
+    if (typeof targetKey === "string") {
       const tab = tabs.find((item) => item.id === targetKey);
       Modal.confirm({
-        title: t('notepad.deleteTab'),
-        content: t('notepad.confirmDelete', { name: tab?.name ?? t('notepad.untitled') }),
-        okText: t('action.delete'),
+        title: t("notepad.deleteTab"),
+        content: t("notepad.confirmDelete", {
+          name: tab?.name ?? t("notepad.untitled"),
+        }),
+        okText: t("action.delete"),
         okButtonProps: { danger: true },
-        cancelText: t('action.cancel'),
+        cancelText: t("action.cancel"),
         onOk: () => handleRemoveTab(targetKey),
       });
     }
   };
 
-  const onContentChange = useCallback((value: string) => {
-    setContent(value);
+  const handleClear = useCallback(() => {
     if (!activeTabId) {
       return;
     }
-
-    localStorage.setItem(getContentKey(activeTabId), value);
-  }, [activeTabId]);
-
-  useEffect(() => {
-    setSelectedCharCount(0);
-  }, [activeTabId]);
-
-  const detectedLanguage = useMemo(() => {
-    const trimmed = content.trimStart();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
-    if (/^<(!doctype|html|div|span|head|body|p\b|ul|ol|li|table|form|a\b|img|section|article|nav|header|footer)/i.test(trimmed)) return 'html';
-    if (/^(import |export |const |let |var |function |class |=>|\/\/)/.test(trimmed)) return 'javascript';
-    return 'plaintext';
-  }, [content]);
-
-  const totalCharCount = useMemo(() => getCharacterCount(content), [content]);
-  const totalLineCount = useMemo(() => (content ? content.split(/\r?\n/).length : 1), [content]);
+    flushPersist();
+    localStorage.removeItem(getContentKey(activeTabId));
+    activeContentRef.current = "";
+    if (editorRef.current) {
+      editorRef.current.setValue("");
+    }
+    scheduleStatsUpdate();
+  }, [activeTabId, flushPersist, scheduleStatsUpdate]);
 
   const focusNameInput = useCallback(() => {
     requestAnimationFrame(() => {
@@ -491,160 +678,165 @@ export default function Notepad() {
 
       input.focus();
 
-      if (dialogMode === 'rename') {
-        const extensionIndex = input.value.lastIndexOf('.');
-        const selectionEnd = extensionIndex > 0 ? extensionIndex : input.value.length;
+      if (dialogMode === "rename") {
+        const extensionIndex = input.value.lastIndexOf(".");
+        const selectionEnd =
+          extensionIndex > 0 ? extensionIndex : input.value.length;
         input.setSelectionRange(0, selectionEnd);
       }
     });
   }, [dialogMode]);
 
   const handleEditorBeforeMount = useCallback<BeforeMount>((monaco) => {
-    monaco.editor.defineTheme('firewood-contrast-light', {
-      base: 'vs',
+    monaco.editor.defineTheme("firewood-contrast-light", {
+      base: "vs",
       inherit: true,
       rules: [
-        { token: 'comment', foreground: '6B7280', fontStyle: 'italic' },
-        { token: 'keyword', foreground: '7C3AED' },
-        { token: 'number', foreground: 'B45309' },
-        { token: 'string', foreground: '047857' },
-        { token: 'regexp', foreground: '0369A1' },
-        { token: 'type.identifier', foreground: '1D4ED8' },
+        { token: "comment", foreground: "6B7280", fontStyle: "italic" },
+        { token: "keyword", foreground: "7C3AED" },
+        { token: "number", foreground: "B45309" },
+        { token: "string", foreground: "047857" },
+        { token: "regexp", foreground: "0369A1" },
+        { token: "type.identifier", foreground: "1D4ED8" },
       ],
       colors: {
-        'editor.background': '#FBFBFC',
-        'editor.foreground': '#0F172A',
-        'editorCursor.foreground': '#EF4444',
-        'editorCursor.background': '#FFFFFF',
-        'editorMultiCursor.primary.foreground': '#EF4444',
-        'editorMultiCursor.secondary.foreground': '#DC2626',
-        'editorLineNumber.foreground': '#94A3B8',
-        'editorLineNumber.activeForeground': '#334155',
-        'editor.selectionBackground': '#CBD5E199',
-        'editor.inactiveSelectionBackground': '#E2E8F099',
-        'editor.selectionHighlightBackground': '#E2E8F055',
-        'editor.selectionHighlightBorder': '#94A3B8',
-        'editor.lineHighlightBackground': '#F5F6F8',
-        'editorIndentGuide.background1': '#E2E8F0',
+        "editor.background": "#FBFBFC",
+        "editor.foreground": "#0F172A",
+        "editorCursor.foreground": "#EF4444",
+        "editorCursor.background": "#FFFFFF",
+        "editorMultiCursor.primary.foreground": "#EF4444",
+        "editorMultiCursor.secondary.foreground": "#DC2626",
+        "editorLineNumber.foreground": "#94A3B8",
+        "editorLineNumber.activeForeground": "#334155",
+        "editor.selectionBackground": "#CBD5E199",
+        "editor.inactiveSelectionBackground": "#E2E8F099",
+        "editor.selectionHighlightBackground": "#E2E8F055",
+        "editor.selectionHighlightBorder": "#94A3B8",
+        "editor.lineHighlightBackground": "#F5F6F8",
+        "editorIndentGuide.background1": "#E2E8F0",
       },
     });
   }, []);
 
-  const handleEditorMount = useCallback<OnMount>((editor, monaco) => {
-    monaco.editor.setTheme('firewood-contrast-light');
+  const handleEditorMount = useCallback<OnMount>(
+    (editor, monaco) => {
+      editorRef.current = editor;
+      monaco.editor.setTheme("firewood-contrast-light");
 
-    const updateCursorStats = () => {
-      const model = editor.getModel();
-      if (!model) {
-        setSelectedCharCount(0);
-        return;
-      }
+      // Stats refresh is rAF-batched so IME composition never triggers
+      // per-event React state updates (which starve the caret rect query).
+      editor.onDidChangeCursorPosition(() => scheduleStatsUpdate());
+      editor.onDidChangeCursorSelection(() => scheduleStatsUpdate());
+      editor.onDidChangeModelContent(() => scheduleStatsUpdate());
 
-      const selections = editor.getSelections() ?? [];
-      const selectedLength = selections.reduce((total, selection) => {
-        if (selection.isEmpty()) {
-          return total;
-        }
-        return total + getCharacterCountWithoutLineBreaks(model.getValueInRange(selection));
-      }, 0);
-      setSelectedCharCount(selectedLength);
-    };
-
-    updateCursorStats();
-    const cursorPositionDisposable = editor.onDidChangeCursorPosition(updateCursorStats);
-    const cursorSelectionDisposable = editor.onDidChangeCursorSelection(updateCursorStats);
-    const contentDisposable = editor.onDidChangeModelContent(updateCursorStats);
-
-    editor.onMouseDown(async (event) => {
-      const isModifierPressed = isMac ? event.event.metaKey : event.event.ctrlKey;
-      if (!event.event.leftButton || !isModifierPressed) return;
-      if (!event.target.position) return;
-      const model = editor.getModel();
-      if (!model) return;
-
-      const line = model.getLineContent(event.target.position.lineNumber);
-      const matched = getUrlAtColumn(line, event.target.position.column);
-      if (!matched) return;
-
-      const normalized = normalizeUrl(matched);
-      try {
-        await openExternal(normalized);
-      } catch (error) {
-        message.error(`Failed to open link: ${String(error)}`);
-      }
-    });
-
-    editor.onDidDispose(() => {
-      cursorPositionDisposable.dispose();
-      cursorSelectionDisposable.dispose();
-      contentDisposable.dispose();
-    });
-
-    editor.addAction({
-      id: 'firewood.formatJson',
-      label: t('notepad.formatJson'),
-      contextMenuGroupId: 'modification',
-      contextMenuOrder: 1,
-      run: (ed) => {
-        const model = ed.getModel();
+      const mouseDownDisposable = editor.onMouseDown(async (event) => {
+        const isModifierPressed = isMac
+          ? event.event.metaKey
+          : event.event.ctrlKey;
+        if (!event.event.leftButton || !isModifierPressed) return;
+        if (!event.target.position) return;
+        const model = editor.getModel();
         if (!model) return;
-        const fullRange = model.getFullModelRange();
-        const text = model.getValue();
-        const formatted = bestEffortFormatJson(text);
-        if (formatted !== text) {
-          ed.executeEdits('firewood.formatJson', [
-            { range: fullRange, text: formatted },
-          ]);
-        }
-      },
-    });
-  }, [isMac, t]);
 
-  const editorOptions = useMemo(() => ({
-    minimap: { enabled: false },
-    fontSize,
-    fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
-    // Wrapped CJK IME input becomes unstable with Monaco's monospace fast-path.
-    letterSpacing: 0,
-    wrappingStrategy: 'advanced' as const,
-    disableMonospaceOptimizations: true,
-    cursorStyle: 'line' as const,
-    cursorWidth: 3,
-    cursorBlinking: 'solid' as const,
-    lineNumbers: 'on' as const,
-    glyphMargin: false,
-    folding: true,
-    lineDecorationsWidth: 8,
-    lineNumbersMinChars: 3,
-    wordWrap: 'on' as const,
-    links: true,
-    smoothScrolling: true,
-    scrollBeyondLastLine: false,
-    unicodeHighlight: {
-      invisibleCharacters: false,
-      ambiguousCharacters: false,
-      nonBasicASCII: false,
+        const line = model.getLineContent(event.target.position.lineNumber);
+        const matched = getUrlAtColumn(line, event.target.position.column);
+        if (!matched) return;
+
+        try {
+          await openExternal(normalizeUrl(matched));
+        } catch (error) {
+          message.error(`Failed to open link: ${String(error)}`);
+        }
+      });
+
+      const formatActionDisposable = editor.addAction({
+        id: "firewood.formatJson",
+        label: t("notepad.formatJson"),
+        contextMenuGroupId: "modification",
+        contextMenuOrder: 1,
+        run: (ed) => {
+          const model = ed.getModel();
+          if (!model) return;
+          const fullRange = model.getFullModelRange();
+          const text = model.getValue();
+          const formatted = bestEffortFormatJson(text);
+          if (formatted !== text) {
+            ed.executeEdits("firewood.formatJson", [
+              { range: fullRange, text: formatted },
+            ]);
+          }
+        },
+      });
+
+      editor.onDidDispose(() => {
+        mouseDownDisposable.dispose();
+        formatActionDisposable.dispose();
+      });
+
+      updateStats();
     },
-  }), [fontSize]);
+    [isMac, scheduleStatsUpdate, t, updateStats],
+  );
+
+  const editorOptions = useMemo(
+    () => ({
+      minimap: { enabled: false },
+      fontSize,
+      fontFamily:
+        "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
+      // Wrapped CJK IME input becomes unstable with Monaco's monospace fast-path.
+      letterSpacing: 0,
+      wrappingStrategy: "advanced" as const,
+      disableMonospaceOptimizations: true,
+      cursorStyle: "line" as const,
+      cursorWidth: 3,
+      cursorBlinking: "solid" as const,
+      lineNumbers: "on" as const,
+      glyphMargin: false,
+      folding: true,
+      lineDecorationsWidth: 8,
+      lineNumbersMinChars: 3,
+      wordWrap: "on" as const,
+      scrollBeyondLastLine: false,
+      unicodeHighlight: {
+        invisibleCharacters: false,
+        ambiguousCharacters: false,
+        nonBasicASCII: false,
+      },
+    }),
+    [fontSize],
+  );
 
   const activeExists = tabs.some((tab) => tab.id === activeTabId);
   const effectiveActive = activeExists ? activeTabId : undefined;
-  const modalTitle = dialogMode === 'rename' ? t('action.rename') : t('notepad.newTab');
-  const modalOkText = dialogMode === 'rename' ? t('action.save') : t('action.ok');
+  const modalTitle =
+    dialogMode === "rename" ? t("action.rename") : t("notepad.newTab");
+  const modalOkText =
+    dialogMode === "rename" ? t("action.save") : t("action.ok");
 
   const statusMeta = (
     <span className="firewood-notepad-statusMeta">
-      {detectedLanguage !== 'plaintext' && (
-        <span className="firewood-notepad-statusLanguage">{detectedLanguage.toUpperCase()}</span>
+      {activeLanguage !== "plaintext" && (
+        <span className="firewood-notepad-statusLanguage">
+          {activeLanguage.toUpperCase()}
+        </span>
       )}
-      <span>{t('notepad.chars')} {totalCharCount}</span>
-      <span>{t('notepad.line')} {totalLineCount}</span>
-      {selectedCharCount > 0 && <span>{t('notepad.selected')} {selectedCharCount}</span>}
+      <span>
+        {t("notepad.chars")} {stats.chars}
+      </span>
+      <span>
+        {t("notepad.line")} {stats.lines}
+      </span>
+      {stats.selected > 0 && (
+        <span>
+          {t("notepad.selected")} {stats.selected}
+        </span>
+      )}
     </span>
   );
 
   return (
-    <ToolLayout title={t('notepad.title')}>
+    <ToolLayout title={t("notepad.title")}>
       <div className="firewood-notepad-shell">
         <div className="firewood-notepad-toolbar">
           <Space wrap className="firewood-notepad-toolbarActions">
@@ -656,7 +848,7 @@ export default function Notepad() {
                 void handleOpenLocalFile();
               }}
             >
-              {t('notepad.openFile')}
+              {t("notepad.openFile")}
             </Button>
             <Button
               type="text"
@@ -667,20 +859,16 @@ export default function Notepad() {
               }}
               disabled={!activeTabId}
             >
-              {t('notepad.saveAs')}
+              {t("notepad.saveAs")}
             </Button>
           </Space>
           <Button
             type="text"
             className="firewood-notepad-clearButton"
             icon={<DeleteOutlined />}
-            title={t('action.clear')}
-            aria-label={t('action.clear')}
-            onClick={() => {
-              if (!activeTabId) return;
-              localStorage.removeItem(getContentKey(activeTabId));
-              setContent('');
-            }}
+            title={t("action.clear")}
+            aria-label={t("action.clear")}
+            onClick={handleClear}
             disabled={!activeTabId}
           />
         </div>
@@ -688,7 +876,6 @@ export default function Notepad() {
         <Tabs
           className="firewood-notepad-tabs"
           type="editable-card"
-          hideAdd={false}
           onEdit={handleEdit}
           activeKey={effectiveActive}
           items={tabItems}
@@ -696,13 +883,15 @@ export default function Notepad() {
         />
 
         <div className="firewood-notepad-workspace">
-          <div className={`firewood-notepad-stage${activeTabId ? '' : ' firewood-notepad-stageEmpty'}`}>
+          <div
+            className={`firewood-notepad-stage${activeTabId ? "" : " firewood-notepad-stageEmpty"}`}
+          >
             {activeTabId ? (
               <Editor
                 height="100%"
-                language={detectedLanguage}
-                value={content}
-                onChange={(value) => onContentChange(value ?? '')}
+                language={activeLanguage}
+                defaultValue={initialContent}
+                onChange={onContentChange}
                 beforeMount={handleEditorBeforeMount}
                 onMount={handleEditorMount}
                 theme="firewood-contrast-light"
@@ -710,14 +899,20 @@ export default function Notepad() {
               />
             ) : (
               <Empty
-                description={t('notepad.newTab')}
+                description={t("notepad.newTab")}
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             )}
           </div>
           <StatusBar
             left={statusMeta}
-            right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
+            right={
+              <FontSizeControl
+                fontSize={fontSize}
+                onIncrease={increase}
+                onDecrease={decrease}
+              />
+            }
           />
         </div>
       </div>
@@ -737,22 +932,26 @@ export default function Notepad() {
         }}
         onOk={() => void handleSubmit()}
         okText={modalOkText}
-        cancelText={t('action.cancel')}
+        cancelText={t("action.cancel")}
         confirmLoading={submittingDialog}
         destroyOnHidden
       >
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item
-            label={t('notepad.tabName')}
+            label={t("notepad.tabName")}
             name="name"
             rules={[
-              { required: true, whitespace: true, message: t('notepad.enterName') },
-              { max: 60, message: t('notepad.maxNameLength', { count: 60 }) },
+              {
+                required: true,
+                whitespace: true,
+                message: t("notepad.enterName"),
+              },
+              { max: 60, message: t("notepad.maxNameLength", { count: 60 }) },
             ]}
           >
             <Input
               ref={nameInputRef}
-              placeholder={t('notepad.namePlaceholder')}
+              placeholder={t("notepad.namePlaceholder")}
               maxLength={60}
               onPressEnter={(event) => {
                 event.preventDefault();

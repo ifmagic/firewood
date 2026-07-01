@@ -139,9 +139,6 @@ const en = {
     fileSaved: 'Saved "{{name}}"',
     openFailed: 'Failed to open file: {{error}}',
     saveFailed: 'Failed to save file: {{error}}',
-    linkHint: '{{shortcut}}+Click to open links',
-    openHint: '{{shortcut}}+O to open local files',
-    saveHint: '{{shortcut}}+S to save as',
   },
 
   // Base64

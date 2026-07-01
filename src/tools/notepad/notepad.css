@@ -193,11 +193,6 @@
   letter-spacing: 0.04em;
 }
 
-.firewood-notepad-shell .monaco-editor .inputarea.ime-input {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 @media (max-width: 768px) {
   .firewood-notepad-shell {
     border-radius: 10px;
