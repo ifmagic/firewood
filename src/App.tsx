@@ -7,6 +7,7 @@ import Updater from './components/Updater';
 import tools from './router/tools';
 import { useToolVisibility } from './hooks/useToolVisibility';
 import { useToolOrder } from './hooks/useToolOrder';
+import { useSidebarCollapsed } from './hooks/useSidebarCollapsed';
 import './App.css';
 
 const { Content } = Layout;
@@ -15,6 +16,7 @@ function App() {
   const toolIds = tools.map((t) => t.id);
   const { visibility, toggleToolVisibility } = useToolVisibility(toolIds);
   const { orderedIds, reorder } = useToolOrder(toolIds);
+  const { collapsed, toggle } = useSidebarCollapsed();
   const [aboutOpen, setAboutOpen] = useState(false);
 
   // Build tool list in user-defined order
@@ -56,6 +58,8 @@ function App() {
             onToggleToolVisibility={toggleToolVisibility}
             onReorder={reorder}
             onOpenAbout={() => setAboutOpen(true)}
+            collapsed={collapsed}
+            onToggleCollapsed={toggle}
           />
           <Content style={{ overflow: 'auto', background: 'var(--fw-surface)' }}>
             <Suspense fallback={<Spin style={{ margin: 40 }} />}>

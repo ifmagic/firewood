@@ -8,6 +8,8 @@ const zhCN = {
   sidebar: {
     showAll: '全部显示',
     hideAll: '全部隐藏',
+    collapse: '收起侧边栏',
+    expand: '展开侧边栏',
   },
 
   // Tool names

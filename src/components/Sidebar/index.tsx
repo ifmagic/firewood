@@ -14,16 +14,27 @@ interface SidebarProps {
   onToggleToolVisibility: (toolId: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
   onOpenAbout?: () => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 const { Sider } = Layout;
 
-export default function Sidebar({ tools, visibility, onToggleToolVisibility, onReorder, onOpenAbout }: SidebarProps) {
+export default function Sidebar({
+  tools,
+  visibility,
+  onToggleToolVisibility,
+  onReorder,
+  onOpenAbout,
+  collapsed,
+  onToggleCollapsed,
+}: SidebarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const currentKey = location.pathname.replace('/', '') || tools[0]?.id;
   const getToolLabel = (tool: ToolMeta) => t(`toolName.${tool.id}`, { defaultValue: tool.name });
+  const logoTitle = collapsed ? t('sidebar.expand') : t('sidebar.collapse');
 
   const pointerOriginRef = useRef<{ toolId: string; x: number; y: number } | null>(null);
   const draggingToolIdRef = useRef<string | null>(null);
@@ -160,24 +171,37 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
   useEffect(() => () => clearPointerDrag(), []);
 
   return (
-    <Sider width={200} className={styles.sider}>
+    <Sider
+      width={collapsed ? 56 : 200}
+      className={`${styles.sider} ${collapsed ? styles.siderCollapsed : ''}`}
+    >
       <div className={styles.logo}>
-        <div className={styles.logoContent}>
-          <FireOutlined className={styles.logoIcon} />
-          <span className={styles.logoText}>Firewood</span>
-        </div>
-        <Dropdown
-          menu={{ items: viewMenuItems }}
-          placement="bottomRight"
-          trigger={['click']}
+        <button
+          type="button"
+          className={styles.logoButton}
+          onClick={onToggleCollapsed}
+          aria-label={logoTitle}
+          title={logoTitle}
         >
-          <Button
-            type="text"
-            size="small"
-            icon={<MenuOutlined />}
-            className={styles.viewButton}
-          />
-        </Dropdown>
+          <span className={styles.logoBadge}>
+            <FireOutlined className={styles.logoIcon} />
+          </span>
+          {!collapsed && <span className={styles.logoText}>Firewood</span>}
+        </button>
+        {!collapsed && (
+          <Dropdown
+            menu={{ items: viewMenuItems }}
+            placement="bottomRight"
+            trigger={['click']}
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<MenuOutlined />}
+              className={styles.viewButton}
+            />
+          </Dropdown>
+        )}
       </div>
       <div className={styles.toolList}>
         {visibleTools.map((tool) => {
@@ -188,7 +212,7 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
             <div
               key={tool.id}
               data-tool-id={tool.id}
-              className={`${styles.toolItem} ${isSelected ? styles.toolItemSelected : ''} ${isDragOver ? styles.toolItemDragOver : ''} ${isDragging ? styles.toolItemDragging : ''}`}
+              className={`${styles.toolItem} ${isSelected ? styles.toolItemSelected : ''} ${isDragOver ? styles.toolItemDragOver : ''} ${isDragging ? styles.toolItemDragging : ''} ${collapsed ? styles.toolItemCollapsed : ''}`}
               onClick={() => {
                 if (draggingToolIdRef.current) {
                   return;
@@ -196,15 +220,17 @@ export default function Sidebar({ tools, visibility, onToggleToolVisibility, onR
                 navigate(`/${tool.id}`);
               }}
             >
-              <span
-                className={styles.dragHandle}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(event) => handlePointerDown(event, tool.id)}
-              >
-                <HolderOutlined />
-              </span>
+              {!collapsed && (
+                <span
+                  className={styles.dragHandle}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(event) => handlePointerDown(event, tool.id)}
+                >
+                  <HolderOutlined />
+                </span>
+              )}
               <span className={styles.toolIcon}>{tool.icon}</span>
-              <span className={styles.toolName}>{getToolLabel(tool)}</span>
+              {!collapsed && <span className={styles.toolName}>{getToolLabel(tool)}</span>}
             </div>
           );
         })}

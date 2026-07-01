@@ -1,7 +1,6 @@
 import { lazy } from 'react';
 import {
   CodeOutlined,
-  ConsoleSqlOutlined,
   DiffOutlined,
   FileTextOutlined,
   LockOutlined,
@@ -10,6 +9,7 @@ import {
   KeyOutlined,
   FilePdfOutlined,
   TranslationOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 import type { ToolMeta } from '../types/tool';
 
@@ -17,14 +17,14 @@ const tools: ToolMeta[] = [
   {
     id: 'terminal',
     name: 'Terminal',
-    icon: <ConsoleSqlOutlined />,
+    icon: <CodeOutlined />,
     description: 'Embedded local shell terminal',
     component: lazy(() => import('../tools/terminal/index.tsx')),
   },
   {
     id: 'json-formatter',
     name: 'JSON',
-    icon: <CodeOutlined />,
+    icon: <NodeIndexOutlined />,
     description: 'Format, minify & unescape JSON',
     component: lazy(() => import('../tools/json-formatter/index.tsx')),
   },

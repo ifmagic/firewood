@@ -8,6 +8,8 @@ const en = {
   sidebar: {
     showAll: 'Show All',
     hideAll: 'Hide All',
+    collapse: 'Collapse sidebar',
+    expand: 'Expand sidebar',
   },
 
   // Tool names
