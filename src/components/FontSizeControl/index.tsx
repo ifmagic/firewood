@@ -14,8 +14,12 @@ export default function FontSizeControl({ fontSize, onIncrease, onDecrease }: Pr
   // Keep refs to callbacks so the wheel listener never needs to be re-registered
   const increaseRef = useRef(onIncrease);
   const decreaseRef = useRef(onDecrease);
-  increaseRef.current = onIncrease;
-  decreaseRef.current = onDecrease;
+  useEffect(() => {
+    increaseRef.current = onIncrease;
+  }, [onIncrease]);
+  useEffect(() => {
+    decreaseRef.current = onDecrease;
+  }, [onDecrease]);
 
   useEffect(() => {
     const el = ref.current;

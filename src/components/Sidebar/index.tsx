@@ -101,8 +101,6 @@ export default function Sidebar({
     dragOverToolIdRef.current = null;
     setDraggingToolId(null);
     setDragOverToolId(null);
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
   };
 
   const handlePointerDown = (event: React.PointerEvent, toolId: string) => {
@@ -115,7 +113,6 @@ export default function Sidebar({
 
     clearPointerDrag();
     pointerOriginRef.current = { toolId, x: event.clientX, y: event.clientY };
-    document.body.style.userSelect = 'none';
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const origin = pointerOriginRef.current;
@@ -132,7 +129,6 @@ export default function Sidebar({
 
         draggingToolIdRef.current = origin.toolId;
         setDraggingToolId(origin.toolId);
-        document.body.style.cursor = 'grabbing';
       }
 
       const targetElement = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('[data-tool-id]') as HTMLElement | null;
@@ -169,6 +165,16 @@ export default function Sidebar({
   };
 
   useEffect(() => () => clearPointerDrag(), []);
+
+  useEffect(() => {
+    if (!draggingToolId) return;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [draggingToolId]);
 
   return (
     <Sider

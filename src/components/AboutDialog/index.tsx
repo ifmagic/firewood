@@ -48,7 +48,7 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
     if (externalOpen && !version) {
       getVersion().then(setVersion);
     }
-  }, [externalOpen]);
+  }, [externalOpen, version]);
 
   const handleClose = () => {
     setInternalOpen(false);
