@@ -1,7 +1,5 @@
 # Firewood
 
-[中文文档](./README.zh-CN.md)
-
 Firewood is a local-first desktop utility suite for developers, built with Tauri, React, and TypeScript.
 
 It brings terminal, text/code utilities, notes, image export, and translation workflows into one lightweight app.
@@ -22,7 +20,17 @@ npm run build
 npm run tauri:dev
 npm run tauri:build
 npm run lint
+npm run sync:version  # sync version to tauri.conf.json and Cargo.toml
 ```
+
+## Release Workflow
+
+1. Bump `version` in `package.json`
+2. Add a new `## v{version}` section to `CHANGELOG.md`
+3. Commit and tag: `git tag v{version} && git push origin v{version}`
+4. CI auto-builds and publishes the release
+
+Version sync to `tauri.conf.json` and `Cargo.toml` runs automatically via `prebuild`/`predev` hooks.
 
 ## Documentation
 

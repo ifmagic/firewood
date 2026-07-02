@@ -5,9 +5,9 @@ import { getVersion } from '@tauri-apps/api/app';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { Modal, Tag, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown';
 import { getLocalReleaseNotes } from '../../utils/updateNotes';
-import buildYmlRaw from '../../../.github/workflows/build.yml?raw';
+import MarkdownBody from '../MarkdownBody';
+import changelogRaw from '../../../CHANGELOG.md?raw';
 import styles from './AboutDialog.module.css';
 
 const GITHUB_HOMEPAGE_URL = 'https://github.com/ifmagic/firewood';
@@ -18,13 +18,9 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
   const open = externalOpen ?? internalOpen;
   const [version, setVersion] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
-  const [notesVersion, setNotesVersion] = useState('');
   const [notesBody, setNotesBody] = useState('');
 
-  const metaTags = useMemo(
-    () => ['Tauri', 'React', 'TypeScript'],
-    [],
-  );
+  const metaTags = useMemo(() => ['Tauri', 'React', 'TypeScript'], []);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -57,8 +53,7 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
 
   const openVersionNotes = async () => {
     const currentVersion = version || (await getVersion());
-    const releaseNotes = getLocalReleaseNotes(buildYmlRaw, currentVersion);
-    setNotesVersion(releaseNotes.version);
+    const releaseNotes = getLocalReleaseNotes(changelogRaw, currentVersion);
     setNotesBody(releaseNotes.body);
     setNotesOpen(true);
   };
@@ -88,9 +83,7 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
               <Typography.Title level={3} className={styles.title}>
                 Firewood
               </Typography.Title>
-              <Typography.Text className={styles.subtitle}>
-                {t('about.subtitle')}
-              </Typography.Text>
+              <Typography.Text className={styles.subtitle}>{t('about.subtitle')}</Typography.Text>
             </div>
           </div>
 
@@ -123,15 +116,13 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
 
       <Modal
         open={notesOpen}
-        title={t('about.releaseNotesTitle', { version: notesVersion || version || '0.0.0' })}
+        title={t('about.releaseNotesTitle', { version: version || '0.0.0' })}
         width={640}
         footer={null}
         centered
         onCancel={() => setNotesOpen(false)}
       >
-        <div className={styles.notesBody}>
-          <ReactMarkdown>{notesBody}</ReactMarkdown>
-        </div>
+        <MarkdownBody content={notesBody} />
       </Modal>
     </>
   );

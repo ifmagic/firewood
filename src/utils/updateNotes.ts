@@ -1,15 +1,9 @@
-export interface UpdateNotesCache {
-  version: string;
-  body: string;
-  checkedAt: number;
-}
-
-const UPDATE_NOTES_CACHE_KEY = 'firewood.updateNotesCache';
-
 interface ReleaseNotesResult {
   version: string;
   body: string;
 }
+
+const DEFAULT_NOTE = 'Includes the latest features and bug fixes.';
 
 /** Strip everything after the first horizontal rule, keeping only the changelog */
 export function extractChangelog(body: string | null): string {
@@ -19,69 +13,73 @@ export function extractChangelog(body: string | null): string {
   return section.trim();
 }
 
-export function cacheUpdateNotes(data: UpdateNotesCache) {
-  try {
-    localStorage.setItem(UPDATE_NOTES_CACHE_KEY, JSON.stringify(data));
-  } catch {
-    // ignore storage errors
-  }
+/**
+ * Extract the changelog section for a specific version from a markdown changelog.
+ *
+ * Format expected:
+ *   # Changelog
+ *   ## v1.2.3
+ *   ...content...
+ *   ## v1.2.2
+ *   ...content...
+ *
+ * - Finds the `## v{version}` heading (version with or without `v` prefix)
+ * - Captures all lines until the next `## ` heading
+ * - Falls back to the first section if the version is not found
+ * - Falls back to a default message if the changelog is empty
+ */
+export function getLocalReleaseNotes(changelogRaw: string, version: string): ReleaseNotesResult {
+  const cleanVersion = version.replace(/^v/, '');
+  const body = extractVersionSection(changelogRaw, cleanVersion) || extractFirstSection(changelogRaw);
+  return {
+    version: cleanVersion,
+    body: body || DEFAULT_NOTE,
+  };
 }
 
+function extractVersionSection(md: string, version: string): string {
+  const lines = md.split('\n');
+  const target = `## v${version}`;
+  const altTarget = `## ${version}`;
 
+  let capturing = false;
+  let found = false;
+  const captured: string[] = [];
 
-/**
- * Parse the release body from the raw build.yml content.
- * Extracts the `body: \`...\`` template literal from the github-script section.
- */
-export function parseReleaseBodyFromBuildYml(raw: string): string {
-  const jsMarker = 'body: `';
-  const jsIdx = raw.indexOf(jsMarker);
-  if (jsIdx === -1) return '';
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      if (capturing) {
+        break;
+      }
+      if (line.trim() === target || line.trim() === altTarget) {
+        capturing = true;
+        found = true;
+      }
+    } else if (capturing) {
+      captured.push(line);
+    }
+  }
 
-  const start = jsIdx + jsMarker.length;
-  // Find the closing backtick (accounting for escaped \`)
-  let i = start;
-  while (i < raw.length) {
-    if (raw[i] === '\\' && i + 1 < raw.length) {
-      i += 2;
+  return found ? captured.join('\n').trim() : '';
+}
+
+function extractFirstSection(md: string): string {
+  const lines = md.split('\n');
+  let capturing = false;
+  const captured: string[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      if (capturing) {
+        break;
+      }
+      capturing = true;
       continue;
     }
-    if (raw[i] === '`') break;
-    i++;
-  }
-  if (i >= raw.length) return '';
-
-  const content = raw.slice(start, i)
-    .replace(/\\`/g, '`');
-
-  const lines = content.split('\n');
-
-  // First line is on the same line as `body: \``, indent is 0; use subsequent non-empty lines to calculate common indent
-  let blockIndent = 0;
-  for (let idx = 1; idx < lines.length; idx++) {
-    if (lines[idx].trim() === '') continue;
-    blockIndent = lines[idx].length - lines[idx].trimStart().length;
-    break;
+    if (capturing) {
+      captured.push(line);
+    }
   }
 
-  const bodyLines = lines.map((line, idx) =>
-    line.trim() === '' ? '' : (idx === 0 ? line : (blockIndent > 0 && line.length >= blockIndent ? line.slice(blockIndent) : line.trimStart()))
-  );
-
-  while (bodyLines.length > 0 && bodyLines[0].trim() === '') bodyLines.shift();
-  while (bodyLines.length > 0 && bodyLines[bodyLines.length - 1].trim() === '') bodyLines.pop();
-
-  return bodyLines.join('\n');
-}
-
-/**
- * Get release notes for the current version from the local build.yml (inlined at build time).
- */
-export function getLocalReleaseNotes(buildYmlRaw: string, version: string): ReleaseNotesResult {
-  const fullBody = parseReleaseBodyFromBuildYml(buildYmlRaw);
-  const changelog = extractChangelog(fullBody);
-  return {
-    version: version.replace(/^v/, ''),
-    body: changelog || 'Includes the latest features and bug fixes.',
-  };
+  return captured.join('\n').trim();
 }

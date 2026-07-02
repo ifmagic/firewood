@@ -201,7 +201,7 @@ const zhCN = {
   // About dialog
   about: {
     subtitle: '一个紧凑的工具箱，让日常开发工作流更高效。',
-    viewChanges: '查看修改点',
+    viewChanges: '更新日志',
     releaseNotesTitle: '版本更新说明 · v{{version}}',
     defaultReleaseNote: '包含最新功能与问题修复。',
   },

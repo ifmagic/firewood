@@ -8,6 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "sync:version": "node scripts/sync-version.mjs",
+    "predev": "npm run sync:version",
+    "prebuild": "npm run sync:version",
     "tauri": "tauri",
     "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "tauri:build": "tauri build"

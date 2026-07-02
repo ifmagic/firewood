@@ -3,9 +3,9 @@ import { listen } from '@tauri-apps/api/event';
 import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { notification, Button, Progress, Space } from 'antd';
-import ReactMarkdown from 'react-markdown';
 import i18n from '../../i18n';
-import { cacheUpdateNotes, extractChangelog } from '../../utils/updateNotes';
+import { extractChangelog } from '../../utils/updateNotes';
+import MarkdownBody from '../MarkdownBody';
 
 interface UpdateInfo {
   version: string;
@@ -13,42 +13,6 @@ interface UpdateInfo {
 }
 
 type UpdateRef = { current: Update | null };
-
-function MarkdownBody({ content }: { content: string }) {
-  return (
-    <div style={{ maxHeight: 200, overflowY: 'auto', fontSize: 13, lineHeight: 1.6 }}>
-      <ReactMarkdown
-        components={{
-          h2: ({ children }) => (
-            <div style={{ fontWeight: 600, fontSize: 13, marginTop: 8, marginBottom: 4 }}>
-              {children}
-            </div>
-          ),
-          h3: ({ children }) => (
-            <div style={{ fontWeight: 600, fontSize: 12, marginTop: 6, marginBottom: 2, color: '#555' }}>
-              {children}
-            </div>
-          ),
-          ul: ({ children }) => (
-            <ul style={{ paddingLeft: 16, margin: '2px 0' }}>{children}</ul>
-          ),
-          li: ({ children }) => (
-            <li style={{ marginBottom: 2 }}>{children}</li>
-          ),
-          p: ({ children }) => (
-            <p style={{ margin: '2px 0' }}>{children}</p>
-          ),
-          strong: ({ children }) => (
-            <strong style={{ fontWeight: 600 }}>{children}</strong>
-          ),
-          hr: () => null,
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
-  );
-}
 
 async function startUpdate(notifKey: string, pendingUpdate: UpdateRef) {
   const update = pendingUpdate.current;
@@ -113,10 +77,11 @@ function showUpdateNotification(info: UpdateInfo, pendingUpdate: UpdateRef) {
   const key = 'firewood-update';
   const changelog = extractChangelog(info.body);
   const description = changelog ? (
-    <MarkdownBody content={changelog} />
+    <MarkdownBody content={changelog} maxBlockSize="dialog" />
   ) : (
     <div style={{ fontSize: 13 }}>
-      {i18n.t('updater.upToDate') || 'A new version is available. Update now to get the latest features and improvements.'}
+      {i18n.t('updater.upToDate') ||
+        'A new version is available. Update now to get the latest features and improvements.'}
     </div>
   );
   notification.info({
@@ -143,18 +108,8 @@ async function checkForUpdate(pendingUpdate: UpdateRef, manual = false) {
   try {
     const update = await check();
     if (update) {
-      if (update.body) {
-        cacheUpdateNotes({
-          version: update.version,
-          body: extractChangelog(update.body),
-          checkedAt: Date.now(),
-        });
-      }
       pendingUpdate.current = update;
-      showUpdateNotification(
-        { version: update.version, body: update.body ?? null },
-        pendingUpdate,
-      );
+      showUpdateNotification({ version: update.version, body: update.body ?? null }, pendingUpdate);
     } else if (manual) {
       notification.success({
         message: i18n.t('updater.upToDate'),
