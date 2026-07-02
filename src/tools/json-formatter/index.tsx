@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Empty, Tooltip, message } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button, Empty, Tooltip } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import { format as formatJsonc, type EditOperation } from 'monaco-editor/esm/external/jsonc-parser/lib/esm/main.js';
@@ -9,6 +9,7 @@ import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import './json-formatter.css';
 
 const jsoncFormatOptions = {
   tabSize: 2,
@@ -34,8 +35,16 @@ export default function JsonFormatter() {
   const { fontSize, increase, decrease } = useEditorFontSize();
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
 
-  const requestViewportReset = useCallback(() => {
+  const requestViewportReset = () => {
     setViewportResetVersion((version) => version + 1);
+  };
+
+  useEffect(() => {
+    document.body.classList.add('firewood-json-formatter-active');
+
+    return () => {
+      document.body.classList.remove('firewood-json-formatter-active');
+    };
   }, []);
 
   useEffect(() => {
@@ -81,10 +90,7 @@ export default function JsonFormatter() {
       try {
         return JSON.stringify(JSON.parse(text), null, 2);
       } catch {
-        return applyJsoncEdits(
-          text,
-          formatJsonc(text, undefined, jsoncFormatOptions),
-        );
+        return applyJsoncEdits(text, formatJsonc(text, undefined, jsoncFormatOptions));
       }
     });
   };
@@ -103,13 +109,8 @@ export default function JsonFormatter() {
       if (nextText.startsWith('"') && nextText.endsWith('"')) {
         nextText = JSON.parse(nextText);
       } else {
-        // Replace common escape sequences directly
-        nextText = nextText
-          .replace(/\\n/g, '\n')
-          .replace(/\\t/g, '\t')
-          .replace(/\\r/g, '\r')
-          .replace(/\\"/g, '"')
-          .replace(/\\\\/g, '\\');
+        // Single-pass unescape; sequential .replace() chains mis-handle `\\`
+        nextText = JSON.parse(`"${nextText}"`);
       }
       return nextText;
     });
@@ -125,24 +126,29 @@ export default function JsonFormatter() {
     setContent(nextValue);
   };
 
-  const handleEditorMount = useCallback<OnMount>((editor) => {
+  const handleEditorMount: OnMount = (editor) => {
     editorRef.current = editor;
-  }, []);
-
-  const editorOptions = {
-    minimap: { enabled: false },
-    fontSize,
-    fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
-    letterSpacing: 0.5,
-    automaticLayout: true,
   };
+
+  const editorOptions = useMemo(
+    () => ({
+      minimap: { enabled: false },
+      fontSize,
+      fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
+      letterSpacing: 0.5,
+      automaticLayout: true,
+    }),
+    [fontSize],
+  );
 
   return (
     <ToolLayout title={t('jsonFormatter.title')}>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">
-            <Button type="primary" onClick={format}>{t('action.format')}</Button>
+            <Button type="primary" onClick={format}>
+              {t('action.format')}
+            </Button>
             <Button onClick={minify}>{t('action.minify')}</Button>
             <Button onClick={unescape}>{t('action.unescape')}</Button>
           </div>
@@ -157,7 +163,6 @@ export default function JsonFormatter() {
                 disabled={!content}
                 onClick={() => {
                   navigator.clipboard.writeText(content);
-                  message.success(t('action.copied'));
                 }}
               />
             </Tooltip>
@@ -188,10 +193,7 @@ export default function JsonFormatter() {
                     zIndex: 1,
                   }}
                 >
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={t('jsonFormatter.emptyHint')}
-                  />
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('jsonFormatter.emptyHint')} />
                 </div>
               )}
               <Editor
@@ -205,9 +207,7 @@ export default function JsonFormatter() {
               />
             </div>
           </div>
-          <StatusBar
-            right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
-          />
+          <StatusBar right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />} />
         </div>
       </div>
     </ToolLayout>
