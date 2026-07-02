@@ -16,7 +16,6 @@ const zhCN = {
   toolName: {
     'json-formatter': 'JSON',
     timestamp: '时间戳转换',
-    'text-diff': 'Diffchecker',
     notepad: '记事本',
     'img-to-pdf': '图片排版',
     translate: '文本翻译',
@@ -29,8 +28,6 @@ const zhCN = {
     unescape: '去除转义',
     clear: '清空',
     convert: '转 换',
-    compare: '对比',
-    restoreEdit: '恢复编辑视图',
     copy: '复制',
     copied: '已复制',
     rename: '重命名',
@@ -46,8 +43,6 @@ const zhCN = {
     result: '结果',
     file: '文件',
     text: '文本',
-    original: '原文',
-    modified: '修改后',
     seconds: '秒',
     milliseconds: '毫秒',
     timestamp: '时间戳',
@@ -88,21 +83,6 @@ const zhCN = {
     formatCopyDateToTs: '日期 → 时间戳',
     formatCopyDate: '日期',
     formatCopyTs: '时间戳',
-  },
-
-  // Diffchecker
-  textDiff: {
-    title: 'Diffchecker',
-    enterOriginal: '请输入原始文本...',
-    enterModified: '请输入修改后文本...',
-    added: '新增',
-    deleted: '删除',
-    foldLines: '显示 {{count}} 行未变化内容',
-    unfoldLines: '收起 {{count}} 行未变化内容',
-    expandAllUnchanged: '一键展开未变动内容',
-    collapseAllUnchanged: '收起未变动内容',
-    hiddenLines: '已收起 {{count}} 行未变化内容',
-    noDifferences: '没有差异内容',
   },
 
   // Notepad

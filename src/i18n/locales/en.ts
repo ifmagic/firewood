@@ -16,7 +16,6 @@ const en = {
   toolName: {
     'json-formatter': 'JSON',
     timestamp: 'Timestamp',
-    'text-diff': 'Diffchecker',
     notepad: 'Notepad',
     'img-to-pdf': 'Image to PDF',
     translate: 'Translate',
@@ -29,8 +28,6 @@ const en = {
     unescape: 'Unescape',
     clear: 'Clear',
     convert: 'Convert',
-    compare: 'Compare',
-    restoreEdit: 'Restore Edit View',
     copy: 'Copy',
     copied: 'Copied',
     rename: 'Rename',
@@ -46,8 +43,6 @@ const en = {
     result: 'Result',
     file: 'File',
     text: 'Text',
-    original: 'Original',
-    modified: 'Modified',
     seconds: 'Seconds',
     milliseconds: 'Milliseconds',
     timestamp: 'Timestamp',
@@ -88,21 +83,6 @@ const en = {
     formatCopyDateToTs: 'Date → Timestamp',
     formatCopyDate: 'Date',
     formatCopyTs: 'Timestamp',
-  },
-
-  // Diffchecker
-  textDiff: {
-    title: 'Diffchecker',
-    enterOriginal: 'Enter original text...',
-    enterModified: 'Enter modified text...',
-    added: 'added',
-    deleted: 'deleted',
-    foldLines: 'Show {{count}} unchanged lines',
-    unfoldLines: 'Collapse {{count}} unchanged lines',
-    expandAllUnchanged: 'Expand all unchanged',
-    collapseAllUnchanged: 'Collapse unchanged',
-    hiddenLines: '{{count}} unchanged lines hidden',
-    noDifferences: 'No differences found',
   },
 
   // Notepad

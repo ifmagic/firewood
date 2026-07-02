@@ -34,7 +34,7 @@ const tools: ToolMeta[] = [
   },
   {
     id: 'text-diff',
-    name: 'Diffchecker',
+    name: 'DIFF',
     icon: <DiffOutlined />,
     description: 'Compare two texts line by line',
     component: lazy(() => import('../tools/text-diff/index.tsx')),
