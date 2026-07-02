@@ -15,14 +15,11 @@ const zhCN = {
   // Tool names
   toolName: {
     'json-formatter': 'JSON',
-    'timestamp': '时间戳转换',
+    timestamp: '时间戳转换',
     'text-diff': 'Diffchecker',
-    'notepad': '记事本',
-    'base64-codec': 'Base64 编解码',
-    'url-codec': 'URL 编解码',
-    'hash': 'Hash 计算',
+    notepad: '记事本',
     'img-to-pdf': '图片排版',
-    'translate': '文本翻译',
+    translate: '文本翻译',
   },
 
   // Common actions
@@ -34,10 +31,6 @@ const zhCN = {
     convert: '转 换',
     compare: '对比',
     restoreEdit: '恢复编辑视图',
-    encode: '编码',
-    decode: '解码',
-    swap: '互换',
-    calculate: '计算',
     copy: '复制',
     copied: '已复制',
     rename: '重命名',
@@ -59,8 +52,6 @@ const zhCN = {
     milliseconds: '毫秒',
     timestamp: '时间戳',
     date: '日期',
-    algorithm: '算法',
-    hashValue: '哈希值',
     settings: '设置',
     language: '语言',
   },
@@ -141,37 +132,6 @@ const zhCN = {
     saveFailed: '保存文件失败：{{error}}',
   },
 
-  // Base64
-  base64: {
-    title: 'Base64 编解码',
-    description: '文本 Base64 编码与解码',
-    enterPlainText: '请输入原始文本...',
-    enterBase64: '请输入 Base64 字符串...',
-    resultPlaceholder: '结果...',
-    decodeFailed: '解码失败，请检查输入是否为合法的 Base64 字符串',
-  },
-
-  // URL Codec
-  urlCodec: {
-    title: 'URL 编解码',
-    description: 'URLEncode / URLDecode',
-    enterUrl: '请输入原始 URL...',
-    enterEncoded: '请输入 URL 编码字符串...',
-    resultPlaceholder: '结果...',
-    decodeFailed: '解码失败，请检查输入是否为合法的 URL 编码字符串',
-  },
-
-  // Hash
-  hash: {
-    title: 'Hash 计算',
-    description: '计算文件或文本的 MD5 / SHA-1 / SHA-256',
-    enterText: '请输入要计算哈希值的文本...',
-    dropFile: '点击选择文件，或将文件拖拽到此处',
-    supportAllTypes: '支持任意类型文件',
-    calculating: '正在计算哈希值…',
-    readFailed: '有 {{count}} 张图片读取失败',
-  },
-
   // Image to PDF
   imgToPdf: {
     title: '图片排版',
@@ -203,6 +163,7 @@ const zhCN = {
     pdfFilter: 'PDF 文件',
     previewTip: '预览与导出使用同一套缩放与留白参数',
     remove: '移除',
+    readFailed: '有 {{count}} 张图片读取失败',
   },
 
   // Translate
@@ -281,9 +242,20 @@ const zhCN = {
 
   // Notepad default name pool
   notepadNames: [
-    '草稿', '笔记', '备忘', '随记', '摘录',
-    '五行天', '修真世界', '永生', '斗破苍穹', '武动乾坤',
-    '剑来', '雪中悍刀行', '庆余年', '诡秘之主',
+    '草稿',
+    '笔记',
+    '备忘',
+    '随记',
+    '摘录',
+    '五行天',
+    '修真世界',
+    '永生',
+    '斗破苍穹',
+    '武动乾坤',
+    '剑来',
+    '雪中悍刀行',
+    '庆余年',
+    '诡秘之主',
   ],
 
   // Tray menu

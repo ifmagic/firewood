@@ -15,14 +15,11 @@ const en = {
   // Tool names
   toolName: {
     'json-formatter': 'JSON',
-    'timestamp': 'Timestamp',
+    timestamp: 'Timestamp',
     'text-diff': 'Diffchecker',
-    'notepad': 'Notepad',
-    'base64-codec': 'Base64 Codec',
-    'url-codec': 'URL Codec',
-    'hash': 'Hash',
+    notepad: 'Notepad',
     'img-to-pdf': 'Image to PDF',
-    'translate': 'Translate',
+    translate: 'Translate',
   },
 
   // Common actions
@@ -34,10 +31,6 @@ const en = {
     convert: 'Convert',
     compare: 'Compare',
     restoreEdit: 'Restore Edit View',
-    encode: 'Encode',
-    decode: 'Decode',
-    swap: 'Swap',
-    calculate: 'Calculate',
     copy: 'Copy',
     copied: 'Copied',
     rename: 'Rename',
@@ -59,8 +52,6 @@ const en = {
     milliseconds: 'Milliseconds',
     timestamp: 'Timestamp',
     date: 'Date',
-    algorithm: 'Algorithm',
-    hashValue: 'Hash Value',
     settings: 'Settings',
     language: 'Language',
   },
@@ -141,37 +132,6 @@ const en = {
     saveFailed: 'Failed to save file: {{error}}',
   },
 
-  // Base64
-  base64: {
-    title: 'Base64 Codec',
-    description: 'Base64 encode & decode',
-    enterPlainText: 'Enter plain text...',
-    enterBase64: 'Enter Base64 string...',
-    resultPlaceholder: 'Result...',
-    decodeFailed: 'Decode failed. Please check if the input is a valid Base64 string.',
-  },
-
-  // URL Codec
-  urlCodec: {
-    title: 'URL Codec',
-    description: 'URL encode & decode',
-    enterUrl: 'Enter URL...',
-    enterEncoded: 'Enter URL encoded string...',
-    resultPlaceholder: 'Result...',
-    decodeFailed: 'Decode failed. Please check if the input is a valid URL encoded string.',
-  },
-
-  // Hash
-  hash: {
-    title: 'Hash',
-    description: 'Calculate MD5 / SHA-1 / SHA-256 for text or files',
-    enterText: 'Enter text to calculate hash...',
-    dropFile: 'Click to select a file, or drag and drop here',
-    supportAllTypes: 'All file types supported',
-    calculating: 'Calculating hash...',
-    readFailed: '{{count}} image(s) failed to read',
-  },
-
   // Image to PDF
   imgToPdf: {
     title: 'Image to PDF',
@@ -203,6 +163,7 @@ const en = {
     pdfFilter: 'PDF File',
     previewTip: 'Preview and export use the same scale and margin settings',
     remove: 'Remove',
+    readFailed: '{{count}} image(s) failed to read',
   },
 
   // Translate
@@ -281,9 +242,20 @@ const en = {
 
   // Notepad default name pool
   notepadNames: [
-    'Draft', 'Notes', 'Memo', 'Scratch', 'Snippet',
-    'Ideas', 'Tasks', 'Journal', 'Log', 'Quick Note',
-    'Thoughts', 'Review', 'Summary', 'Reference',
+    'Draft',
+    'Notes',
+    'Memo',
+    'Scratch',
+    'Snippet',
+    'Ideas',
+    'Tasks',
+    'Journal',
+    'Log',
+    'Quick Note',
+    'Thoughts',
+    'Review',
+    'Summary',
+    'Reference',
   ],
 
   // Tray menu

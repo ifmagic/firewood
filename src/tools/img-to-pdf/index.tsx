@@ -154,7 +154,10 @@ async function buildPDF(
 
 /** Parse user-entered size limit string, return bytes or null if invalid */
 function parseMaxSizeMB(input: string): number | null {
-  const trimmed = input.trim().toLowerCase().replace(/m[b]?$/, '');
+  const trimmed = input
+    .trim()
+    .toLowerCase()
+    .replace(/m[b]?$/, '');
   if (!trimmed) return null;
   const num = parseFloat(trimmed);
   if (isNaN(num) || num <= 0) return null;
@@ -177,9 +180,9 @@ async function buildPDFWithSizeLimit(
     const mid = (lo + hi) / 2;
     result = await builder(mid);
     if (result.byteLength <= maxBytes) {
-      lo = mid;  // quality can be higher
+      lo = mid; // quality can be higher
     } else {
-      hi = mid;  // quality needs to be lower
+      hi = mid; // quality needs to be lower
     }
   }
   // Use lo as final result (highest quality that stays <= maxBytes)
@@ -232,21 +235,24 @@ export default function ImgToPdf() {
     pointerOrigin.current = { idx, x: e.clientX, y: e.clientY };
   }, []);
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!pointerOrigin.current) return;
-    const dx = e.clientX - pointerOrigin.current.x;
-    const dy = e.clientY - pointerOrigin.current.y;
-    if (draggingIdx === null && Math.abs(dx) + Math.abs(dy) > 4) {
-      setDraggingIdx(pointerOrigin.current.idx);
-      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    }
-    if (draggingIdx === null) return;
-    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-thumb-idx]') as HTMLElement | null;
-    if (el) {
-      const targetIdx = Number(el.dataset.thumbIdx);
-      if (!isNaN(targetIdx)) setOverIdx(targetIdx);
-    }
-  }, [draggingIdx]);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!pointerOrigin.current) return;
+      const dx = e.clientX - pointerOrigin.current.x;
+      const dy = e.clientY - pointerOrigin.current.y;
+      if (draggingIdx === null && Math.abs(dx) + Math.abs(dy) > 4) {
+        setDraggingIdx(pointerOrigin.current.idx);
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+      }
+      if (draggingIdx === null) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-thumb-idx]') as HTMLElement | null;
+      if (el) {
+        const targetIdx = Number(el.dataset.thumbIdx);
+        if (!isNaN(targetIdx)) setOverIdx(targetIdx);
+      }
+    },
+    [draggingIdx],
+  );
 
   const handlePointerUp = useCallback(() => {
     if (draggingIdx !== null && overIdx !== null && draggingIdx !== overIdx) {
@@ -269,15 +275,13 @@ export default function ImgToPdf() {
     );
     if (pendingFiles.length === 0) return;
     pendingFiles.forEach((f) => processedUploadUidsRef.current.add(f.uid));
-    Promise.allSettled(
-      pendingFiles.map((f) => readImageFile(f.originFileObj as File)),
-    ).then((results) => {
+    Promise.allSettled(pendingFiles.map((f) => readImageFile(f.originFileObj as File))).then((results) => {
       const okItems = results
         .filter((r): r is PromiseFulfilledResult<ImageItem> => r.status === 'fulfilled')
         .map((r) => r.value);
       const failCount = results.length - okItems.length;
       if (okItems.length > 0) setItems((prev) => [...prev, ...okItems]);
-      if (failCount > 0) message.error(t('hash.readFailed', { count: failCount }));
+      if (failCount > 0) message.error(t('imgToPdf.readFailed', { count: failCount }));
     });
   };
 
@@ -292,7 +296,10 @@ export default function ImgToPdf() {
   };
 
   const handleGenerate = async () => {
-    if (items.length === 0) { message.warning(t('imgToPdf.addImagesFirst')); return; }
+    if (items.length === 0) {
+      message.warning(t('imgToPdf.addImagesFirst'));
+      return;
+    }
     const defaultName = `images-${dayjs().format('YYYYMMDD-HHmmss')}.pdf`;
     let savePath: string | null;
     try {
@@ -300,7 +307,9 @@ export default function ImgToPdf() {
         defaultPath: defaultName,
         filters: [{ name: t('imgToPdf.pdfFilter'), extensions: ['pdf'] }],
       })) as string | null;
-    } catch { return; }
+    } catch {
+      return;
+    }
     if (!savePath) return;
 
     setGenerating(true);
@@ -348,7 +357,10 @@ export default function ImgToPdf() {
   );
 
   useEffect(() => {
-    if (pageCount === 0) { setPreviewPage(1); return; }
+    if (pageCount === 0) {
+      setPreviewPage(1);
+      return;
+    }
     if (previewPage > pageCount) setPreviewPage(pageCount);
   }, [pageCount, previewPage]);
 
@@ -407,17 +419,22 @@ export default function ImgToPdf() {
                     onPointerDown={(e) => handlePointerDown(e, idx)}
                     className={styles.thumbCard}
                     style={{
-                      borderColor: overIdx === idx && draggingIdx !== null && draggingIdx !== idx
-                        ? '#1677ff' : undefined,
-                      borderWidth: overIdx === idx && draggingIdx !== null && draggingIdx !== idx
-                        ? 2 : undefined,
+                      borderColor:
+                        overIdx === idx && draggingIdx !== null && draggingIdx !== idx ? '#1677ff' : undefined,
+                      borderWidth: overIdx === idx && draggingIdx !== null && draggingIdx !== idx ? 2 : undefined,
                       transform: draggingIdx === idx ? 'scale(0.90)' : undefined,
                       opacity: draggingIdx === idx ? 0.45 : undefined,
                     }}
                   >
                     <img src={item.dataUrl} alt={`img-${idx + 1}`} draggable={false} className={styles.thumbImg} />
                     <span className={styles.thumbIdx}>{idx + 1}</span>
-                    <button className={styles.thumbRemove} onClick={() => handleRemove(item.id)} title={t('imgToPdf.remove')}>×</button>
+                    <button
+                      className={styles.thumbRemove}
+                      onClick={() => handleRemove(item.id)}
+                      title={t('imgToPdf.remove')}
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
               </div>

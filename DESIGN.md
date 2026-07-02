@@ -11,59 +11,54 @@
 
 ## 2. Implemented Tools
 
-| Tool | Current implementation |
-|------|------------------------|
-| Terminal | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
-| JSON Formatter | Monaco-based editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content |
-| Timestamp | Unix timestamp/date conversion, seconds/milliseconds toggle, quick current time/date actions, copy support, and persisted history |
-| Diffchecker | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs |
-| Notepad | Multi-tab local notes and file editing with Monaco, local open/save, JSON formatting, and persisted tab state |
-| Base64 Codec | Encode/decode workflow with mode switch, swap action, and persisted input/output |
-| URL Codec | Encode/decode workflow with live conversion and persisted input/output |
-| Hash | Text and file hashing for MD5 / SHA-1 / SHA-256, including drag-and-drop file support |
-| Image to PDF | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration |
-| Translate | Tencent Cloud / Baidu translation with Rust-side signing, 13 language pairs, provider settings, history, and adjustable reading size |
+| Tool           | Current implementation                                                                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Terminal       | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
+| JSON Formatter | Monaco-based editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content                                              |
+| Timestamp      | Unix timestamp/date conversion, seconds/milliseconds toggle, quick current time/date actions, copy support, and persisted history                                 |
+| Diffchecker    | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs               |
+| Notepad        | Multi-tab local notes and file editing with Monaco, local open/save, JSON formatting, and persisted tab state                                                     |
+| Image to PDF   | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration                    |
+| Translate      | Tencent Cloud / Baidu translation with Rust-side signing, 13 language pairs, provider settings, history, and adjustable reading size                              |
 
 ## 3. Tech Stack
 
 ### 3.1 Core
 
-| Layer | Technology |
-|-------|------------|
-| Desktop runtime | Tauri 2 |
-| Frontend | React 19 + TypeScript 5 |
-| Build tool | Vite 8 |
-| Routing | React Router DOM 7 |
+| Layer           | Technology              |
+| --------------- | ----------------------- |
+| Desktop runtime | Tauri 2                 |
+| Frontend        | React 19 + TypeScript 5 |
+| Build tool      | Vite 8                  |
+| Routing         | React Router DOM 7      |
 
 ### 3.2 UI and shared libraries
 
-| Library | Purpose |
-|---------|---------|
-| Ant Design 6 | Main UI components |
-| CSS Modules | Component-scoped styling |
-| `@monaco-editor/react` | Code and note editing |
-| `@xterm/xterm` + addons | Terminal rendering, fit, links, Unicode 11 |
-| `diff` | Text diffing |
-| `js-base64` | Base64 conversion |
-| `dayjs` | Time handling |
-| `spark-md5` / `js-sha1` / `js-sha256` | Hashing |
-| `jspdf` | PDF generation |
-| `react-markdown` | Release note rendering |
-| `i18next` + `react-i18next` | Internationalization |
+| Library                     | Purpose                                    |
+| --------------------------- | ------------------------------------------ |
+| Ant Design 6                | Main UI components                         |
+| CSS Modules                 | Component-scoped styling                   |
+| `@monaco-editor/react`      | Code and note editing                      |
+| `@xterm/xterm` + addons     | Terminal rendering, fit, links, Unicode 11 |
+| `diff`                      | Text diffing                               |
+| `dayjs`                     | Time handling                              |
+| `jspdf`                     | PDF generation                             |
+| `react-markdown`            | Release note rendering                     |
+| `i18next` + `react-i18next` | Internationalization                       |
 
 ### 3.3 Rust-side dependencies
 
-| Crate / plugin | Purpose |
-|----------------|---------|
-| `reqwest` | Translation API requests |
-| `hmac` + `sha2` | Tencent Cloud request signing |
-| `md-5` | Baidu request signing |
-| `font-kit` | System font discovery |
-| `libc` | PTY and process integration |
-| `parking_lot` | PTY manager synchronization |
-| `tauri-plugin-updater` | App updates |
-| `tauri-plugin-single-instance` | Single-instance behavior in release builds |
-| `tauri-plugin-dialog`, `fs`, `opener`, `process`, `shell` | Native file/system integrations |
+| Crate / plugin                                            | Purpose                                    |
+| --------------------------------------------------------- | ------------------------------------------ |
+| `reqwest`                                                 | Translation API requests                   |
+| `hmac` + `sha2`                                           | Tencent Cloud request signing              |
+| `md-5`                                                    | Baidu request signing                      |
+| `font-kit`                                                | System font discovery                      |
+| `libc`                                                    | PTY and process integration                |
+| `parking_lot`                                             | PTY manager synchronization                |
+| `tauri-plugin-updater`                                    | App updates                                |
+| `tauri-plugin-single-instance`                            | Single-instance behavior in release builds |
+| `tauri-plugin-dialog`, `fs`, `opener`, `process`, `shell` | Native file/system integrations            |
 
 ## 4. Architecture
 
@@ -135,16 +130,13 @@ firewood/
 │   ├── router/
 │   │   └── tools.tsx
 │   ├── tools/
-│   │   ├── base64-codec/
-│   │   ├── hash/
 │   │   ├── img-to-pdf/
 │   │   ├── json-formatter/
 │   │   ├── notepad/
 │   │   ├── terminal/
 │   │   ├── text-diff/
 │   │   ├── timestamp/
-│   │   ├── translate/
-│   │   └── url-codec/
+│   │   └── translate/
 │   ├── types/
 │   │   └── tool.ts
 │   ├── utils/
