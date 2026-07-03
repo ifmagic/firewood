@@ -227,6 +227,13 @@ fn main() {
                 api.prevent_close();
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                if let Some(pty_manager) = app_handle.try_state::<Arc<pty::PtyManager>>() {
+                    pty_manager.close_all();
+                }
+            }
+        });
 }

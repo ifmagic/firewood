@@ -1,9 +1,4 @@
 const zhCN = {
-  // App-level
-  app: {
-    name: 'Firewood',
-  },
-
   // Sidebar
   sidebar: {
     showAll: '全部显示',
@@ -16,6 +11,7 @@ const zhCN = {
   toolName: {
     'json-formatter': 'JSON',
     timestamp: '时间戳转换',
+    'text-diff': '文本对比',
     notepad: '记事本',
     'img-to-pdf': '图片排版',
     translate: '文本翻译',
@@ -41,14 +37,8 @@ const zhCN = {
   // Common labels
   label: {
     result: '结果',
-    file: '文件',
-    text: '文本',
-    seconds: '秒',
-    milliseconds: '毫秒',
     timestamp: '时间戳',
-    date: '日期',
     settings: '设置',
-    language: '语言',
   },
 
   // Font size control
@@ -60,14 +50,12 @@ const zhCN = {
   // JSON
   jsonFormatter: {
     title: 'JSON',
-    description: 'JSON 格式化、压缩与去除转义',
     emptyHint: '粘贴 JSON 或转义文本，然后执行格式化、压缩或去除转义',
   },
 
   // Timestamp
   timestamp: {
     title: '时间戳转换',
-    description: 'Unix 时间戳与人类可读日期互转',
     tsToDate: '时间戳 → 日期',
     dateToTs: '日期 → 时间戳',
     enterTs: '输入 Unix 时间戳',
@@ -88,7 +76,6 @@ const zhCN = {
   // Notepad
   notepad: {
     title: '记事本',
-    description: '本地多标签记事，支持打开本地文本文件',
     untitled: '未命名',
     newTab: '新建标签',
     deleteTab: '删除标签页',
@@ -115,7 +102,6 @@ const zhCN = {
   // Image to PDF
   imgToPdf: {
     title: '图片排版',
-    description: '选择图片，设定每页布局，一键导出为 A4 尺寸 PDF',
     addImages: '添加图片',
     clickOrDrag: '点击或拖拽，支持批量',
     imageCount: '{{count}} 张图片 · 拖拽排序',
@@ -149,7 +135,6 @@ const zhCN = {
   // Translate
   translate: {
     title: '文本翻译',
-    description: '支持腾讯云 / 百度翻译 API',
     engine: '翻译引擎',
     tencent: '腾讯翻译',
     baidu: '百度翻译',
@@ -203,7 +188,6 @@ const zhCN = {
     subtitle: '一个紧凑的工具箱，让日常开发工作流更高效。',
     viewChanges: '更新日志',
     releaseNotesTitle: '版本更新说明 · v{{version}}',
-    defaultReleaseNote: '包含最新功能与问题修复。',
   },
 
   // Updater
@@ -238,19 +222,9 @@ const zhCN = {
     '诡秘之主',
   ],
 
-  // Tray menu
-  tray: {
-    showWindow: '显示窗口',
-    checkForUpdates: '检查更新…',
-    quit: '退出',
-    language: '语言',
-  },
-
   // Settings
   settings: {
-    title: '设置',
     language: '语言',
-    languageAuto: '自动（跟随系统）',
     checkForUpdates: '检查更新…',
     aboutApp: '关于 Firewood',
   },

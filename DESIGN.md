@@ -113,6 +113,7 @@ firewood/
 │   ├── components/
 │   │   ├── AboutDialog/
 │   │   ├── FontSizeControl/
+│   │   ├── MarkdownBody/
 │   │   ├── SettingsMenuButton/
 │   │   ├── Sidebar/
 │   │   ├── StatusBar/
@@ -122,6 +123,7 @@ firewood/
 │   │   ├── useEditorFontSize.ts
 │   │   ├── usePersistentState.ts
 │   │   ├── useResizablePanels.ts
+│   │   ├── useSidebarCollapsed.ts
 │   │   ├── useToolOrder.ts
 │   │   └── useToolVisibility.ts
 │   ├── i18n/
@@ -143,8 +145,7 @@ firewood/
 │   │   └── updateNotes.ts
 │   └── jsonc-parser.d.ts
 ├── DESIGN.md
-├── README.md
-└── README.zh-CN.md
+└── README.md
 ```
 
 ## 6. Extension Model

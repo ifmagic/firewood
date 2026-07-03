@@ -1,9 +1,4 @@
 const en = {
-  // App-level
-  app: {
-    name: 'Firewood',
-  },
-
   // Sidebar
   sidebar: {
     showAll: 'Show All',
@@ -16,6 +11,7 @@ const en = {
   toolName: {
     'json-formatter': 'JSON',
     timestamp: 'Timestamp',
+    'text-diff': 'Diff',
     notepad: 'Notepad',
     'img-to-pdf': 'Image to PDF',
     translate: 'Translate',
@@ -41,14 +37,8 @@ const en = {
   // Common labels
   label: {
     result: 'Result',
-    file: 'File',
-    text: 'Text',
-    seconds: 'Seconds',
-    milliseconds: 'Milliseconds',
     timestamp: 'Timestamp',
-    date: 'Date',
     settings: 'Settings',
-    language: 'Language',
   },
 
   // Font size control
@@ -60,14 +50,12 @@ const en = {
   // JSON
   jsonFormatter: {
     title: 'JSON',
-    description: 'Format, minify & unescape JSON',
     emptyHint: 'Paste JSON or escaped text, then format, minify, or unescape it here',
   },
 
   // Timestamp
   timestamp: {
     title: 'Timestamp',
-    description: 'Convert between Unix timestamps and dates',
     tsToDate: 'Timestamp → Date',
     dateToTs: 'Date → Timestamp',
     enterTs: 'Enter Unix timestamp',
@@ -88,7 +76,6 @@ const en = {
   // Notepad
   notepad: {
     title: 'Notepad',
-    description: 'Multi-tab local notepad with local file open',
     untitled: 'Untitled',
     newTab: 'New Tab',
     deleteTab: 'Delete Tab',
@@ -115,7 +102,6 @@ const en = {
   // Image to PDF
   imgToPdf: {
     title: 'Image to PDF',
-    description: 'Arrange images and export as A4 PDF',
     addImages: 'Add Images',
     clickOrDrag: 'Click or drag, batch supported',
     imageCount: '{{count}} images · drag to reorder',
@@ -149,7 +135,6 @@ const en = {
   // Translate
   translate: {
     title: 'Translate',
-    description: 'Translate via Tencent Cloud / Baidu API',
     engine: 'Engine',
     tencent: 'Tencent',
     baidu: 'Baidu',
@@ -203,7 +188,6 @@ const en = {
     subtitle: 'A compact toolbox for efficient dev workflows.',
     viewChanges: 'Changelog',
     releaseNotesTitle: 'Release Notes · v{{version}}',
-    defaultReleaseNote: 'Includes the latest features and bug fixes.',
   },
 
   // Updater
@@ -238,19 +222,9 @@ const en = {
     'Reference',
   ],
 
-  // Tray menu
-  tray: {
-    showWindow: 'Show Window',
-    checkForUpdates: 'Check for Updates…',
-    quit: 'Quit',
-    language: 'Language',
-  },
-
   // Settings
   settings: {
-    title: 'Settings',
     language: 'Language',
-    languageAuto: 'Auto (System)',
     checkForUpdates: 'Check for Updates…',
     aboutApp: 'About Firewood',
   },

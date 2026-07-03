@@ -6,5 +6,4 @@ export interface ToolMeta {
   icon: ReactNode;
   description: string;
   component: LazyExoticComponent<FC>;
-  visible?: boolean; // defaults to true
 }

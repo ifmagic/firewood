@@ -24,7 +24,6 @@ type RawFd = i32;
 pub struct PtyInfo {
     pub id: String,
     pub pid: u32,
-    pub cwd: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -274,7 +273,6 @@ impl PtyManager {
         Ok(PtyInfo {
             id: session_id,
             pid: pid as u32,
-            cwd: cwd_path.to_string(),
         })
     }
 
@@ -482,6 +480,26 @@ impl PtyManager {
     pub fn close_session(&self, id: &str) -> Result<(), String> {
         let _ = id;
         Err(Self::unsupported_error())
+    }
+
+    pub fn close_all(&self) {
+        let sessions: Vec<PtySession> = {
+            let mut sessions = self.sessions.lock();
+            sessions.drain().map(|(_, session)| session).collect()
+        };
+
+        for session in sessions {
+            session.running.store(false, Ordering::Relaxed);
+
+            #[cfg(unix)]
+            unsafe {
+                close(session.master_fd);
+            }
+
+            if let Some(handle) = session.handle {
+                let _ = handle.join();
+            }
+        }
     }
 
     pub fn get_default_shell() -> String {
