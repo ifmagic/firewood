@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.7.7
+
+### ✨ Features
+
+- Add a shared Monaco compatibility hook to improve editor behavior on Tauri macOS builds.
+
+### 🐛 Bug Fixes
+
+- Drain PTY sessions on exit and add Ctrl+L support to clear the terminal.
+
+### 🔧 Chore / Updates
+
+- Add an AGENTS guide that documents repository conventions for contributors.
+
 ## v0.7.6
 
 ### ✨ Features
