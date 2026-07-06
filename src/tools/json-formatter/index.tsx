@@ -8,6 +8,7 @@ import ToolLayout from '../../components/ToolLayout';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
+import { useMonacoCompat } from '../../hooks/useMonacoCompat';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import './json-formatter.css';
 
@@ -130,16 +131,19 @@ export default function JsonFormatter() {
     editorRef.current = editor;
   };
 
-  const editorOptions = useMemo(
+  const baseEditorOptions = useMemo(
     () => ({
       minimap: { enabled: false },
-      fontSize,
-      fontFamily: "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace",
       letterSpacing: 0.5,
       automaticLayout: true,
     }),
-    [fontSize],
+    [],
   );
+
+  const { editorClassName, editorOptions } = useMonacoCompat({
+    fontSize,
+    options: baseEditorOptions,
+  });
 
   return (
     <ToolLayout title={t('jsonFormatter.title')}>
@@ -197,6 +201,7 @@ export default function JsonFormatter() {
                 </div>
               )}
               <Editor
+                className={editorClassName}
                 height="100%"
                 language="json"
                 value={content}

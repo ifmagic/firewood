@@ -1,0 +1,22 @@
+/*
+ * Monaco's inputarea CSS is loaded with high specificity by @monaco-editor/react.
+ * `!important` is required to override the composition-state (.ime-input)
+ * textarea so it doesn't paint a ghost caret on WKWebView. Scoped to Tauri Mac
+ * only via the .fw-monaco-compat--tauri-mac parent class, so non-Mac platforms
+ * keep Monaco's defaults. The class name is emitted by useMonacoCompat.ts;
+ * keep both in sync on rename. Verified on Tauri/macOS with a CJK IME: the OS
+ * candidate window remains the primary composition feedback, so hiding the
+ * inline textarea text does not regress Pinyin/Japanese input.
+ */
+.fw-monaco-compat--tauri-mac .monaco-editor textarea.inputarea.ime-input {
+	min-height: 1px !important;
+	height: 1px !important;
+	overflow: visible !important;
+	opacity: 0 !important;
+	color: transparent !important;
+	background-color: transparent !important;
+	caret-color: transparent !important;
+	text-decoration: none !important;
+	text-shadow: none !important;
+	-webkit-text-fill-color: transparent !important;
+}
