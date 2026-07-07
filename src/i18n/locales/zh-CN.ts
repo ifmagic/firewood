@@ -159,7 +159,6 @@ const zhCN = {
 
   // Moxia (novel writing workspace)
   moxia: {
-    emptyHint: '从左侧选择一个章节开始写作',
     untitled: '未命名',
     uncategorized: '未分类',
     words: '字',
@@ -175,14 +174,10 @@ const zhCN = {
     settings: '设置',
     editorFontSize: '编辑器字号',
     contentMaxWidth: '内容区宽度',
-    aiTools: 'AI 写作工具',
-    expand: '展开',
-    collapse: '收起',
-    generate: '生成',
+    aiToolsRow: 'AI 工具',
     openBook: '打开作品',
     newBook: '新建作品',
     closeBook: '关闭当前作品',
-    noBookOpened: '未打开作品',
     currentBook: '当前作品',
     bookRequired: '请先打开或创建一本作品',
     book: '作品',
@@ -198,6 +193,7 @@ const zhCN = {
     characterName: '角色名称',
     roleType: '角色类型',
     characters: '角色',
+    chapterGroup: '正文管理',
     description: '基本描述',
     descriptionPlaceholder: '角色的外貌、身份、标志特征...',
     personality: '性格特征',
@@ -228,7 +224,6 @@ const zhCN = {
     addCharacter: '添加角色',
     create: '创建',
     generateCharacterCard: '生成角色卡',
-    generateCharacterCardDesc: '基于角色预期一键生成完整 AI 执行 Prompt',
     generatePrompt: '生成 Prompt',
     refineCurrentCharacter: '在当前已加载角色基础上扩展',
     referenceCharacter: '参考角色',
@@ -240,6 +235,8 @@ const zhCN = {
     promptResultHint: '下方即为可直接发送给大模型的完整 Prompt，复制后粘贴到 AI 工具使用',
     copyAll: '一键复制',
     searchPlaceholder: '搜索章节...',
+    emptyQuote: '“没有什么比将未曾讲述的故事深埋心底更令人痛苦。”',
+    emptyAuthor: '— 马雅·安哲罗',
   },
 
   // Languages

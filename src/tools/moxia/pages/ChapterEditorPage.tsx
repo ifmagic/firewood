@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import { SaveOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
@@ -112,9 +112,10 @@ export default function ChapterEditorPage({ fontSize, contentMaxWidth }: Props) 
 
         <div className={styles.chapterFooter}>
           <button className={styles.ghostBtn} onClick={() => setShowNotes((s) => !s)}>
-            📝 {t('moxia.notes')}
+            <FileTextOutlined />
+            {t('moxia.notes')}
           </button>
-          <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--fw-text-tertiary)' }}>
+          <span className={styles.chapterFooterWordCount}>
             {t('moxia.wordCount')}: {formatNumber(wordCount)}
           </span>
         </div>

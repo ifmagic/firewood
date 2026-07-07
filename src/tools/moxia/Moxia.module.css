@@ -1,5 +1,23 @@
 /* Main stylesheet for the moxia tool. Tab-indented (firewood convention); reuses --fw-* CSS variables. */
 
+/* ============ Shared focus-visible (a11y) ============ */
+/* Applied to all custom interactive elements (buttons, nav items, pills, collapsible headers). */
+
+.bookSwitcherBtn:focus-visible,
+.iconBtn:focus-visible,
+.saveBtn:focus-visible,
+.ghostBtn:focus-visible,
+.aiToolBtn:focus-visible,
+.navItem:focus-visible,
+.navItemActionBtn:focus-visible,
+.relationActionBtn:focus-visible,
+.pillClickable:focus-visible,
+.collapsibleHeader:focus-visible {
+	outline: 2px solid var(--fw-accent, #ff7a45);
+	outline-offset: 2px;
+	border-radius: var(--fw-radius-md, 6px);
+}
+
 .wrapper {
 	display: flex;
 	flex-direction: column;
@@ -19,20 +37,13 @@
 	flex-shrink: 0;
 }
 
-.bookSwitcher {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	min-width: 200px;
-}
-
 .bookSwitcherBtn {
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	padding: 4px 10px;
 	border: 1px solid var(--fw-divider, #eee);
-	border-radius: 6px;
+	border-radius: var(--fw-radius-md, 6px);
 	background: var(--fw-panel-muted, #f7f7f8);
 	cursor: pointer;
 	font-size: 13px;
@@ -44,8 +55,8 @@
 	border-color: var(--fw-accent, #ff7a45);
 }
 
-.bookSwitcherBtnEmpty {
-	color: var(--fw-text-tertiary, #8c8c8c);
+.bookSwitcherLabel {
+	font-weight: 600;
 }
 
 .topBarActions {
@@ -82,19 +93,14 @@
 	background: var(--fw-surface, #fff);
 }
 
-.rightPanel {
-	width: 300px;
-	min-width: 32px;
-	max-width: 400px;
-	border-left: 1px solid var(--fw-divider, #eee);
-	background: var(--fw-panel-muted, #f7f7f8);
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
+.centerPanelRelative {
+	position: relative;
 }
 
-.rightPanelCollapsed {
-	width: 32px;
+/* ============ Status bar separator ============ */
+
+.statusBarSeparator {
+	color: var(--fw-text-tertiary, #8c8c8c);
 }
 
 /* ============ Left panel: navigation tree ============ */
@@ -150,6 +156,13 @@
 .navItemIcon {
 	margin-right: 6px;
 	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.navItemSelected .navItemIcon {
+	color: var(--fw-accent, #ff7a45);
 }
 
 .navItemText {
@@ -204,12 +217,28 @@
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	color: var(--fw-text-tertiary, #8c8c8c);
-	gap: 12px;
+	padding: 0 32px;
+	box-sizing: border-box;
 }
 
-.emptyIcon {
-	font-size: 48px;
+.emptyQuote {
+	margin: 0;
+	max-width: 640px;
+	font-family: Georgia, 'Times New Roman', serif;
+	font-style: italic;
+	font-size: 26px;
+	line-height: 1.6;
+	text-align: center;
+	color: var(--fw-text-body, #595959);
+}
+
+.emptyAuthor {
+	margin-top: 20px;
+	font-family: Georgia, 'Times New Roman', serif;
+	font-size: 14px;
+	font-weight: 400;
+	font-style: normal;
+	color: var(--fw-text-tertiary, #8c8c8c);
 }
 
 /* ============ Editor page header ============ */
@@ -230,6 +259,12 @@
 	background: transparent;
 	color: var(--fw-text-strong, #1f1f1f);
 	font-family: inherit;
+}
+
+.pageTitleInput:focus-visible {
+	outline: 2px solid var(--fw-accent, #ff7a45);
+	outline-offset: 2px;
+	border-radius: var(--fw-radius-sm, 4px);
 }
 
 .pageTitleInput::placeholder {
@@ -320,6 +355,78 @@
 	margin: 0 32px 20px;
 }
 
+/* ============ AI tool row + reusable AiToolButton ============ */
+
+.aiToolRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 32px 16px;
+	flex-wrap: wrap;
+}
+
+.aiToolRowTitle {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-right: 4px;
+}
+
+.aiToolBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+}
+
+.aiToolBtn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.aiToolBtnGhost {
+	border: 1px solid var(--fw-divider, #eee);
+	background: var(--fw-panel-muted, #f3f4f6);
+	color: var(--fw-text-body, #595959);
+}
+
+.aiToolBtnGhost:hover:not(:disabled) {
+	border-color: var(--fw-accent, #ff7a45);
+	color: var(--fw-accent, #ff7a45);
+}
+
+.aiToolBtnSolid {
+	border: 1px solid var(--fw-accent, #ff7a45);
+	background: var(--fw-accent, #ff7a45);
+	color: var(--fw-surface, #fff);
+}
+
+.aiToolBtnSolid:hover:not(:disabled) {
+	opacity: 0.9;
+}
+
+.aiToolBtnIcon {
+	display: inline-flex;
+	align-items: center;
+	font-size: 14px;
+	line-height: 1;
+}
+
+.aiToolBtnLabel {
+	font-weight: 500;
+}
+
 /* ============ Centered chapter content container ============ */
 
 .contentCenter {
@@ -328,9 +435,23 @@
 	padding: 0 24px 60px;
 }
 
-.contentCenterFull {
-	padding: 0 32px 60px;
-	max-width: none;
+/* ============ Book overview split layout (description + worldbuilding sidebar) ============ */
+
+.bookSplit {
+	display: flex;
+	gap: 16px;
+	padding: 0 32px;
+}
+
+.bookSplitMain {
+	flex: 1;
+	min-width: 0;
+}
+
+.bookSplitSide {
+	width: 30%;
+	flex-shrink: 0;
+	min-width: 0;
 }
 
 /* ============ Editor (CodeMirror host) ============ */
@@ -382,6 +503,10 @@
 	color: var(--fw-text-tertiary, #8c8c8c);
 }
 
+.chevron > :global(svg) {
+	transition: transform 0.15s;
+}
+
 .chevronOpen {
 	transform: rotate(90deg);
 }
@@ -411,6 +536,12 @@
 	border-top: 1px solid var(--fw-divider, #eee);
 }
 
+.chapterFooterWordCount {
+	margin-left: auto;
+	font-size: 12px;
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
 .ghostBtn {
 	padding: 4px 10px;
 	border: none;
@@ -418,7 +549,10 @@
 	cursor: pointer;
 	color: var(--fw-text-body, #595959);
 	font-size: 13px;
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm, 4px);
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
 }
 
 .ghostBtn:hover {
@@ -451,6 +585,13 @@
 	margin-bottom: 20px;
 }
 
+.characterSectionHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
 .characterSectionTitle {
 	font-size: 13px;
 	font-weight: 600;
@@ -458,6 +599,10 @@
 	margin-bottom: 8px;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
+}
+
+.characterSectionHeader .characterSectionTitle {
+	margin-bottom: 0;
 }
 
 .relationsList {
@@ -547,78 +692,7 @@
 	font-size: 13px;
 }
 
-/* ============ Right panel: AI tool cards ============ */
-
-.rightPanelHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 12px 16px;
-	border-bottom: 1px solid var(--fw-divider, #eee);
-}
-
-.rightPanelTitle {
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--fw-text-strong, #1f1f1f);
-}
-
-.rightPanelBody {
-	flex: 1;
-	overflow: auto;
-	padding: 16px;
-}
-
-.toolCard {
-	border: 1px solid var(--fw-divider, #eee);
-	border-radius: 12px;
-	padding: 16px;
-	background: var(--fw-surface, #fff);
-	cursor: pointer;
-	transition:
-		border-color 0.15s,
-		box-shadow 0.15s;
-}
-
-.toolCard:hover {
-	border-color: var(--fw-accent, #ff7a45);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.toolCardIcon {
-	font-size: 24px;
-	margin-bottom: 8px;
-}
-
-.toolCardTitle {
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--fw-text-strong, #1f1f1f);
-	margin-bottom: 4px;
-}
-
-.toolCardDesc {
-	font-size: 12px;
-	color: var(--fw-text-tertiary, #8c8c8c);
-	line-height: 1.5;
-	margin-bottom: 12px;
-}
-
-.toolCardAction {
-	display: inline-block;
-	padding: 4px 12px;
-	border-radius: 6px;
-	background: var(--fw-accent, #ff7a45);
-	color: var(--fw-surface, #fff);
-	font-size: 12px;
-}
-
-.rightPanelFooter {
-	padding: 8px;
-	border-top: 1px solid var(--fw-divider, #eee);
-	display: flex;
-	justify-content: flex-end;
-}
+/* ============ Right panel: AI tool cards (REMOVED — AI triggers now live in-page via AiToolButton) ============ */
 
 .iconBtn {
 	width: 28px;
@@ -639,19 +713,6 @@
 	color: var(--fw-accent, #ff7a45);
 }
 
-.collapsedExpandBtn {
-	width: 32px;
-	flex: 1;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	color: var(--fw-text-tertiary, #8c8c8c);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 14px;
-}
-
 /* ============ Validation messages ============ */
 
 .validationError {
@@ -668,6 +729,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(255, 255, 255, 0.6);
+	background: color-mix(in srgb, var(--fw-surface, #fff) 60%, transparent);
 	z-index: 10;
 }

@@ -5,8 +5,8 @@ export default function EmptyPage() {
   const { t } = useTranslation();
   return (
     <div className={styles.emptyPage}>
-      <div className={styles.emptyIcon}>✏️</div>
-      <div>{t('moxia.emptyHint')}</div>
+      <blockquote className={styles.emptyQuote}>{t('moxia.emptyQuote')}</blockquote>
+      <cite className={styles.emptyAuthor}>{t('moxia.emptyAuthor')}</cite>
     </div>
   );
 }

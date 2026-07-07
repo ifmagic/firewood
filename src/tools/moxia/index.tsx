@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Dropdown, Spin, message } from 'antd';
 import type { MenuProps } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
@@ -13,7 +14,6 @@ import { useMoxiaStore } from './store';
 import { GENRES } from './enums';
 import { getLastBookPath } from './library';
 import LeftPanel from './components/LeftPanel';
-import RightPanel from './components/RightPanel';
 import EmptyPage from './pages/EmptyPage';
 import BookOverviewPage from './pages/BookOverviewPage';
 import ChapterEditorPage from './pages/ChapterEditorPage';
@@ -63,7 +63,6 @@ export default function Moxia() {
     })),
   );
 
-  const [rightCollapsed, setRightCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [promptInputOpen, setPromptInputOpen] = useState(false);
   const [promptResult, setPromptResult] = useState<string>('');
@@ -77,8 +76,11 @@ export default function Moxia() {
   }, [error, setError]);
 
   // On mount: load the library and try to reopen the last book.
+  // Guard: if the store already has a book open (tool-switch remount), skip
+  // openBook so the in-memory page/selection/drafts are preserved.
   useEffect(() => {
     refreshLibraryFromDisk();
+    if (useMoxiaStore.getState().bookPath) return;
     const last = getLastBookPath();
     if (last) {
       void openBook(last).catch(() => {
@@ -154,31 +156,35 @@ export default function Moxia() {
       : []),
   ];
 
+  // Promoted menu bar: replaces the default ToolLayout breadcrumb and the old internal topBar.
+  const menuBar = (
+    <div className={styles.topBar}>
+      <Dropdown menu={{ items: bookMenuItems }} trigger={['click']}>
+        <button className={styles.bookSwitcherBtn}>
+          <span className={styles.bookSwitcherLabel}>Moxia</span>
+        </button>
+      </Dropdown>
+      <div className={styles.topBarActions}>
+        <button
+          className={styles.iconBtn}
+          onClick={() => setSettingsOpen(true)}
+          title={t('moxia.settings')}
+          aria-label={t('moxia.settings')}
+        >
+          <SettingOutlined />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <ToolLayout title={t('toolName.moxia', { defaultValue: 'Moxia' })}>
+    <ToolLayout title={t('toolName.moxia', { defaultValue: 'Moxia' })} header={menuBar}>
       <div className={styles.wrapper}>
-        {/* Top book switcher */}
-        <div className={styles.topBar}>
-          <Dropdown menu={{ items: bookMenuItems }} trigger={['click']}>
-            <button className={`${styles.bookSwitcherBtn} ${!bookPath ? styles.bookSwitcherBtnEmpty : ''}`}>
-              {bookMeta ? `📖 ${bookMeta.title}` : t('moxia.noBookOpened')}
-            </button>
-          </Dropdown>
-          <div className={styles.topBarActions}>
-            <button className={styles.iconBtn} onClick={() => void handleOpenBook()} title={t('moxia.openBook')}>
-              📂
-            </button>
-            <button className={styles.iconBtn} onClick={() => void handleNewBook()} title={t('moxia.newBook')}>
-              ＋
-            </button>
-          </div>
-        </div>
-
-        {/* Three-column body */}
+        {/* Two-column body (left nav + center panel). The right AI sidebar was removed; AI tool triggers now live inside page content. */}
         <div className={styles.body}>
-          <LeftPanel />
+          {bookPath && <LeftPanel />}
 
-          <div className={styles.centerPanel} style={{ position: 'relative' }}>
+          <div className={`${styles.centerPanel} ${styles.centerPanelRelative}`}>
             {loading && (
               <div className={styles.loadingOverlay}>
                 <Spin />
@@ -187,7 +193,7 @@ export default function Moxia() {
             {!bookPath ? (
               <EmptyPage />
             ) : page === 'book' ? (
-              <BookOverviewPage fontSize={fontSize} />
+              <BookOverviewPage fontSize={fontSize} onGenerateCharacterCard={() => setPromptInputOpen(true)} />
             ) : page === 'chapter' ? (
               <ChapterEditorPage fontSize={fontSize} contentMaxWidth={contentMaxWidth} />
             ) : page === 'character' ? (
@@ -196,13 +202,6 @@ export default function Moxia() {
               <EmptyPage />
             )}
           </div>
-
-          <RightPanel
-            collapsed={rightCollapsed}
-            onToggle={() => setRightCollapsed((c) => !c)}
-            onSettings={() => setSettingsOpen(true)}
-            onGenerateCharacterCard={() => setPromptInputOpen(true)}
-          />
         </div>
 
         {/* Status bar */}
@@ -211,7 +210,7 @@ export default function Moxia() {
             bookMeta ? (
               <>
                 <span>{bookMeta.title}</span>
-                <span style={{ color: 'var(--fw-text-tertiary)' }}>·</span>
+                <span className={styles.statusBarSeparator}>·</span>
                 <span>{bookMeta.genre}</span>
               </>
             ) : null

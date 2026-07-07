@@ -14,6 +14,9 @@ import type {
 
 export type PageKind = 'empty' | 'book' | 'chapter' | 'character';
 
+/** IDs for expandable nav folders in the left panel. */
+export type NavGroupId = 'character' | 'chapter';
+
 interface MoxiaState {
   // === Library ===
   library: LibraryEntry[];
@@ -31,7 +34,7 @@ interface MoxiaState {
   selectedId: number | null;
   page: PageKind;
   searchKeyword: string;
-  expandedGroups: Set<number>;
+  expandedGroups: Set<NavGroupId>;
 
   // === Edit drafts ===
   chapterDraft: Chapter | null;
@@ -57,7 +60,7 @@ interface MoxiaState {
   clearSelection: () => void;
 
   setSearchKeyword: (kw: string) => void;
-  toggleGroup: (bookId: number) => void;
+  toggleGroup: (id: NavGroupId) => void;
 
   // Book metadata editing
   patchBookMeta: (fields: Partial<BookMeta>) => void;
@@ -105,7 +108,9 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
   selectedId: null,
   page: 'empty',
   searchKeyword: '',
-  expandedGroups: new Set(),
+  // 'chapter' folder default expanded so chapters stay visible;
+  // 'character' folder default collapsed (matches prior behavior).
+  expandedGroups: new Set<NavGroupId>(['chapter']),
 
   chapterDraft: null,
   chapterDirty: false,
@@ -154,6 +159,7 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
         page: 'empty',
         selectedType: null,
         selectedId: null,
+        searchKeyword: '',
         chapterDraft: null,
         chapterDirty: false,
         characterDraft: null,
@@ -205,6 +211,7 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
       selectedType: null,
       selectedId: null,
       page: 'empty',
+      searchKeyword: '',
       chapterDraft: null,
       characterDraft: null,
       relations: [],
@@ -285,10 +292,10 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
 
   setSearchKeyword: (kw) => set({ searchKeyword: kw }),
 
-  toggleGroup: (bookId) => {
+  toggleGroup: (id) => {
     const s = new Set(get().expandedGroups);
-    if (s.has(bookId)) s.delete(bookId);
-    else s.add(bookId);
+    if (s.has(id)) s.delete(id);
+    else s.add(id);
     set({ expandedGroups: s });
   },
 
@@ -411,11 +418,9 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
     const character = await api.createCharacter(bookPath, name, roleType);
     const characters = await api.listCharacters(bookPath);
     set({ characters });
-    // Auto-expand this book's character group and select the new character
+    // Auto-expand the character folder so the new entry is visible.
     const s = new Set(get().expandedGroups);
-    // Single-book file model: the group is aggregated per current book; expand state uses 0
-    // to represent the current book's character group.
-    s.add(0);
+    s.add('character');
     set({ expandedGroups: s });
     await get().selectCharacter(character.id);
   },

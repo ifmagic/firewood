@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Input, message } from 'antd';
-import { SaveOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { SaveOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
@@ -65,7 +65,9 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
   return (
     <div>
       <div className={styles.pageHeader}>
-        <div className={styles.characterAvatar}>👤</div>
+        <div className={styles.characterAvatar}>
+          <UserOutlined />
+        </div>
         <Input
           className={styles.pageTitleInput}
           value={characterDraft.name}
@@ -152,14 +154,7 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
         <div className={styles.divider} />
 
         <div className={styles.characterSection}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 8,
-            }}
-          >
+          <div className={styles.characterSectionHeader}>
             <div className={styles.characterSectionTitle}>
               {t('moxia.relations')} ({relations.length})
             </div>

@@ -159,7 +159,6 @@ const en = {
 
   // Moxia (novel writing workspace)
   moxia: {
-    emptyHint: 'Select a chapter from the left to start writing',
     untitled: 'Untitled',
     uncategorized: 'Uncategorized',
     words: 'words',
@@ -175,14 +174,10 @@ const en = {
     settings: 'Settings',
     editorFontSize: 'Editor font size',
     contentMaxWidth: 'Content max width',
-    aiTools: 'AI Writing Tools',
-    expand: 'Expand',
-    collapse: 'Collapse',
-    generate: 'Generate',
+    aiToolsRow: 'AI Tools',
     openBook: 'Open Book',
     newBook: 'New Book',
     closeBook: 'Close current book',
-    noBookOpened: 'No book opened',
     currentBook: 'Current book',
     bookRequired: 'Please open or create a book first',
     book: 'Book',
@@ -198,6 +193,7 @@ const en = {
     characterName: 'Character name',
     roleType: 'Role type',
     characters: 'Characters',
+    chapterGroup: 'Chapters',
     description: 'Description',
     descriptionPlaceholder: 'Appearance, identity, signature traits...',
     personality: 'Personality',
@@ -228,7 +224,6 @@ const en = {
     addCharacter: 'Add character',
     create: 'Create',
     generateCharacterCard: 'Generate character card',
-    generateCharacterCardDesc: 'Generate a complete AI prompt from your expectation',
     generatePrompt: 'Generate prompt',
     refineCurrentCharacter: 'Refine the currently loaded character',
     referenceCharacter: 'Reference character',
@@ -240,6 +235,8 @@ const en = {
     promptResultHint: 'Copy this prompt to your AI tool',
     copyAll: 'Copy all',
     searchPlaceholder: 'Search chapters...',
+    emptyQuote: '“There is no greater agony than bearing an untold story inside you.”',
+    emptyAuthor: '— Maya Angelou',
   },
 
   // Languages

@@ -1,20 +1,22 @@
 import { useEffect } from 'react';
 import { Input } from 'antd';
-import { SaveOutlined } from '@ant-design/icons';
+import { SaveOutlined, BulbOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
 import PillTag from '../components/PillTag';
 import CollapsibleSection from '../components/CollapsibleSection';
+import AiToolButton from '../components/AiToolButton';
 import { useMoxiaStore } from '../store';
 import { GENRES, BOOK_STATUS_LABELS, bookStatusToLabel, bookStatusToKey, formatNumber } from '../enums';
 import styles from '../Moxia.module.css';
 
 interface Props {
   fontSize: number;
+  onGenerateCharacterCard: () => void;
 }
 
-export default function BookOverviewPage({ fontSize }: Props) {
+export default function BookOverviewPage({ fontSize, onGenerateCharacterCard }: Props) {
   const { t } = useTranslation();
   const { bookMeta, bookMetaDirty, patchBookMeta, markBookMetaDirty, saveBookMeta } = useMoxiaStore(
     useShallow((s) => ({
@@ -83,10 +85,20 @@ export default function BookOverviewPage({ fontSize }: Props) {
         <PillTag value={`${formatNumber(bookMeta.wordCount)} ${t('moxia.words')}`} readOnly />
       </div>
 
+      {/* AI tools row: reusable trigger chips for AI generators. Currently only character card; more can be appended. */}
+      <div className={styles.aiToolRow}>
+        <span className={styles.aiToolRowTitle}>{t('moxia.aiToolsRow')}</span>
+        <AiToolButton
+          icon={<BulbOutlined />}
+          label={t('moxia.generateCharacterCard')}
+          onClick={onGenerateCharacterCard}
+        />
+      </div>
+
       <div className={styles.divider} />
 
-      <div style={{ display: 'flex', gap: 16, padding: '0 32px' }}>
-        <div style={{ flex: 1 }}>
+      <div className={styles.bookSplit}>
+        <div className={styles.bookSplitMain}>
           <Editor
             key="book-description"
             value={bookMeta.description}
@@ -98,7 +110,7 @@ export default function BookOverviewPage({ fontSize }: Props) {
             fontSize={fontSize}
           />
         </div>
-        <div style={{ width: '30%' }}>
+        <div className={styles.bookSplitSide}>
           <CollapsibleSection title={t('moxia.worldbuilding')}>
             <Editor
               key="book-worldbuilding"

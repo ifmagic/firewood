@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
+import { CaretDownOutlined } from '@ant-design/icons';
 import styles from '../Moxia.module.css';
 
 interface PillTagProps {
@@ -52,7 +53,9 @@ export default function PillTag({ label, value, options, readOnly = false, onCha
       >
         {label && <span className={styles.pillLabel}>{label}</span>}
         <span className={styles.pillValue}>{value}</span>
-        <span className={styles.pillCaret}>▾</span>
+        <span className={styles.pillCaret}>
+          <CaretDownOutlined />
+        </span>
       </div>
     </Dropdown>
   );

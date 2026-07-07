@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { CaretRightOutlined } from '@ant-design/icons';
 import styles from '../Moxia.module.css';
 
 interface CollapsibleSectionProps {
@@ -26,6 +27,7 @@ export default function CollapsibleSection({
         className={styles.collapsibleHeader}
         role="button"
         tabIndex={0}
+        aria-expanded={!collapsed}
         onClick={() => setCollapsed((c) => !c)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -34,7 +36,9 @@ export default function CollapsibleSection({
           }
         }}
       >
-        <span className={`${styles.chevron} ${collapsed ? '' : styles.chevronOpen}`}>▸</span>
+        <span className={`${styles.chevron} ${collapsed ? '' : styles.chevronOpen}`}>
+          <CaretRightOutlined />
+        </span>
         <span className={styles.collapsibleTitle}>{title}</span>
         {extra && <div className={styles.collapsibleExtra}>{extra}</div>}
       </div>
