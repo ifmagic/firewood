@@ -174,7 +174,10 @@ const zhCN = {
     settings: '设置',
     editorFontSize: '编辑器字号',
     contentMaxWidth: '内容区宽度',
-    aiToolsRow: 'AI 工具',
+    commandPaletteTitle: 'AI 工具',
+    commandPalettePlaceholder: '搜索工具...',
+    commandPaletteEmpty: '没有匹配的工具',
+    generateCharacterCardDesc: '基于角色预期一键生成完整 AI 执行 Prompt',
     openBook: '打开作品',
     newBook: '新建作品',
     closeBook: '关闭当前作品',
@@ -235,8 +238,6 @@ const zhCN = {
     promptResultHint: '下方即为可直接发送给大模型的完整 Prompt，复制后粘贴到 AI 工具使用',
     copyAll: '一键复制',
     searchPlaceholder: '搜索章节...',
-    emptyQuote: '“没有什么比将未曾讲述的故事深埋心底更令人痛苦。”',
-    emptyAuthor: '— 马雅·安哲罗',
   },
 
   // Languages

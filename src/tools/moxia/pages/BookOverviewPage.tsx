@@ -1,22 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Input } from 'antd';
-import { SaveOutlined, BulbOutlined } from '@ant-design/icons';
+import { SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
+import type { EditorHandle } from '../components/Editor';
 import PillTag from '../components/PillTag';
 import CollapsibleSection from '../components/CollapsibleSection';
-import AiToolButton from '../components/AiToolButton';
 import { useMoxiaStore } from '../store';
 import { GENRES, BOOK_STATUS_LABELS, bookStatusToLabel, bookStatusToKey, formatNumber } from '../enums';
 import styles from '../Moxia.module.css';
 
 interface Props {
   fontSize: number;
-  onGenerateCharacterCard: () => void;
 }
 
-export default function BookOverviewPage({ fontSize, onGenerateCharacterCard }: Props) {
+export default function BookOverviewPage({ fontSize }: Props) {
   const { t } = useTranslation();
   const { bookMeta, bookMetaDirty, patchBookMeta, markBookMetaDirty, saveBookMeta } = useMoxiaStore(
     useShallow((s) => ({
@@ -40,6 +39,8 @@ export default function BookOverviewPage({ fontSize, onGenerateCharacterCard }: 
     return () => window.removeEventListener('keydown', handler);
   }, [bookMetaDirty, saveBookMeta]);
 
+  const descriptionEditorRef = useRef<EditorHandle>(null);
+
   if (!bookMeta) return null;
 
   return (
@@ -52,6 +53,13 @@ export default function BookOverviewPage({ fontSize, onGenerateCharacterCard }: 
           onChange={(e) => {
             patchBookMeta({ title: e.target.value });
             markBookMetaDirty();
+          }}
+          onPressEnter={(e) => {
+            e.preventDefault();
+            if (bookMetaDirty) void saveBookMeta();
+            // Defer focus to the next frame so the Enter keydown isn't dispatched
+            // to the CodeMirror editor (which would insert a newline).
+            requestAnimationFrame(() => descriptionEditorRef.current?.focus());
           }}
           variant="borderless"
         />
@@ -85,22 +93,13 @@ export default function BookOverviewPage({ fontSize, onGenerateCharacterCard }: 
         <PillTag value={`${formatNumber(bookMeta.wordCount)} ${t('moxia.words')}`} readOnly />
       </div>
 
-      {/* AI tools row: reusable trigger chips for AI generators. Currently only character card; more can be appended. */}
-      <div className={styles.aiToolRow}>
-        <span className={styles.aiToolRowTitle}>{t('moxia.aiToolsRow')}</span>
-        <AiToolButton
-          icon={<BulbOutlined />}
-          label={t('moxia.generateCharacterCard')}
-          onClick={onGenerateCharacterCard}
-        />
-      </div>
-
       <div className={styles.divider} />
 
       <div className={styles.bookSplit}>
         <div className={styles.bookSplitMain}>
           <Editor
             key="book-description"
+            ref={descriptionEditorRef}
             value={bookMeta.description}
             onChange={(v) => {
               patchBookMeta({ description: v });

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 import { useCodemirror } from '../../../hooks/useCodemirror';
 import styles from '../Moxia.module.css';
 
@@ -13,20 +13,20 @@ interface EditorProps {
   className?: string;
 }
 
+/** Imperative handle exposed by Editor via ref. */
+export interface EditorHandle {
+  focus: () => void;
+}
+
 /**
  * CodeMirror 6 editor wrapper. Ports the original moxia QML Editor.qml.
  * Font size is passed in from the parent (via useMoxiaFontSize); IME, undo-loop prevention and
  * placeholder handling all live inside useCodemirror.
  */
-export default function Editor({
-  value,
-  onChange,
-  placeholder,
-  fontSize,
-  readOnly = false,
-  externalChangeInHistory = false,
-  className,
-}: EditorProps) {
+const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
+  { value, onChange, placeholder, fontSize, readOnly = false, externalChangeInHistory = false, className },
+  ref,
+) {
   const onChangeStable = useCallback(
     (v: string) => {
       onChange?.(v);
@@ -34,7 +34,7 @@ export default function Editor({
     [onChange],
   );
 
-  const { hostRef } = useCodemirror({
+  const { hostRef, focus } = useCodemirror({
     value,
     onChange: onChangeStable,
     placeholder,
@@ -43,6 +43,8 @@ export default function Editor({
     externalChangeInHistory,
   });
 
+  useImperativeHandle(ref, () => ({ focus }), [focus]);
+
   return (
     <div
       ref={hostRef}
@@ -50,4 +52,6 @@ export default function Editor({
       // CodeMirror fills this container.
     />
   );
-}
+});
+
+export default Editor;

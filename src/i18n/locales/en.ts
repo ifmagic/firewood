@@ -174,7 +174,10 @@ const en = {
     settings: 'Settings',
     editorFontSize: 'Editor font size',
     contentMaxWidth: 'Content max width',
-    aiToolsRow: 'AI Tools',
+    commandPaletteTitle: 'AI Tools',
+    commandPalettePlaceholder: 'Search tools...',
+    commandPaletteEmpty: 'No matching tools',
+    generateCharacterCardDesc: 'Generate a complete AI prompt from your expectation',
     openBook: 'Open Book',
     newBook: 'New Book',
     closeBook: 'Close current book',
@@ -235,8 +238,6 @@ const en = {
     promptResultHint: 'Copy this prompt to your AI tool',
     copyAll: 'Copy all',
     searchPlaceholder: 'Search chapters...',
-    emptyQuote: '“There is no greater agony than bearing an untold story inside you.”',
-    emptyAuthor: '— Maya Angelou',
   },
 
   // Languages

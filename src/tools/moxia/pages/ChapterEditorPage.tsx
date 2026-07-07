@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from 'antd';
 import { SaveOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
+import type { EditorHandle } from '../components/Editor';
 import PillTag from '../components/PillTag';
 import { useMoxiaStore } from '../store';
 import {
@@ -34,6 +35,7 @@ export default function ChapterEditorPage({ fontSize, contentMaxWidth }: Props) 
   );
 
   const [showNotes, setShowNotes] = useState(false);
+  const contentEditorRef = useRef<EditorHandle>(null);
 
   const suffix = chapterDraft ? parseChapterPrefix(chapterDraft.title).suffix : '';
   const suffixValid = suffix.trim() !== '';
@@ -75,6 +77,13 @@ export default function ChapterEditorPage({ fontSize, contentMaxWidth }: Props) 
           value={draftSuffix}
           placeholder={t('moxia.chapterNamePlaceholder')}
           onChange={(e) => handleSuffixChange(e.target.value)}
+          onPressEnter={(e) => {
+            e.preventDefault();
+            if (canSave) void saveChapter();
+            // Defer focus to the next frame so the Enter keydown isn't dispatched
+            // to the CodeMirror editor (which would insert a newline).
+            requestAnimationFrame(() => contentEditorRef.current?.focus());
+          }}
           variant="borderless"
         />
         <button className={styles.saveBtn} onClick={() => void saveChapter()} disabled={!canSave} title={saveTitle}>
@@ -101,6 +110,7 @@ export default function ChapterEditorPage({ fontSize, contentMaxWidth }: Props) 
       <div className={styles.contentCenter} style={{ maxWidth: contentMaxWidth }}>
         <Editor
           key={`chapter-content-${chapterDraft.id}`}
+          ref={contentEditorRef}
           value={chapterDraft.content}
           onChange={(v) => {
             patchChapter({ content: v });

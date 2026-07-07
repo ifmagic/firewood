@@ -338,7 +338,25 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
   patchChapter: (fields) => {
     const cur = get().chapterDraft;
     if (!cur) return;
-    set({ chapterDraft: { ...cur, ...fields }, chapterDirty: true });
+    // Sync title/status back to the chapters summary list so the left nav reflects edits live.
+    const syncSummary = fields.title !== undefined || fields.status !== undefined;
+    set({
+      chapterDraft: { ...cur, ...fields },
+      chapterDirty: true,
+      ...(syncSummary
+        ? {
+            chapters: get().chapters.map((c) =>
+              c.id === cur.id
+                ? {
+                    ...c,
+                    ...(fields.title !== undefined ? { title: fields.title } : {}),
+                    ...(fields.status !== undefined ? { status: fields.status } : {}),
+                  }
+                : c,
+            ),
+          }
+        : {}),
+    });
   },
 
   markChapterDirty: () => set({ chapterDirty: true }),
@@ -370,7 +388,25 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
   patchCharacter: (fields) => {
     const cur = get().characterDraft;
     if (!cur) return;
-    set({ characterDraft: { ...cur, ...fields }, characterDirty: true });
+    // Sync name/roleType back to the characters summary list so the left nav reflects edits live.
+    const syncSummary = fields.name !== undefined || fields.roleType !== undefined;
+    set({
+      characterDraft: { ...cur, ...fields },
+      characterDirty: true,
+      ...(syncSummary
+        ? {
+            characters: get().characters.map((c) =>
+              c.id === cur.id
+                ? {
+                    ...c,
+                    ...(fields.name !== undefined ? { name: fields.name } : {}),
+                    ...(fields.roleType !== undefined ? { roleType: fields.roleType } : {}),
+                  }
+                : c,
+            ),
+          }
+        : {}),
+    });
   },
 
   markCharacterDirty: () => set({ characterDirty: true }),

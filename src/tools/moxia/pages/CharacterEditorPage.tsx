@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input, message } from 'antd';
 import { SaveOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
+import type { EditorHandle } from '../components/Editor';
 import PillTag from '../components/PillTag';
 import ConfirmPopup from '../components/ConfirmPopup';
 import AddRelationPopup from '../dialogs/AddRelationPopup';
@@ -48,6 +49,7 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
   const [addRelationOpen, setAddRelationOpen] = useState(false);
   const [editRelation, setEditRelation] = useState<CharacterRelation | null>(null);
   const [deleteRelationId, setDeleteRelationId] = useState<number | null>(null);
+  const descriptionEditorRef = useRef<EditorHandle>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -75,6 +77,13 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
           onChange={(e) => {
             patchCharacter({ name: e.target.value });
             markCharacterDirty();
+          }}
+          onPressEnter={(e) => {
+            e.preventDefault();
+            if (characterDirty) void saveCharacter();
+            // Defer focus to the next frame so the Enter keydown isn't dispatched
+            // to the CodeMirror editor (which would insert a newline).
+            requestAnimationFrame(() => descriptionEditorRef.current?.focus());
           }}
           variant="borderless"
         />
@@ -108,6 +117,7 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
           <div className={styles.editorBordered}>
             <Editor
               key={`char-desc-${characterDraft.id}`}
+              ref={descriptionEditorRef}
               value={characterDraft.description}
               onChange={(v) => {
                 patchCharacter({ description: v });
