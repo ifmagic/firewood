@@ -1,9 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod moxia;
 mod pty;
 mod translate;
 
+use moxia::create_moxia_manager;
 use pty::create_pty_manager;
 use std::sync::Arc;
 use tauri::{
@@ -101,6 +103,7 @@ fn show_window(app: &tauri::AppHandle) {
 
 fn main() {
     let pty_manager = create_pty_manager();
+    let moxia_manager = create_moxia_manager();
 
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -110,6 +113,7 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(pty_manager)
+        .manage(moxia_manager)
         .invoke_handler(tauri::generate_handler![
             translate::baidu_translate,
             translate::tencent_translate,
@@ -121,6 +125,30 @@ fn main() {
             start_pty_reader,
             list_shells,
             list_system_fonts,
+            moxia::commands::moxia_create_book,
+            moxia::commands::moxia_open_book,
+            moxia::commands::moxia_close_book,
+            moxia::commands::moxia_get_book_meta,
+            moxia::commands::moxia_update_book_meta,
+            moxia::commands::moxia_list_chapters,
+            moxia::commands::moxia_get_chapter,
+            moxia::commands::moxia_create_chapter,
+            moxia::commands::moxia_update_chapter,
+            moxia::commands::moxia_delete_chapter,
+            moxia::commands::moxia_reorder_chapters,
+            moxia::commands::moxia_get_next_chapter_sort_order,
+            moxia::commands::moxia_list_characters,
+            moxia::commands::moxia_get_character,
+            moxia::commands::moxia_create_character,
+            moxia::commands::moxia_update_character,
+            moxia::commands::moxia_delete_character,
+            moxia::commands::moxia_list_relations,
+            moxia::commands::moxia_add_relation,
+            moxia::commands::moxia_update_relation,
+            moxia::commands::moxia_delete_relation,
+            moxia::commands::moxia_get_setting,
+            moxia::commands::moxia_set_setting,
+            moxia::commands::moxia_get_all_settings,
         ]);
 
     #[cfg(not(debug_assertions))]
@@ -233,6 +261,11 @@ fn main() {
             if let tauri::RunEvent::ExitRequested { .. } = event {
                 if let Some(pty_manager) = app_handle.try_state::<Arc<pty::PtyManager>>() {
                     pty_manager.close_all();
+                }
+                if let Some(moxia_manager) =
+                    app_handle.try_state::<Arc<moxia::MoxiaManager>>()
+                {
+                    moxia_manager.close_all();
                 }
             }
         });

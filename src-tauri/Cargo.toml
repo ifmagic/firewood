@@ -35,6 +35,7 @@ tauri-plugin-shell = "2.3.5"
 parking_lot = "0.12"
 libc = "0.2"
 font-kit = "0.14.3"
+rusqlite = { version = "0.40.1", features = ["bundled"] }
 
 [profile.release]
 strip = true

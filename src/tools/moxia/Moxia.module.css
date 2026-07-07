@@ -1,0 +1,673 @@
+/* Main stylesheet for the moxia tool. Tab-indented (firewood convention); reuses --fw-* CSS variables. */
+
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+/* ============ Top book switcher ============ */
+
+.topBar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 16px;
+	border-bottom: 1px solid var(--fw-divider, #eee);
+	background: var(--fw-surface, #fff);
+	flex-shrink: 0;
+}
+
+.bookSwitcher {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 200px;
+}
+
+.bookSwitcherBtn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border: 1px solid var(--fw-divider, #eee);
+	border-radius: 6px;
+	background: var(--fw-panel-muted, #f7f7f8);
+	cursor: pointer;
+	font-size: 13px;
+	color: var(--fw-text-strong, #1f1f1f);
+	white-space: nowrap;
+}
+
+.bookSwitcherBtn:hover {
+	border-color: var(--fw-accent, #ff7a45);
+}
+
+.bookSwitcherBtnEmpty {
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.topBarActions {
+	margin-left: auto;
+	display: flex;
+	gap: 8px;
+}
+
+/* ============ Three-column layout ============ */
+
+.body {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.leftPanel {
+	width: 280px;
+	min-width: 200px;
+	max-width: 400px;
+	border-right: 1px solid var(--fw-divider, #eee);
+	background: var(--fw-panel-muted, #f7f7f8);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	resize: horizontal;
+}
+
+.centerPanel {
+	flex: 1;
+	min-width: 0;
+	overflow: auto;
+	background: var(--fw-surface, #fff);
+}
+
+.rightPanel {
+	width: 300px;
+	min-width: 32px;
+	max-width: 400px;
+	border-left: 1px solid var(--fw-divider, #eee);
+	background: var(--fw-panel-muted, #f7f7f8);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.rightPanelCollapsed {
+	width: 32px;
+}
+
+/* ============ Left panel: navigation tree ============ */
+
+.leftSearch {
+	padding: 8px;
+	border-bottom: 1px solid var(--fw-divider, #eee);
+}
+
+.navList {
+	flex: 1;
+	overflow: auto;
+	padding: 4px 0;
+}
+
+.navItem {
+	display: flex;
+	align-items: center;
+	height: 32px;
+	padding: 0 12px;
+	cursor: pointer;
+	font-size: 13px;
+	color: var(--fw-text-body, #595959);
+	white-space: nowrap;
+	overflow: hidden;
+	position: relative;
+}
+
+.navItem:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+}
+
+.navItemSelected {
+	background: color-mix(in srgb, var(--fw-accent, #ff7a45) 12%, transparent);
+	color: var(--fw-accent, #ff7a45);
+}
+
+.navItemSelected::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 4px;
+	bottom: 4px;
+	width: 3px;
+	background: var(--fw-accent, #ff7a45);
+	border-radius: 0 2px 2px 0;
+}
+
+.navItemIndent {
+	flex-shrink: 0;
+}
+
+.navItemIcon {
+	margin-right: 6px;
+	flex-shrink: 0;
+}
+
+.navItemText {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.navItemActions {
+	display: none;
+	gap: 4px;
+	margin-left: 4px;
+}
+
+.navItem:hover .navItemActions {
+	display: flex;
+}
+
+.navItemActionBtn {
+	width: 22px;
+	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	border-radius: 4px;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	font-size: 13px;
+}
+
+.navItemActionBtn:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+	color: var(--fw-accent, #ff7a45);
+}
+
+.navGroupToggle {
+	width: 16px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+/* ============ Empty state page ============ */
+
+.emptyPage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	gap: 12px;
+}
+
+.emptyIcon {
+	font-size: 48px;
+}
+
+/* ============ Editor page header ============ */
+
+.pageHeader {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 24px 32px 12px;
+}
+
+.pageTitleInput {
+	flex: 1;
+	font-size: 28px;
+	font-weight: 700;
+	border: none;
+	outline: none;
+	background: transparent;
+	color: var(--fw-text-strong, #1f1f1f);
+	font-family: inherit;
+}
+
+.pageTitleInput::placeholder {
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.pageTitlePrefix {
+	font-size: 28px;
+	font-weight: 700;
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.saveBtn {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 1px solid var(--fw-divider, #eee);
+	background: transparent;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	font-size: 14px;
+}
+
+.saveBtn:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--fw-accent, #ff7a45) 12%, transparent);
+	color: var(--fw-accent, #ff7a45);
+}
+
+.saveBtn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+/* ============ PillTag ============ */
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 12px;
+	border-radius: 999px;
+	background: var(--fw-panel-muted, #f3f4f6);
+	font-size: 12px;
+	color: var(--fw-text-body, #595959);
+	white-space: nowrap;
+}
+
+.pillClickable {
+	cursor: pointer;
+}
+
+.pillClickable:hover {
+	background: var(--fw-hover-light, #e5e7eb);
+}
+
+.pillActive {
+	border: 1px solid var(--fw-accent, #ff7a45);
+}
+
+.pillLabel {
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.pillValue {
+	font-weight: 500;
+}
+
+.pillCaret {
+	font-size: 10px;
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.metaRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 32px 16px;
+	flex-wrap: wrap;
+}
+
+.divider {
+	height: 1px;
+	background: var(--fw-divider, #eee);
+	margin: 0 32px 20px;
+}
+
+/* ============ Centered chapter content container ============ */
+
+.contentCenter {
+	max-width: 820px;
+	margin: 0 auto;
+	padding: 0 24px 60px;
+}
+
+.contentCenterFull {
+	padding: 0 32px 60px;
+	max-width: none;
+}
+
+/* ============ Editor (CodeMirror host) ============ */
+
+.cmHost {
+	height: 100%;
+	min-height: 200px;
+	overflow: hidden;
+}
+
+.cmHost .cm-editor {
+	height: 100%;
+}
+
+.cmHost .cm-scroller {
+	overflow: auto;
+}
+
+.editorBordered {
+	border: 1px solid var(--fw-divider, #eee);
+	border-radius: 8px;
+	min-height: 120px;
+	padding: 0;
+}
+
+/* ============ CollapsibleSection ============ */
+
+.collapsible {
+	margin-bottom: 16px;
+}
+
+.collapsibleHeader {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 36px;
+	padding: 0 4px;
+	cursor: pointer;
+	border-radius: 6px;
+}
+
+.collapsibleHeader:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+}
+
+.chevron {
+	display: inline-block;
+	transition: transform 0.15s;
+	color: var(--fw-text-tertiary, #8c8c8c);
+}
+
+.chevronOpen {
+	transform: rotate(90deg);
+}
+
+.collapsibleTitle {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--fw-text-strong, #1f1f1f);
+}
+
+.collapsibleExtra {
+	margin-left: auto;
+}
+
+.collapsibleBody {
+	padding: 8px 0;
+}
+
+/* ============ Chapter editor footer ============ */
+
+.chapterFooter {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 0;
+	margin-top: 16px;
+	border-top: 1px solid var(--fw-divider, #eee);
+}
+
+.ghostBtn {
+	padding: 4px 10px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: var(--fw-text-body, #595959);
+	font-size: 13px;
+	border-radius: 4px;
+}
+
+.ghostBtn:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+	color: var(--fw-accent, #ff7a45);
+}
+
+.notesSection {
+	margin-top: 12px;
+	padding: 12px;
+	border: 1px solid var(--fw-divider, #eee);
+	border-radius: 8px;
+}
+
+/* ============ Character editor page ============ */
+
+.characterAvatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--fw-accent, #ff7a45) 15%, transparent);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 22px;
+	flex-shrink: 0;
+}
+
+.characterSection {
+	margin-bottom: 20px;
+}
+
+.characterSectionTitle {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	margin-bottom: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.relationsList {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.relationRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 0 8px;
+	border-radius: 6px;
+	font-size: 13px;
+}
+
+.relationRow:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+}
+
+.relationDirection {
+	font-size: 10px;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	width: 44px;
+	flex-shrink: 0;
+}
+
+.relationName {
+	width: 70px;
+	flex-shrink: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 500;
+}
+
+.relationTypePill {
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--fw-accent, #ff7a45) 12%, transparent);
+	color: var(--fw-accent, #ff7a45);
+	font-size: 11px;
+	flex-shrink: 0;
+}
+
+.relationDesc {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--fw-text-body, #595959);
+}
+
+.relationActions {
+	display: flex;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.relationActionBtn {
+	width: 24px;
+	height: 24px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.relationActionBtn:hover {
+	color: var(--fw-accent, #ff7a45);
+}
+
+.relationActionBtnDanger:hover {
+	color: var(--fw-danger, #e5484d);
+}
+
+.relationsEmpty {
+	text-align: center;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	padding: 24px;
+	font-size: 13px;
+}
+
+/* ============ Right panel: AI tool cards ============ */
+
+.rightPanelHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--fw-divider, #eee);
+}
+
+.rightPanelTitle {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--fw-text-strong, #1f1f1f);
+}
+
+.rightPanelBody {
+	flex: 1;
+	overflow: auto;
+	padding: 16px;
+}
+
+.toolCard {
+	border: 1px solid var(--fw-divider, #eee);
+	border-radius: 12px;
+	padding: 16px;
+	background: var(--fw-surface, #fff);
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.toolCard:hover {
+	border-color: var(--fw-accent, #ff7a45);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.toolCardIcon {
+	font-size: 24px;
+	margin-bottom: 8px;
+}
+
+.toolCardTitle {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--fw-text-strong, #1f1f1f);
+	margin-bottom: 4px;
+}
+
+.toolCardDesc {
+	font-size: 12px;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	line-height: 1.5;
+	margin-bottom: 12px;
+}
+
+.toolCardAction {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 6px;
+	background: var(--fw-accent, #ff7a45);
+	color: var(--fw-surface, #fff);
+	font-size: 12px;
+}
+
+.rightPanelFooter {
+	padding: 8px;
+	border-top: 1px solid var(--fw-divider, #eee);
+	display: flex;
+	justify-content: flex-end;
+}
+
+.iconBtn {
+	width: 28px;
+	height: 28px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+}
+
+.iconBtn:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+	color: var(--fw-accent, #ff7a45);
+}
+
+.collapsedExpandBtn {
+	width: 32px;
+	flex: 1;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+}
+
+/* ============ Validation messages ============ */
+
+.validationError {
+	color: var(--fw-danger, #e5484d);
+	font-size: 12px;
+	padding: 0 32px 8px;
+}
+
+/* ============ Loading state ============ */
+
+.loadingOverlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.6);
+	z-index: 10;
+}

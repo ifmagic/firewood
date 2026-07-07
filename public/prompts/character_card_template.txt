@@ -1,0 +1,118 @@
+你是一位资深的小说角色设计师。请根据下方的"用户预期描述"，{{mode_label}}一份结构完整、性格鲜明、背景合理的角色卡。
+
+---
+
+## 用户预期描述
+
+{{user_expectation}}
+{{#if reference_character_name}}
+- 参考角色：{{reference_character_name}}（详细设定见「已有角色清单」，不在此重复）
+{{#if reference_relation_type}}
+- 关系大类：{{reference_relation_type}}
+{{/if}}
+- 新角色须与参考角色建立明确关系，具体定位请从上方预期描述中提取；若未明确，则根据关系大类与双方身份自行细化。新角色需在身份定位、性格互补或冲突、背景交织上与参考角色形成有机联系。
+{{/if}}
+
+---
+
+## 作品上下文
+
+- 作品标题：{{book_title}}
+{{#if book_genre}}
+- 类型：{{book_genre}}
+{{/if}}
+{{#if book_worldbuilding}}
+- 世界观设定：{{book_worldbuilding}}
+{{/if}}
+{{#if book_description}}
+- 作品简介：{{book_description}}
+{{/if}}
+
+{{#if existing_characters}}
+## 已有角色清单
+
+请避免与以下角色重名或冲突，并尽量与其构成可扩展的关系网：
+
+{{existing_characters}}
+
+{{/if}}
+{{#if character_name}}
+## 当前角色基础
+
+以下为已有角色素材，请在保留其核心设定的前提下进行扩展与丰富：
+
+- 角色名称：{{character_name}}
+{{#if character_role_type}}
+- 角色类型：{{character_role_type}}
+{{/if}}
+{{#if character_description}}
+- 当前基本描述：{{character_description}}
+{{/if}}
+{{#if character_personality}}
+- 当前性格特征：{{character_personality}}
+{{/if}}
+{{#if character_background}}
+- 当前背景故事：{{character_background}}
+{{/if}}
+
+{{/if}}
+{{#if existing_relations}}
+## 现有关系
+
+以下为该角色已建立的关系，请在生成时保留并深化，不得与之矛盾；新增关系避免与现有重复：
+
+{{existing_relations}}
+
+{{/if}}
+---
+
+## 请你按以下结构生成角色卡
+
+### 一、角色身份
+- 角色名称（{{name_strategy}}）
+- 角色类型：{{role_type}}{{role_type_hint}}
+{{#if reference_character_name}}
+- 与参考角色「{{reference_character_name}}」的关系定位：{{reference_relation_type}}（确保身份设定与该关系自洽）
+{{/if}}
+
+### 二、基本描述
+- 外貌特征（容貌、身形、气质、着装风格等）
+- 年龄与社会身份
+- 标志性的视觉元素或口头禅
+
+### 三、性格特征
+- 核心性格（3–5 个关键词 + 一句话解释）
+- 行为习惯 / 说话方式
+- 内在矛盾或隐藏面
+- 面对压力时的典型反应
+
+### 四、背景故事
+- 出身与成长环境
+- 关键的人生转折事件
+- 当前的动机与目标
+- 面临的主要冲突或挑战
+
+### 五、角色关系
+{{#if reference_character_name}}
+**必须**首先列出与参考角色「{{reference_character_name}}」的关系，按上述关系大类与具体定位展开互动模式与相互影响；再补充 1–2 个其他相关人物。每条关系注明：
+{{#else}}
+{{#if existing_characters}}
+至少列出 2–3 个与该角色紧密相关的人物，优先从「已有角色清单」中选择以构成可扩展的关系网；如确需新增人物，请在姓名后标注「（待新建）」以便后续录入。每条关系注明：
+{{#else}}
+列出 2–3 个与该角色紧密相关的人物（可虚构，姓名后标注「（待新建）」以便后续录入）。每条关系注明：
+{{/if}}
+{{/if}}
+- 人物姓名
+- 关系类型{{relation_type_hint}}
+- 关系描述与对该角色的影响（以本角色为视角，即「本角色→对方」的方向）
+
+---
+
+## 写作要求
+
+1. {{name_requirement}}
+2. 设定必须严格呼应"用户预期描述"中的关键词与氛围。
+3. 基本描述、性格特征、背景故事的输出必须简洁精练，不要太啰嗦，每个片段限制字数为 100～150 字以内
+4. 人物之间的关系需要相互呼应，构成可扩展的关系网。
+5. 语言保持小说风格，避免过于机械或数据化。
+6. 最终输出使用上面提供的五个章节结构，标题保持一致，正文分段清晰，不要输出多余内容

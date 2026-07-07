@@ -7,6 +7,7 @@ import {
   FilePdfOutlined,
   TranslationOutlined,
   NodeIndexOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import type { ToolMeta } from '../types/tool';
 
@@ -59,6 +60,13 @@ const tools: ToolMeta[] = [
     icon: <TranslationOutlined />,
     description: 'Translate via Tencent Cloud / Baidu API',
     component: lazy(() => import('../tools/translate/index.tsx')),
+  },
+  {
+    id: 'moxia',
+    name: 'Moxia',
+    icon: <BookOutlined />,
+    description: 'Novel writing workspace',
+    component: lazy(() => import('../tools/moxia/index.tsx')),
   },
 ];
 
