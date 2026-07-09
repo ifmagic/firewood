@@ -729,3 +729,40 @@ fn count_words(s: &str) -> i64 {
 pub fn create_moxia_manager() -> Arc<MoxiaManager> {
     Arc::new(MoxiaManager::new())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Contract test: the frontend (`library.ts` → `isBookNotFoundError`) parses
+    // the error string emitted by `open_book` for a missing file. If this format
+    // ever changes, update `BOOK_NOT_FOUND_PREFIX` in `src/tools/moxia/library.ts`
+    // and the matching tests in `library.test.ts`.
+    #[test]
+    fn open_book_missing_file_emits_file_not_found_prefix() {
+        let mgr = MoxiaManager::new();
+        let err = mgr
+            .open_book("/nonexistent/path/missing.moxia")
+            .unwrap_err();
+        assert!(
+            err.starts_with("file not found: "),
+            "expected 'file not found: ' prefix, got: {}",
+            err
+        );
+        assert!(err.contains("missing.moxia"));
+    }
+
+    #[test]
+    fn validate_path_rejects_wrong_extension() {
+        let err = MoxiaManager::validate_path("/tmp/not-a-book.txt").unwrap_err();
+        assert!(err.contains("only .moxia"));
+    }
+
+    #[test]
+    fn count_words_counts_non_whitespace() {
+        assert_eq!(count_words("hello 世界"), 7);
+        assert_eq!(count_words(""), 0);
+        assert_eq!(count_words("   \n\t  "), 0);
+        assert_eq!(count_words("a b c"), 3);
+    }
+}

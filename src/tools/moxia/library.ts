@@ -60,3 +60,32 @@ export function clearLastBookPath(): void {
     // ignore
   }
 }
+
+/**
+ * The error prefix emitted by `MoxiaManager::open_book` in
+ * `src-tauri/src/moxia/mod.rs` when the book file does not exist:
+ * `format!("file not found: {}", path)`. This is a cross-FFI string contract —
+ * if the Rust wording changes, update this constant and the matching test in
+ * `library.test.ts`.
+ */
+const BOOK_NOT_FOUND_PREFIX = 'file not found: ';
+
+/**
+ * Detects whether an `openBook` failure is due to the file being missing
+ * (deleted or moved). Expects the raw Tauri rejection string (not an
+ * `Error.toString()` which would prefix with "Error: ").
+ */
+export function isBookNotFoundError(e: unknown): boolean {
+  return typeof e === 'string' && e.startsWith(BOOK_NOT_FOUND_PREFIX);
+}
+
+/**
+ * Extracts the book path from a `file not found: {path}` error string.
+ * Returns null if the error is not a file-not-found error. The path is
+ * returned verbatim (no trimming) so paths with trailing whitespace — legal
+ * on macOS/Linux — still match library/last-book entries.
+ */
+export function extractBookPathFromError(e: unknown): string | null {
+  if (!isBookNotFoundError(e)) return null;
+  return (e as string).slice(BOOK_NOT_FOUND_PREFIX.length);
+}

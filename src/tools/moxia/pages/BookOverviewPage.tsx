@@ -6,16 +6,17 @@ import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
 import type { EditorHandle } from '../components/Editor';
 import PillTag from '../components/PillTag';
-import CollapsibleSection from '../components/CollapsibleSection';
+import SectionCard from '../components/SectionCard';
 import { useMoxiaStore } from '../store';
 import { GENRES, BOOK_STATUS_LABELS, bookStatusToLabel, bookStatusToKey, formatNumber } from '../enums';
 import styles from '../Moxia.module.css';
 
 interface Props {
   fontSize: number;
+  contentMaxWidth: number;
 }
 
-export default function BookOverviewPage({ fontSize }: Props) {
+export default function BookOverviewPage({ fontSize, contentMaxWidth }: Props) {
   const { t } = useTranslation();
   const { bookMeta, bookMetaDirty, patchBookMeta, markBookMetaDirty, saveBookMeta } = useMoxiaStore(
     useShallow((s) => ({
@@ -95,34 +96,35 @@ export default function BookOverviewPage({ fontSize }: Props) {
 
       <div className={styles.divider} />
 
-      <div className={styles.bookSplit}>
-        <div className={styles.bookSplitMain}>
-          <Editor
-            key="book-description"
-            ref={descriptionEditorRef}
-            value={bookMeta.description}
-            onChange={(v) => {
-              patchBookMeta({ description: v });
-              markBookMetaDirty();
-            }}
-            placeholder={t('moxia.bookDescriptionPlaceholder')}
-            fontSize={fontSize}
-          />
-        </div>
-        <div className={styles.bookSplitSide}>
-          <CollapsibleSection title={t('moxia.worldbuilding')}>
+      <div className={styles.contentCenter} style={{ maxWidth: contentMaxWidth }}>
+        <SectionCard title={t('moxia.workDescription')}>
+          <div className={styles.sectionCardDescriptionBody}>
             <Editor
-              key="book-worldbuilding"
-              value={bookMeta.worldbuilding}
+              key="book-description"
+              ref={descriptionEditorRef}
+              value={bookMeta.description}
               onChange={(v) => {
-                patchBookMeta({ worldbuilding: v });
+                patchBookMeta({ description: v });
                 markBookMetaDirty();
               }}
-              placeholder={t('moxia.worldbuildingPlaceholder')}
+              placeholder={t('moxia.bookDescriptionPlaceholder')}
               fontSize={fontSize}
             />
-          </CollapsibleSection>
-        </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title={t('moxia.worldbuilding')}>
+          <Editor
+            key="book-worldbuilding"
+            value={bookMeta.worldbuilding}
+            onChange={(v) => {
+              patchBookMeta({ worldbuilding: v });
+              markBookMetaDirty();
+            }}
+            placeholder={t('moxia.worldbuildingPlaceholder')}
+            fontSize={fontSize}
+          />
+        </SectionCard>
       </div>
     </div>
   );

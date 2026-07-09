@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
 import type { EditorHandle } from '../components/Editor';
 import PillTag from '../components/PillTag';
+import SectionCard from '../components/SectionCard';
 import ConfirmPopup from '../components/ConfirmPopup';
 import AddRelationPopup from '../dialogs/AddRelationPopup';
 import { useMoxiaStore } from '../store';
@@ -112,65 +113,53 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
       <div className={styles.divider} />
 
       <div className={styles.contentCenter} style={{ maxWidth: contentMaxWidth }}>
-        <div className={styles.characterSection}>
-          <div className={styles.characterSectionTitle}>{t('moxia.description')}</div>
-          <div className={styles.editorBordered}>
-            <Editor
-              key={`char-desc-${characterDraft.id}`}
-              ref={descriptionEditorRef}
-              value={characterDraft.description}
-              onChange={(v) => {
-                patchCharacter({ description: v });
-                markCharacterDirty();
-              }}
-              placeholder={t('moxia.descriptionPlaceholder')}
-              fontSize={fontSize}
-            />
-          </div>
-        </div>
+        <SectionCard title={t('moxia.description')}>
+          <Editor
+            key={`char-desc-${characterDraft.id}`}
+            ref={descriptionEditorRef}
+            value={characterDraft.description}
+            onChange={(v) => {
+              patchCharacter({ description: v });
+              markCharacterDirty();
+            }}
+            placeholder={t('moxia.descriptionPlaceholder')}
+            fontSize={fontSize}
+          />
+        </SectionCard>
 
-        <div className={styles.characterSection}>
-          <div className={styles.characterSectionTitle}>{t('moxia.personality')}</div>
-          <div className={styles.editorBordered}>
-            <Editor
-              key={`char-pers-${characterDraft.id}`}
-              value={characterDraft.personality}
-              onChange={(v) => {
-                patchCharacter({ personality: v });
-                markCharacterDirty();
-              }}
-              placeholder={t('moxia.personalityPlaceholder')}
-              fontSize={fontSize}
-            />
-          </div>
-        </div>
+        <SectionCard title={t('moxia.personality')}>
+          <Editor
+            key={`char-pers-${characterDraft.id}`}
+            value={characterDraft.personality}
+            onChange={(v) => {
+              patchCharacter({ personality: v });
+              markCharacterDirty();
+            }}
+            placeholder={t('moxia.personalityPlaceholder')}
+            fontSize={fontSize}
+          />
+        </SectionCard>
 
-        <div className={styles.characterSection}>
-          <div className={styles.characterSectionTitle}>{t('moxia.background')}</div>
-          <div className={styles.editorBordered}>
-            <Editor
-              key={`char-bg-${characterDraft.id}`}
-              value={characterDraft.background}
-              onChange={(v) => {
-                patchCharacter({ background: v });
-                markCharacterDirty();
-              }}
-              placeholder={t('moxia.backgroundPlaceholder')}
-              fontSize={fontSize}
-            />
-          </div>
-        </div>
+        <SectionCard title={t('moxia.background')}>
+          <Editor
+            key={`char-bg-${characterDraft.id}`}
+            value={characterDraft.background}
+            onChange={(v) => {
+              patchCharacter({ background: v });
+              markCharacterDirty();
+            }}
+            placeholder={t('moxia.backgroundPlaceholder')}
+            fontSize={fontSize}
+          />
+        </SectionCard>
 
-        <div className={styles.divider} />
-
-        <div className={styles.characterSection}>
-          <div className={styles.characterSectionHeader}>
-            <div className={styles.characterSectionTitle}>
-              {t('moxia.relations')} ({relations.length})
-            </div>
+        <SectionCard
+          title={`${t('moxia.relations')} (${relations.length})`}
+          extra={
             <button
               className={styles.iconBtn}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setEditRelation(null);
                 setAddRelationOpen(true);
               }}
@@ -178,8 +167,8 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
             >
               <PlusOutlined />
             </button>
-          </div>
-
+          }
+        >
           {relations.length === 0 ? (
             <div className={styles.relationsEmpty}>{t('moxia.noRelations')}</div>
           ) : (
@@ -219,7 +208,7 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
               })}
             </div>
           )}
-        </div>
+        </SectionCard>
       </div>
 
       <AddRelationPopup

@@ -52,7 +52,7 @@ export default function ConfirmPopup({
       ]}
       width={400}
     >
-      <p>{message}</p>
+      <p style={{ whiteSpace: 'pre-line' }}>{message}</p>
     </Modal>
   );
 }

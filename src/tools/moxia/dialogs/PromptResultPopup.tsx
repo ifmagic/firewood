@@ -13,10 +13,20 @@ interface Props {
 export default function PromptResultPopup({ open, prompt, onCancel }: Props) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [editValue, setEditValue] = useState(prompt);
+
+  // Sync the editable buffer on the open false→true transition.
+  // "Adjust state during render" pattern (React docs) — avoids setState-in-effect
+  // which would flash the stale value for one frame after paint.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setEditValue(prompt);
+  }
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(prompt);
+      await navigator.clipboard.writeText(editValue);
       setCopied(true);
       message.success(t('moxia.copied'));
       setTimeout(() => setCopied(false), 2000);
@@ -42,8 +52,8 @@ export default function PromptResultPopup({ open, prompt, onCancel }: Props) {
     >
       <p style={{ fontSize: 12, color: 'var(--fw-text-tertiary)', marginBottom: 8 }}>{t('moxia.promptResultHint')}</p>
       <TextArea
-        value={prompt}
-        readOnly
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
         rows={18}
         style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 13 }}
       />

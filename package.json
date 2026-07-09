@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "sync:version": "node scripts/sync-version.mjs",
     "predev": "npm run sync:version",
     "prebuild": "npm run sync:version",
@@ -61,6 +63,7 @@
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.0"
+    "vite": "^8.0.0",
+    "vitest": "^3.2.4"
   }
 }

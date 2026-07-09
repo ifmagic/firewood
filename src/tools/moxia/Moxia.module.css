@@ -6,12 +6,11 @@
 .bookSwitcherBtn:focus-visible,
 .iconBtn:focus-visible,
 .saveBtn:focus-visible,
-.ghostBtn:focus-visible,
 .navItem:focus-visible,
 .navItemActionBtn:focus-visible,
 .relationActionBtn:focus-visible,
 .pillClickable:focus-visible,
-.collapsibleHeader:focus-visible {
+.sectionCardHeader:focus-visible {
 	outline: 2px solid var(--fw-accent, #ff7a45);
 	outline-offset: 2px;
 	border-radius: var(--fw-radius-md, 6px);
@@ -362,25 +361,6 @@
 	padding: 0 24px 60px;
 }
 
-/* ============ Book overview split layout (description + worldbuilding sidebar) ============ */
-
-.bookSplit {
-	display: flex;
-	gap: 16px;
-	padding: 0 32px;
-}
-
-.bookSplitMain {
-	flex: 1;
-	min-width: 0;
-}
-
-.bookSplitSide {
-	width: 30%;
-	flex-shrink: 0;
-	min-width: 0;
-}
-
 /* ============ Editor (CodeMirror host) ============ */
 
 .cmHost {
@@ -397,33 +377,6 @@
 	overflow: auto;
 }
 
-.editorBordered {
-	border: 1px solid var(--fw-divider, #eee);
-	border-radius: 8px;
-	min-height: 120px;
-	padding: 0;
-}
-
-/* ============ CollapsibleSection ============ */
-
-.collapsible {
-	margin-bottom: 16px;
-}
-
-.collapsibleHeader {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	height: 36px;
-	padding: 0 4px;
-	cursor: pointer;
-	border-radius: 6px;
-}
-
-.collapsibleHeader:hover {
-	background: var(--fw-hover-light, #f2f3f5);
-}
-
 .chevron {
 	display: inline-block;
 	transition: transform 0.15s;
@@ -438,18 +391,52 @@
 	transform: rotate(90deg);
 }
 
-.collapsibleTitle {
+/* ============ SectionCard (unified detail-page card) ============ */
+
+.sectionCard {
+	background: var(--fw-surface, #fff);
+	border: 1px solid var(--fw-divider, #eee);
+	border-radius: var(--fw-radius-lg, 12px);
+	margin-bottom: 16px;
+	overflow: hidden;
+}
+
+.sectionCardHeader {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.sectionCardHeader:hover {
+	background: var(--fw-hover-light, #f2f3f5);
+}
+
+.sectionCardIcon {
+	display: inline-flex;
+	align-items: center;
+	color: var(--fw-text-tertiary, #8c8c8c);
+	font-size: 15px;
+}
+
+.sectionCardTitle {
 	font-size: 14px;
 	font-weight: 600;
 	color: var(--fw-text-strong, #1f1f1f);
 }
 
-.collapsibleExtra {
+.sectionCardExtra {
 	margin-left: auto;
 }
 
-.collapsibleBody {
-	padding: 8px 0;
+.sectionCardBody {
+	padding: 0 16px 16px;
+}
+
+.sectionCardDescriptionBody :global(.cm-editor) .cm-scroller {
+	min-height: 320px;
 }
 
 /* ============ Chapter editor footer ============ */
@@ -469,31 +456,6 @@
 	color: var(--fw-text-tertiary, #8c8c8c);
 }
 
-.ghostBtn {
-	padding: 4px 10px;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	color: var(--fw-text-body, #595959);
-	font-size: 13px;
-	border-radius: var(--fw-radius-sm, 4px);
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.ghostBtn:hover {
-	background: var(--fw-hover-light, #f2f3f5);
-	color: var(--fw-accent, #ff7a45);
-}
-
-.notesSection {
-	margin-top: 12px;
-	padding: 12px;
-	border: 1px solid var(--fw-divider, #eee);
-	border-radius: 8px;
-}
-
 /* ============ Character editor page ============ */
 
 .characterAvatar {
@@ -506,30 +468,6 @@
 	justify-content: center;
 	font-size: 22px;
 	flex-shrink: 0;
-}
-
-.characterSection {
-	margin-bottom: 20px;
-}
-
-.characterSectionHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 8px;
-}
-
-.characterSectionTitle {
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--fw-text-tertiary, #8c8c8c);
-	margin-bottom: 8px;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
-.characterSectionHeader .characterSectionTitle {
-	margin-bottom: 0;
 }
 
 .relationsList {

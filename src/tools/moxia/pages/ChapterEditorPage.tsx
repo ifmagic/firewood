@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Input } from 'antd';
-import { SaveOutlined, FileTextOutlined } from '@ant-design/icons';
+import { SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
 import Editor from '../components/Editor';
 import type { EditorHandle } from '../components/Editor';
 import PillTag from '../components/PillTag';
+import SectionCard from '../components/SectionCard';
 import { useMoxiaStore } from '../store';
 import {
   CHAPTER_STATUS_LABELS,
@@ -34,7 +35,6 @@ export default function ChapterEditorPage({ fontSize, contentMaxWidth }: Props) 
     })),
   );
 
-  const [showNotes, setShowNotes] = useState(false);
   const contentEditorRef = useRef<EditorHandle>(null);
 
   const suffix = chapterDraft ? parseChapterPrefix(chapterDraft.title).suffix : '';
@@ -121,29 +121,23 @@ export default function ChapterEditorPage({ fontSize, contentMaxWidth }: Props) 
         />
 
         <div className={styles.chapterFooter}>
-          <button className={styles.ghostBtn} onClick={() => setShowNotes((s) => !s)}>
-            <FileTextOutlined />
-            {t('moxia.notes')}
-          </button>
           <span className={styles.chapterFooterWordCount}>
             {t('moxia.wordCount')}: {formatNumber(wordCount)}
           </span>
         </div>
 
-        {showNotes && (
-          <div className={styles.notesSection}>
-            <Editor
-              key={`chapter-notes-${chapterDraft.id}`}
-              value={chapterDraft.notes}
-              onChange={(v) => {
-                patchChapter({ notes: v });
-                markChapterDirty();
-              }}
-              placeholder={t('moxia.notesPlaceholder')}
-              fontSize={fontSize}
-            />
-          </div>
-        )}
+        <SectionCard title={t('moxia.notes')} defaultCollapsed>
+          <Editor
+            key={`chapter-notes-${chapterDraft.id}`}
+            value={chapterDraft.notes}
+            onChange={(v) => {
+              patchChapter({ notes: v });
+              markChapterDirty();
+            }}
+            placeholder={t('moxia.notesPlaceholder')}
+            fontSize={fontSize}
+          />
+        </SectionCard>
       </div>
     </div>
   );
