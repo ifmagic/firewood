@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/shallow';
 import { ROLE_TYPES, RELATION_TYPES } from '../enums';
 import { useMoxiaStore } from '../store';
 import { renderCharacterCard, characterToLike, bookToLike, relationsToLike } from '../characterCard';
+import { getCharacter } from '../api';
 import type { Character, CharacterRelation } from '../types';
 
 const { TextArea } = Input;
@@ -57,18 +58,57 @@ function PromptInputForm({ onGenerated, onCancel }: { onGenerated: (prompt: stri
 
       let existingRelations: ReturnType<typeof relationsToLike> = [];
       if (mode === 'refine' && characterDraft) {
-        existingRelations = relationsToLike(relations as CharacterRelation[], characterDraft.id);
+        existingRelations = relationsToLike(relations as CharacterRelation[]);
       }
 
-      const existingCharacters = characters
-        .filter((c) => !characterDraft || c.id !== characterDraft.id)
-        .map((c) => ({
-          name: c.name,
-          roleType: c.roleType,
-          description: '',
-          personality: '',
-          background: '',
-        }));
+      // Gather context characters for the prompt. Two goals:
+      // 1. Name collision avoidance — the AI should know existing character names.
+      // 2. Relationship context — the AI needs full data for characters it should relate to.
+      //
+      // In create mode there are no existing relations yet, so we send ALL book characters
+      // (shallow: name + roleType from the store summary) for goal #1, plus full data for
+      // the reference character (if any) for goal #2.
+      //
+      // In refine mode we narrow to related characters only, but fetch their FULL data
+      // for goal #2 — the related list itself implicitly handles name collision.
+      const relatedIds = new Set<number>();
+
+      if (mode === 'refine' && characterDraft) {
+        for (const r of relations as CharacterRelation[]) {
+          if (r.characterId !== characterDraft.id) relatedIds.add(r.characterId);
+          if (r.relatedId !== characterDraft.id) relatedIds.add(r.relatedId);
+        }
+      }
+
+      // Always include the reference character — the template's "参考角色" line points
+      // the AI to the "已有角色" list for its full details.
+      if (referenceCharacter) {
+        relatedIds.add(referenceCharacter.id);
+      }
+
+      // Fetch FULL data for characters the AI should build relationships with.
+      const fullDataIds = [...relatedIds].filter((id) => !characterDraft || id !== characterDraft.id);
+      const fullCharacters = await Promise.all(
+        fullDataIds.map((id) => getCharacter(bookPath!, id).then(characterToLike)),
+      );
+
+      // In create mode, also include all OTHER characters with shallow data for name
+      // collision avoidance. Refine mode skips this — the related-characters list is
+      // sufficient context when extending an existing character.
+      const shallowCharacters =
+        mode === 'create'
+          ? characters
+              .filter((c) => (!characterDraft || c.id !== characterDraft.id) && !relatedIds.has(c.id))
+              .map((c) => ({
+                name: c.name,
+                roleType: c.roleType,
+                description: '',
+                personality: '',
+                background: '',
+              }))
+          : [];
+
+      const existingCharacters = [...fullCharacters, ...shallowCharacters];
 
       const prompt = await renderCharacterCard({
         userExpectation: expectation,
@@ -78,8 +118,9 @@ function PromptInputForm({ onGenerated, onCancel }: { onGenerated: (prompt: stri
         existingCharacters,
         character: mode === 'refine' && characterDraft ? characterToLike(characterDraft) : undefined,
         existingRelations,
-        roleTypeOptions: [...ROLE_TYPES],
-        relationTypeOptions: [],
+        relationTypeOptions: [...RELATION_TYPES],
+        // referenceCharacter only needs name — the full details are in existingCharacters
+        // (the reference character's ID was added to relatedIds above).
         referenceCharacter: referenceCharacter
           ? {
               name: referenceCharacter.name,

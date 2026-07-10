@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Input, message } from 'antd';
+import { Input, Tooltip, message } from 'antd';
 import { SaveOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/shallow';
@@ -183,9 +183,13 @@ export default function CharacterEditorPage({ fontSize, contentMaxWidth }: Props
                 return (
                   <div key={r.id} className={styles.relationRow}>
                     {direction}
-                    <span className={styles.relationName}>{r.relatedName}</span>
+                    <span className={styles.relationName} title={r.relatedName}>
+                      {r.relatedName}
+                    </span>
                     {r.relationType && <span className={styles.relationTypePill}>{r.relationType}</span>}
-                    <span className={styles.relationDesc}>{r.description}</span>
+                    <Tooltip title={r.description} placement="topLeft">
+                      <span className={styles.relationDesc}>{r.description}</span>
+                    </Tooltip>
                     <div className={styles.relationActions}>
                       <button
                         className={styles.relationActionBtn}

@@ -25,7 +25,6 @@ interface RelationLike {
   name: string;
   relationType: string;
   description: string;
-  direction: 'outgoing' | 'incoming' | '';
 }
 
 const MODE_LABELS: Record<string, string> = {
@@ -61,10 +60,7 @@ function formatRelationList(relations: RelationLike[]): string {
       const name = r.name || '未知';
       const rtype = r.relationType.trim();
       const desc = r.description.trim();
-      let dirLabel = '';
-      if (r.direction === 'outgoing') dirLabel = '，出';
-      else if (r.direction === 'incoming') dirLabel = '，入';
-      const head = `- ${name}${rtype ? `（${rtype}${dirLabel}）` : ''}`;
+      const head = `- ${name}${rtype ? `（${rtype}）` : ''}`;
       return desc ? `${head}：${desc}` : head;
     })
     .join('\n');
@@ -94,7 +90,6 @@ export interface RenderCharacterCardParams {
   existingCharacters?: CharacterLike[];
   character?: CharacterLike;
   existingRelations?: RelationLike[];
-  roleTypeOptions?: string[];
   relationTypeOptions?: string[];
   referenceCharacter?: CharacterLike;
   referenceRelationType?: string;
@@ -108,7 +103,6 @@ export async function renderCharacterCard({
   existingCharacters,
   character,
   existingRelations,
-  roleTypeOptions,
   relationTypeOptions,
   referenceCharacter,
   referenceRelationType = '',
@@ -119,17 +113,15 @@ export async function renderCharacterCard({
   const role = (roleType || '').trim() || '根据上下文自动判断';
   const modeKey = mode in MODE_LABELS ? mode : 'create';
 
-  const roleTypeList = roleTypeOptions ?? [];
+  // Only relation types need a vocabulary hint — the AI should tag new
+  // relationships using the app's known RELATION_TYPES so they can be imported.
+  // Role type is the user's choice (auto or specific), so no hint is needed.
   const relationTypeList = relationTypeOptions ?? [];
-  const roleTypeHint = roleTypeList.length
-    ? `（若为"根据上下文自动判断"，请从 ${roleTypeList.join(' / ')} 中自行选择一个最合适的）`
-    : '';
   const relationTypeHint = relationTypeList.length ? `（${relationTypeList.join(' / ')}）` : '';
 
   const ctx: Record<string, string> = {
     user_expectation: expectation,
     role_type: role,
-    role_type_hint: roleTypeHint,
     relation_type_hint: relationTypeHint,
     mode_label: MODE_LABELS[modeKey],
     name_strategy: NAME_STRATEGIES[modeKey],
@@ -165,17 +157,13 @@ export async function renderCharacterCard({
   return renderTemplate(template, ctx);
 }
 
-/** Converts `CharacterRelation[]` to `RelationLike[]` (computes direction + name). */
-export function relationsToLike(relations: CharacterRelation[], currentCharacterId: number): RelationLike[] {
-  return relations.map((r) => {
-    const direction: RelationLike['direction'] = r.characterId === currentCharacterId ? 'outgoing' : 'incoming';
-    return {
-      name: r.relatedName,
-      relationType: r.relationType,
-      description: r.description,
-      direction,
-    };
-  });
+/** Converts `CharacterRelation[]` to `RelationLike[]` for prompt rendering. */
+export function relationsToLike(relations: CharacterRelation[]): RelationLike[] {
+  return relations.map((r) => ({
+    name: r.relatedName,
+    relationType: r.relationType,
+    description: r.description,
+  }));
 }
 
 /** Converts `Character` to `CharacterLike`. */

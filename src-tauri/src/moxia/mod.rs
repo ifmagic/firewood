@@ -554,18 +554,24 @@ impl MoxiaManager {
         character_id: i64,
     ) -> Result<Vec<CharacterRelation>, String> {
         self.with_conn(path, |conn| {
+            // Join BOTH endpoints so we can resolve the "other" character's name regardless
+            // of which side `character_id` is on. The CASE picks the name of the character
+            // that is NOT the current viewpoint — so `related_name` is always the opposite
+            // party, whether the row is outgoing (character_id = us) or incoming (related_id = us).
             let mut stmt = conn
                 .prepare(
-                    "SELECT r.id, r.character_id, r.related_id, c.name AS related_name,
+                    "SELECT r.id, r.character_id, r.related_id,
+                            CASE WHEN r.character_id = ? THEN c_rel.name ELSE c_char.name END AS related_name,
                             r.relation_type, r.description, r.created_at, r.updated_at
                      FROM character_relations r
-                     JOIN characters c ON c.id = r.related_id
+                     JOIN characters c_char ON c_char.id = r.character_id
+                     JOIN characters c_rel  ON c_rel.id  = r.related_id
                      WHERE r.character_id=? OR r.related_id=?
                      ORDER BY r.id",
                 )
                 .map_err(|e| format!("prepare relations failed: {}", e))?;
             let rows = stmt
-                .query_map(params![character_id, character_id], |r| {
+                .query_map(params![character_id, character_id, character_id], |r| {
                     Ok(CharacterRelation {
                         id: r.get(0)?,
                         character_id: r.get(1)?,
