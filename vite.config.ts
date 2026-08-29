@@ -7,6 +7,6 @@ export default defineConfig({
   test: {
     // vitest config — `npm test` to run. Frontend unit tests live next to source.
     environment: 'jsdom',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 });

@@ -3,12 +3,12 @@ import {
   CodeOutlined,
   DiffOutlined,
   FileTextOutlined,
-  FieldTimeOutlined,
   FilePdfOutlined,
   TranslationOutlined,
   NodeIndexOutlined,
   BookOutlined,
 } from '@ant-design/icons';
+import AbacusIcon from '../tools/numbox/AbacusIcon';
 import type { ToolMeta } from '../types/tool';
 
 const tools: ToolMeta[] = [
@@ -27,11 +27,11 @@ const tools: ToolMeta[] = [
     component: lazy(() => import('../tools/json-formatter/index.tsx')),
   },
   {
-    id: 'timestamp',
-    name: 'Timestamp',
-    icon: <FieldTimeOutlined />,
-    description: 'Convert between Unix timestamps and dates',
-    component: lazy(() => import('../tools/timestamp/index.tsx')),
+    id: 'numbox',
+    name: 'Abacus',
+    icon: <AbacusIcon />,
+    description: 'Calculations & time conversion',
+    component: lazy(() => import('../tools/numbox/index.tsx')),
   },
   {
     id: 'text-diff',
