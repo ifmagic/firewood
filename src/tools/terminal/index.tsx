@@ -42,6 +42,7 @@ interface TerminalTabState {
   error: string | null;
   disposed: boolean;
   sessionVersion: number;
+  mountWaiters: Array<{ resolve: () => void; reject: (err: unknown) => void }>;
 }
 
 interface TerminalTabView {
@@ -89,6 +90,7 @@ let _fontsReadyKey = '';
 let _terminalTabs: TerminalTabState[] = [];
 let _activeTerminalTabId: string | null = null;
 let _nextTerminalTabNumber = 1;
+let _terminalContainer: HTMLElement | null = null;
 
 function ensureActiveTabSelection() {
   if (_activeTerminalTabId && _terminalTabs.some((tab) => tab.id === _activeTerminalTabId)) {
@@ -142,6 +144,7 @@ function createTerminalTabState(shellPath: string | null): TerminalTabState {
     error: null,
     disposed: false,
     sessionVersion: 0,
+    mountWaiters: [],
   };
 }
 
@@ -173,6 +176,22 @@ function appendBufferedOutput(tab: TerminalTabState, data: string) {
 function clearBufferedOutput(tab: TerminalTabState) {
   tab.bufferedOutput = [];
   tab.bufferedChars = 0;
+}
+
+function settleTabMountWaiters(tab: TerminalTabState, error?: unknown) {
+  const waiters = tab.mountWaiters;
+  tab.mountWaiters = [];
+  for (const waiter of waiters) {
+    if (error !== undefined) waiter.reject(error);
+    else waiter.resolve();
+  }
+}
+
+function waitForTabMount(tab: TerminalTabState): Promise<void> {
+  if (tab.mounted) return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    tab.mountWaiters.push({ resolve, reject });
+  });
 }
 
 function detachTabInput(tab: TerminalTabState) {
@@ -263,6 +282,7 @@ function mountTerminalTab(tab: TerminalTabState, container: HTMLElement, fontSiz
   term.options.fontSize = fontSize;
   term.options.fontFamily = fontFamily;
   fitTerminalTab(tab);
+  settleTabMountWaiters(tab);
 
   setTimeout(() => term.focus(), 50);
 }
@@ -314,6 +334,7 @@ async function destroyTabPty(tab: TerminalTabState) {
 
 async function disposeTerminalTab(tab: TerminalTabState) {
   unmountTerminalTab(tab);
+  settleTabMountWaiters(tab, new Error('Terminal disposed'));
   clearBufferedOutput(tab);
   await destroyTabPty(tab);
   tab.term?.dispose();
@@ -325,7 +346,7 @@ async function disposeTerminalTab(tab: TerminalTabState) {
   tab.div = null;
 }
 
-async function startTabSession(tab: TerminalTabState, shellPath: string | null) {
+async function startTabSession(tab: TerminalTabState, shellPath: string | null, fontSize: number, fontFamily: string) {
   const sessionVersion = ++tab.sessionVersion;
   tab.status = 'loading';
   tab.error = null;
@@ -339,10 +360,32 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null) 
     return;
   }
 
+  // The shell starts as soon as the PTY is created, so the terminal must be
+  // mounted and measured first: TUI apps query the terminal size at startup,
+  // and a PTY that is still 0x0 (or not yet resized) makes them render tiny.
+  await ensureFontsReady(fontFamily);
+  if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+    return;
+  }
+
+  if (!tab.mounted && _terminalContainer) {
+    mountTerminalTab(tab, _terminalContainer, fontSize, fontFamily);
+  }
+  if (!tab.mounted) {
+    await waitForTabMount(tab);
+    if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+      return;
+    }
+  }
+
+  fitTerminalTab(tab);
+
   try {
     const info: PtyInfo = await invoke('create_pty_session', {
       shell: shellPath,
       cwd: null,
+      rows: tab.term?.rows ?? null,
+      cols: tab.term?.cols ?? null,
     });
 
     if (tab.disposed || tab.sessionVersion !== sessionVersion) {
@@ -453,7 +496,7 @@ export default function TerminalPage() {
       tab.error = null;
       refreshFromStore();
 
-      void startTabSession(tab, shellPath)
+      void startTabSession(tab, shellPath, fontSizeRef.current, fontFamilyRef.current)
         .then(() => {
           if (!tab.disposed) {
             refreshFromStore();
@@ -692,6 +735,7 @@ export default function TerminalPage() {
       })
       .catch((err) => {
         if (cancelled || tab.disposed) return;
+        settleTabMountWaiters(tab, err);
         tab.status = 'error';
         tab.error = `Failed to render terminal: ${String(err)}`;
         refreshFromStore();
@@ -993,7 +1037,13 @@ export default function TerminalPage() {
             </div>
           )}
 
-          <div ref={containerRef} className="firewood-terminal-container" />
+          <div
+            ref={(el) => {
+              containerRef.current = el;
+              _terminalContainer = el;
+            }}
+            className="firewood-terminal-container"
+          />
         </div>
 
         <div className="firewood-terminal-footer">

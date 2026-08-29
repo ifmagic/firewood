@@ -20,6 +20,9 @@ use tauri::Emitter;
 #[cfg(not(unix))]
 type RawFd = i32;
 
+const DEFAULT_PTY_ROWS: u16 = 24;
+const DEFAULT_PTY_COLS: u16 = 80;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PtyInfo {
     pub id: String,
@@ -170,10 +173,31 @@ impl PtyManager {
     }
 
     #[cfg(unix)]
+    fn set_winsize(fd: RawFd, rows: Option<u16>, cols: Option<u16>) -> Result<(), String> {
+        let ws_row = rows.filter(|r| *r > 0).unwrap_or(DEFAULT_PTY_ROWS);
+        let ws_col = cols.filter(|c| *c > 0).unwrap_or(DEFAULT_PTY_COLS);
+
+        unsafe {
+            let winsize = winsize {
+                ws_row,
+                ws_col,
+                ws_xpixel: 0,
+                ws_ypixel: 0,
+            };
+            if ioctl(fd, TIOCSWINSZ, &winsize) < 0 {
+                return Err(format!("Failed to set PTY size: {}", Self::errno()));
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(unix)]
     pub fn create_session(
         &self,
         shell: Option<&str>,
         cwd: Option<&str>,
+        rows: Option<u16>,
+        cols: Option<u16>,
     ) -> Result<PtyInfo, String> {
         let shell_path = if let Some(s) = shell {
             s.to_string()
@@ -191,6 +215,11 @@ impl PtyManager {
             .map_err(|_| "Working directory contains interior NUL byte".to_string())?;
 
         let (master_fd, slave_fd) = Self::open_pty()?;
+
+        // Set the initial window size BEFORE the shell starts, so TUI apps
+        // that query the terminal size at startup get real dimensions
+        // instead of the fresh PTY's 0x0 (which makes them render tiny).
+        Self::set_winsize(master_fd, rows, cols)?;
 
         let pid = unsafe { fork() };
 
@@ -281,8 +310,10 @@ impl PtyManager {
         &self,
         shell: Option<&str>,
         cwd: Option<&str>,
+        rows: Option<u16>,
+        cols: Option<u16>,
     ) -> Result<PtyInfo, String> {
-        let _ = (shell, cwd);
+        let _ = (shell, cwd, rows, cols);
         Err(Self::unsupported_error())
     }
 
@@ -342,18 +373,7 @@ impl PtyManager {
             }
         };
 
-        unsafe {
-            let winsize = winsize {
-                ws_row: rows,
-                ws_col: cols,
-                ws_xpixel: 0,
-                ws_ypixel: 0,
-            };
-            if ioctl(master_fd, TIOCSWINSZ, &winsize) < 0 {
-                return Err(format!("Resize error: {}", Self::errno()));
-            }
-        }
-        Ok(())
+        Self::set_winsize(master_fd, Some(rows), Some(cols))
     }
 
     #[cfg(not(unix))]

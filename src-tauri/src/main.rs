@@ -19,8 +19,10 @@ fn create_pty_session(
     pty_manager: State<'_, Arc<pty::PtyManager>>,
     shell: Option<String>,
     cwd: Option<String>,
+    rows: Option<u16>,
+    cols: Option<u16>,
 ) -> Result<pty::PtyInfo, String> {
-    pty_manager.create_session(shell.as_deref(), cwd.as_deref())
+    pty_manager.create_session(shell.as_deref(), cwd.as_deref(), rows, cols)
 }
 
 #[tauri::command]
