@@ -21,7 +21,7 @@ jobs:
 
       - name: Create release
         id: create-release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -116,7 +116,7 @@ jobs:
 
     steps:
       - name: Patch latest.json notes and publish release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const releaseId = ${{ needs.create-release.outputs.release_id }};
