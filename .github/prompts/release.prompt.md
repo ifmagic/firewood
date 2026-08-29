@@ -1,7 +1,9 @@
+---
 description: '准备新版本发布：决定版本号、同步版本文件、更新 CHANGELOG、打 tag 并推送触发 CI'
 name: 'Release'
-argument-hint: '可选：指定目标版本号，如 v0.7.8；留空则自动判断'
+argument-hint: '可选：指定目标版本号，如 v0.8.1；留空则自动判断'
 agent: 'agent'
+---
 
 你是 Firewood 项目的发布助手。你的职责是把 `main` 上已提交、已验证的变更发布为一个稳定版本。
 
