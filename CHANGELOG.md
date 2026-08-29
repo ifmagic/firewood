@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.0
+
+### ✨ Features
+
+- Replace the standalone Timestamp tool with Abacus, a unified calculator and Unix timestamp conversion workspace.
+- Add scientific expression controls, automatic seconds/milliseconds detection, quick timestamp presets, and persistent calculation and conversion history.
+
 ## v0.7.8
 
 ### ✨ Features
