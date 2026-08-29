@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
-import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { CloseOutlined, LockOutlined, PlusOutlined, UnlockOutlined } from '@ant-design/icons';
 import { Terminal, type IDisposable } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -41,6 +41,7 @@ interface TerminalTabState {
   status: TerminalTabStatus;
   error: string | null;
   disposed: boolean;
+  locked: boolean;
   sessionVersion: number;
   mountWaiters: Array<{ resolve: () => void; reject: (err: unknown) => void }>;
 }
@@ -51,6 +52,7 @@ interface TerminalTabView {
   shellPath: string | null;
   status: TerminalTabStatus;
   error: string | null;
+  locked: boolean;
 }
 
 const DEFAULT_FONT_SIZE = 14;
@@ -110,6 +112,7 @@ function getTabsSnapshot(): TerminalTabView[] {
     shellPath: tab.shellPath,
     status: tab.status,
     error: tab.error,
+    locked: tab.locked,
   }));
 }
 
@@ -143,6 +146,7 @@ function createTerminalTabState(shellPath: string | null): TerminalTabState {
     status: 'loading',
     error: null,
     disposed: false,
+    locked: false,
     sessionVersion: 0,
     mountWaiters: [],
   };
@@ -599,6 +603,8 @@ export default function TerminalPage() {
       if (currentIndex < 0) return;
 
       const tab = _terminalTabs[currentIndex];
+      if (tab.locked) return;
+
       const remainingTabs = _terminalTabs.filter((item) => item.id !== tabId);
       tab.disposed = true;
 
@@ -623,6 +629,16 @@ export default function TerminalPage() {
     if (!tab) return;
     runTabSession(tab, tab.shellPath, 'Failed to connect PTY');
   }, [runTabSession]);
+
+  const handleToggleTabLock = useCallback(
+    (tabId: string) => {
+      const tab = getTabState(tabId);
+      if (!tab) return;
+      tab.locked = !tab.locked;
+      refreshFromStore();
+    },
+    [refreshFromStore],
+  );
 
   const activeTabMeta = tabs.find((tab) => tab.id === activeTabId) ?? null;
   const activeTabState = getTabState(activeTabId);
@@ -817,11 +833,11 @@ export default function TerminalPage() {
                 return (
                   <div
                     key={tab.id}
-                    className={`firewood-terminal-tab${isActive ? ' is-active' : ''}`}
+                    className={`firewood-terminal-tab${isActive ? ' is-active' : ''}${isEditing ? ' is-editing' : ''}${tab.locked ? ' is-locked' : ''}`}
                     title={
                       isActive
-                        ? `${tab.title} · ${shellLabel} · Double-click to rename`
-                        : `${tab.title} · ${shellLabel}`
+                        ? `${tab.title} · ${shellLabel} · Double-click to rename${tab.locked ? ' · Locked' : ''}`
+                        : `${tab.title} · ${shellLabel}${tab.locked ? ' · Locked' : ''}`
                     }
                   >
                     {isEditing ? (
@@ -868,6 +884,19 @@ export default function TerminalPage() {
                         <span className="firewood-terminal-tabTitle">{tab.title}</span>
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className={`firewood-terminal-tabLock${tab.locked ? ' is-locked' : ''}`}
+                      title={tab.locked ? `Unlock ${tab.title}` : `Lock ${tab.title}`}
+                      aria-label={tab.locked ? `Unlock ${tab.title}` : `Lock ${tab.title}`}
+                      aria-pressed={tab.locked}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleToggleTabLock(tab.id);
+                      }}
+                    >
+                      {tab.locked ? <LockOutlined /> : <UnlockOutlined />}
+                    </button>
                     <button
                       type="button"
                       className="firewood-terminal-tabClose"
