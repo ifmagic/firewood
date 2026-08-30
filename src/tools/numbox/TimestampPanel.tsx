@@ -4,7 +4,14 @@ import { CopyOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import { type NewTsRecord, type TsRecord, formatRecordForCopy, recordTag, useTsHistory } from './history';
+import {
+  type NewTsRecord,
+  type TsRecord,
+  formatRecordForCopy,
+  makeTsDeduper,
+  recordTag,
+  useTsHistory,
+} from './history';
 import HistorySection from './HistorySection';
 import styles from './Numbox.module.css';
 
@@ -56,7 +63,7 @@ export default function TimestampPanel() {
   const [dateValue, setDateValue] = usePersistentState<string | null>('tool:numbox:ts:date', null);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [clearConfirming, setClearConfirming] = useState(false);
-  const lastRecordedRef = useRef('');
+  const deduperRef = useRef(makeTsDeduper());
   const didMountRef = useRef(false);
 
   const { records: tsHistory, add: addTsHistory, clear: clearTsHistory } = useTsHistory();
@@ -78,7 +85,7 @@ export default function TimestampPanel() {
     return { local: formatLocal(d), utc: formatUTC(d), ms, unit };
   }, [ts]);
 
-  const date: Dayjs | null = dateValue ? dayjs(dateValue) : null;
+  const date: Dayjs | null = useMemo(() => (dateValue ? dayjs(dateValue) : null), [dateValue]);
   const dateMs = date ? date.valueOf() : null;
   const dateOutputs = useMemo(() => {
     if (dateMs == null) return null;
@@ -87,9 +94,7 @@ export default function TimestampPanel() {
   }, [dateMs]);
 
   const maybeRecordTs = (r: NewTsRecord) => {
-    const sig = `${r.kind}|${r.left}|${r.right}|${r.unit}`;
-    if (sig === lastRecordedRef.current) return;
-    lastRecordedRef.current = sig;
+    if (!deduperRef.current.shouldRecord(r)) return;
     addTsHistory(r);
   };
 
@@ -213,74 +218,7 @@ export default function TimestampPanel() {
           </div>
         </div>
 
-        {/* Timestamp -> Date */}
-        <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>{t('timestamp.tsToDate')}</h4>
-          <div className={styles.tsInputRow}>
-            <Input
-              value={ts}
-              onChange={(e) => setTs(e.target.value)}
-              placeholder={t('timestamp.enterTsHint')}
-              onPressEnter={commitTsToDate}
-              className={styles.monoInput}
-              aria-label={t('timestamp.enterTs')}
-            />
-            {tsOutputs && (
-              <span className={styles.unitBadge}>
-                {tsOutputs.unit === 's' ? t('timestamp.secondsShort') : t('timestamp.msShort')}
-              </span>
-            )}
-          </div>
-          {tsOutputs ? (
-            <div className={styles.tsOutputs}>
-              {renderOutput(t('timestamp.localTime'), tsOutputs.local, {
-                kind: 'ts-to-date',
-                left: ts.trim(),
-                right: tsOutputs.local,
-                unit: tsOutputs.unit,
-              })}
-              {renderOutput(t('timestamp.utcTime'), tsOutputs.utc)}
-              {renderOutput(t('timestamp.relativeTime'), tsRel)}
-            </div>
-          ) : (
-            <div className={styles.tsHint}>{t('timestamp.enterTsHint')}</div>
-          )}
-        </div>
-
-        {/* Date -> Timestamp */}
-        <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>{t('timestamp.dateToTs')}</h4>
-          <div className={styles.tsInputRow}>
-            <DatePicker
-              value={date}
-              showTime={{ defaultOpenValue: dayjs().startOf('day') }}
-              onChange={(d) => setDateValue(d ? d.toISOString() : null)}
-              style={{ flex: 1 }}
-              aria-label={t('timestamp.selectDate')}
-            />
-          </div>
-          {dateOutputs ? (
-            <div className={styles.tsOutputs}>
-              {renderOutput(t('timestamp.secondsShort'), dateOutputs.s, {
-                kind: 'date-to-ts',
-                left: dateOutputs.local,
-                right: dateOutputs.s,
-                unit: 's',
-              })}
-              {renderOutput(t('timestamp.msShort'), dateOutputs.ms, {
-                kind: 'date-to-ts',
-                left: dateOutputs.local,
-                right: dateOutputs.s,
-                unit: 's',
-              })}
-              {renderOutput(t('timestamp.localTime'), dateOutputs.local)}
-            </div>
-          ) : (
-            <div className={styles.tsHint}>{t('timestamp.selectDate')}</div>
-          )}
-        </div>
-
-        {/* Quick timestamp pills */}
+        {/* Quick timestamp pills (copy on click) */}
         <div className={styles.section}>
           <h4 className={styles.sectionTitle}>{t('timestamp.quickTitle')}</h4>
           <div className={styles.quickPills}>
@@ -297,6 +235,81 @@ export default function TimestampPanel() {
             ))}
           </div>
         </div>
+
+        {/* Timestamp <-> Date converters, side by side on wide panels */}
+        <div className={styles.tsColumns}>
+          {/* Timestamp -> Date */}
+          <div className={styles.tsColumn}>
+            <div className={styles.section}>
+              <h4 className={styles.sectionTitle}>{t('timestamp.tsToDate')}</h4>
+              <div className={styles.tsInputRow}>
+                <Input
+                  value={ts}
+                  onChange={(e) => setTs(e.target.value)}
+                  placeholder={t('timestamp.enterTsHint')}
+                  onPressEnter={commitTsToDate}
+                  className={styles.monoInput}
+                  aria-label={t('timestamp.enterTs')}
+                />
+                {tsOutputs && (
+                  <span className={styles.unitBadge}>
+                    {tsOutputs.unit === 's' ? t('timestamp.secondsShort') : t('timestamp.msShort')}
+                  </span>
+                )}
+              </div>
+              {tsOutputs ? (
+                <div className={styles.tsOutputs}>
+                  {renderOutput(t('timestamp.localTime'), tsOutputs.local, {
+                    kind: 'ts-to-date',
+                    left: ts.trim(),
+                    right: tsOutputs.local,
+                    unit: tsOutputs.unit,
+                  })}
+                  {renderOutput(t('timestamp.utcTime'), tsOutputs.utc)}
+                  {renderOutput(t('timestamp.relativeTime'), tsRel)}
+                </div>
+              ) : (
+                <div className={styles.tsHint}>{t('timestamp.enterTsHint')}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Date -> Timestamp */}
+          <div className={styles.tsColumn}>
+            <div className={styles.section}>
+              <h4 className={styles.sectionTitle}>{t('timestamp.dateToTs')}</h4>
+              <div className={styles.tsInputRow}>
+                <DatePicker
+                  value={date}
+                  showTime={{ defaultOpenValue: dayjs().startOf('day') }}
+                  getPopupContainer={() => document.body}
+                  onChange={(d) => setDateValue(d ? d.toISOString() : null)}
+                  style={{ flex: 1 }}
+                  aria-label={t('timestamp.selectDate')}
+                />
+              </div>
+              {dateOutputs ? (
+                <div className={styles.tsOutputs}>
+                  {renderOutput(t('timestamp.secondsShort'), dateOutputs.s, {
+                    kind: 'date-to-ts',
+                    left: dateOutputs.local,
+                    right: dateOutputs.s,
+                    unit: 's',
+                  })}
+                  {renderOutput(t('timestamp.msShort'), dateOutputs.ms, {
+                    kind: 'date-to-ts',
+                    left: dateOutputs.local,
+                    right: dateOutputs.s,
+                    unit: 's',
+                  })}
+                  {renderOutput(t('timestamp.localTime'), dateOutputs.local)}
+                </div>
+              ) : (
+                <div className={styles.tsHint}>{t('timestamp.selectDate')}</div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Inline timestamp history (isolated from the calculator's) */}
@@ -306,6 +319,7 @@ export default function TimestampPanel() {
         onRequestClear={() => setClearConfirming(true)}
         onClearConfirm={() => {
           clearTsHistory();
+          deduperRef.current.reset();
           setClearConfirming(false);
         }}
         onClearCancel={() => setClearConfirming(false)}

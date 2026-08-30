@@ -713,6 +713,34 @@ button.histMain:focus-visible {
 	outline-offset: 1px;
 }
 
+/* ---------- Timestamp converter columns (side-by-side on wide panels) ---------- */
+
+.tsColumns {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 16px;
+}
+
+.tsColumn {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 300px;
+	min-width: 0;
+}
+
+.tsColumn > .section {
+	flex: 1;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.tsColumn > .section:hover {
+	border-color: color-mix(in srgb, var(--fw-accent) 35%, var(--fw-divider));
+	box-shadow: 0 2px 12px rgba(31, 31, 31, 0.06);
+}
+
 /* ---------- Button active feedback (scoped to numbox) ---------- */
 
 .container :global(.ant-btn):active {

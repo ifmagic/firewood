@@ -63,7 +63,7 @@ describe('numbox history stores', () => {
     expect(localStorage.getItem('tool:numbox:history:migrated-v2')).toBe('true');
   });
 
-  it('caps calculator history at 100 and timestamp history at 50', async () => {
+  it('caps calculator history at 100 and timestamp history at 20', async () => {
     mod = await import('./history');
 
     let api!: ReturnType<HistoryModule['useCalcHistory']>;
@@ -81,10 +81,30 @@ describe('numbox history stores', () => {
     mountWith((m) => {
       tsApi = m.useTsHistory();
     });
-    for (let i = 0; i < 55; i++) {
+    for (let i = 0; i < 25; i++) {
       act(() => tsApi.add({ kind: 'ts-to-date', left: String(i), right: 'r', unit: 's' }));
     }
-    expect(tsApi.records).toHaveLength(50);
+    expect(tsApi.records).toHaveLength(20);
+  });
+
+  it('trims over-cap persisted timestamp history on load', async () => {
+    mod = await import('./history');
+    const over = Array.from({ length: 30 }, (_, i) => ({
+      id: `t${i}`,
+      at: 29 - i,
+      kind: 'ts-to-date' as const,
+      left: String(29 - i),
+      right: 'r',
+      unit: 's' as const,
+    }));
+    localStorage.setItem('tool:numbox:ts-history', JSON.stringify(over));
+
+    let tsApi!: ReturnType<HistoryModule['useTsHistory']>;
+    mountWith((m) => {
+      tsApi = m.useTsHistory();
+    });
+    expect(tsApi.records).toHaveLength(20);
+    expect(tsApi.records[0]?.left).toBe('29'); // newest first
   });
 
   it('keeps calculator and timestamp histories fully isolated', async () => {
@@ -113,5 +133,26 @@ describe('numbox history stores', () => {
     expect(calc[0]?.kind).toBe('calc');
     expect(ts).toHaveLength(1);
     expect(ts[0]?.kind).toBe('ts-to-date');
+  });
+});
+
+describe('makeTsDeduper', () => {
+  const rec = { kind: 'ts-to-date' as const, left: '1700000000', right: '2023-11-14 22:13:20', unit: 's' as const };
+
+  it('dedupes only consecutive repeats', async () => {
+    mod = await import('./history');
+    const d = mod.makeTsDeduper();
+    expect(d.shouldRecord(rec)).toBe(true);
+    expect(d.shouldRecord(rec)).toBe(false); // consecutive repeat
+    expect(d.shouldRecord({ ...rec, left: '1700000001' })).toBe(true);
+    expect(d.shouldRecord(rec)).toBe(true); // old value after another pick records again
+  });
+
+  it('records the same value again after reset (history cleared)', async () => {
+    mod = await import('./history');
+    const d = mod.makeTsDeduper();
+    expect(d.shouldRecord(rec)).toBe(true);
+    d.reset();
+    expect(d.shouldRecord(rec)).toBe(true);
   });
 });

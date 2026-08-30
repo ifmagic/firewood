@@ -26,7 +26,23 @@ export type NewCalcRecord = Omit<CalcRecord, 'id' | 'at'>;
 export type NewTsRecord = Omit<TsRecord, 'id' | 'at'>;
 
 export const MAX_CALC_HISTORY = 100;
-export const MAX_TS_HISTORY = 50;
+export const MAX_TS_HISTORY = 20;
+
+/** Dedupes consecutive identical ts conversions; call reset() when the history is cleared. */
+export function makeTsDeduper() {
+  let lastSig = '';
+  return {
+    shouldRecord(r: NewTsRecord): boolean {
+      const sig = `${r.kind}|${r.left}|${r.right}|${r.unit}`;
+      if (sig === lastSig) return false;
+      lastSig = sig;
+      return true;
+    },
+    reset() {
+      lastSig = '';
+    },
+  };
+}
 
 const CALC_KEY = 'tool:numbox:calc-history';
 const TS_KEY = 'tool:numbox:ts-history';
@@ -136,8 +152,11 @@ if (typeof localStorage !== 'undefined' && !readJSON<boolean>(MIGRATION_KEY)) {
 }
 
 function useSplitHistory() {
-  const [calcRecords, setCalcRecords] = usePersistentState<CalcRecord[]>(CALC_KEY, []);
-  const [tsRecords, setTsRecords] = usePersistentState<TsRecord[]>(TS_KEY, []);
+  const [calcState, setCalcRecords] = usePersistentState<CalcRecord[]>(CALC_KEY, []);
+  const [tsState, setTsRecords] = usePersistentState<TsRecord[]>(TS_KEY, []);
+  // Trim any records persisted before a cap was lowered (caps also apply on add).
+  const calcRecords = calcState.slice(0, MAX_CALC_HISTORY);
+  const tsRecords = tsState.slice(0, MAX_TS_HISTORY);
 
   const addCalc = useCallback(
     (rec: NewCalcRecord) => {
