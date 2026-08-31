@@ -52,7 +52,7 @@ function unmount() {
 
 const pickerInput = () => document.querySelector<HTMLInputElement>('.ant-picker input');
 
-function click(el: Element | null) {
+function click(el: Element | null | undefined) {
   expect(el).toBeTruthy();
   act(() => {
     el!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
