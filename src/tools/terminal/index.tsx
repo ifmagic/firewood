@@ -59,6 +59,7 @@ const DEFAULT_FONT_SIZE = 14;
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 32;
 const MAX_BUFFER_CHARS = 100_000;
+const RESIZE_FIT_THROTTLE_MS = 100;
 const DEFAULT_FONT_FAMILY =
   "'Hack Nerd Font Mono', 'Hack Nerd Font', 'Cascadia Code NF', 'Cascadia Code', Menlo, Consolas, monospace";
 
@@ -360,7 +361,12 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
 
   await destroyTabPty(tab);
 
-  if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+  // True when a newer session start or a disposal has taken over the tab.
+  // Once stale, this run must not touch tab fields: the new owner is
+  // responsible for the resources stored on them (via destroyTabPty).
+  const isStale = () => tab.disposed || tab.sessionVersion !== sessionVersion;
+
+  if (isStale()) {
     return;
   }
 
@@ -368,7 +374,7 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
   // mounted and measured first: TUI apps query the terminal size at startup,
   // and a PTY that is still 0x0 (or not yet resized) makes them render tiny.
   await ensureFontsReady(fontFamily);
-  if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+  if (isStale()) {
     return;
   }
 
@@ -377,7 +383,7 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
   }
   if (!tab.mounted) {
     await waitForTabMount(tab);
-    if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+    if (isStale()) {
       return;
     }
   }
@@ -392,36 +398,31 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
       cols: tab.term?.cols ?? null,
     });
 
-    if (tab.disposed || tab.sessionVersion !== sessionVersion) {
+    if (isStale()) {
       await invoke('close_pty_session', { id: info.id }).catch(console.error);
       return;
     }
 
-    tab.ptyId = info.id;
+    const ptyId = info.id;
+    const exitMessage = '\r\n[Shell exited]\r\n';
 
-    await invoke('start_pty_reader', { id: info.id });
-
-    if (tab.disposed || tab.sessionVersion !== sessionVersion) {
-      await invoke('close_pty_session', { id: info.id }).catch(console.error);
-      tab.ptyId = null;
-      return;
-    }
-
-    tab.ptyListenReady = listen<PtyOutput>(`pty:data:${info.id}`, (event) => {
-      if (tab.disposed || tab.ptyId !== info.id) return;
+    // Ownership handoff and listener registration happen in one synchronous
+    // block: a concurrent session start or disposal can only observe the tab
+    // before or after this block, never half-way through it.
+    tab.ptyId = ptyId;
+    const dataListener = listen<PtyOutput>(`pty:data:${ptyId}`, (event) => {
+      if (tab.disposed || tab.ptyId !== ptyId) return;
       if (tab.mounted && tab.term) {
         tab.term.write(event.payload.data);
       } else {
         appendBufferedOutput(tab, event.payload.data);
       }
     });
-
-    const exitMessage = '\r\n[Shell exited]\r\n';
-    tab.ptyExitListenReady = listen(`pty:exit:${info.id}`, () => {
-      if (tab.disposed || tab.ptyId !== info.id) return;
+    const exitListener = listen(`pty:exit:${ptyId}`, () => {
+      if (tab.disposed || tab.ptyId !== ptyId) return;
 
       tab.ptyId = null;
-      void invoke('close_pty_session', { id: info.id }).catch(() => {});
+      void invoke('close_pty_session', { id: ptyId }).catch(() => {});
 
       if (tab.mounted && tab.term) {
         tab.term.write(exitMessage);
@@ -429,11 +430,35 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
         appendBufferedOutput(tab, exitMessage);
       }
     });
+    tab.ptyListenReady = dataListener;
+    tab.ptyExitListenReady = exitListener;
+
+    // The listeners must be fully registered before the reader starts:
+    // Tauri events are fire-and-forget, so output or exit events emitted
+    // between `start_pty_reader` and `listen()` would be lost for good.
+    await Promise.all([dataListener, exitListener]);
+    if (isStale()) {
+      // The new owner's destroyTabPty already unlistened these listeners
+      // and closed this PTY.
+      return;
+    }
+
+    await invoke('start_pty_reader', { id: ptyId });
+
+    if (isStale()) {
+      // The new owner already closed this PTY; if the reader had already
+      // been started, close_session stopped its thread.
+      return;
+    }
 
     tab.status = 'ready';
     tab.error = null;
   } catch (err) {
-    await destroyTabPty(tab);
+    if (!isStale()) {
+      // Still the owner: clean up exactly the resources this run stored on
+      // the tab. (When stale, the new owner already did.)
+      await destroyTabPty(tab);
+    }
     throw err;
   }
 }
@@ -767,7 +792,12 @@ export default function TerminalPage() {
     const container = containerRef.current;
     if (!container) return;
 
-    resizeRef.current = new ResizeObserver(() => {
+    let rafId = 0;
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+    let lastFitAt = 0;
+
+    const fitActiveTab = () => {
+      lastFitAt = Date.now();
       const tab = getTabState(_activeTerminalTabId);
       if (!tab) return;
 
@@ -776,11 +806,37 @@ export default function TerminalPage() {
       } catch (err) {
         console.error('Failed to resize terminal', err);
       }
-    });
+    };
 
-    resizeRef.current.observe(container);
+    const scheduleFit = () => {
+      const wait = RESIZE_FIT_THROTTLE_MS - (Date.now() - lastFitAt);
+      if (wait <= 0) {
+        if (timerId) {
+          clearTimeout(timerId);
+          timerId = undefined;
+        }
+        if (!rafId) {
+          rafId = requestAnimationFrame(() => {
+            rafId = 0;
+            fitActiveTab();
+          });
+        }
+      } else if (!timerId) {
+        timerId = setTimeout(() => {
+          timerId = undefined;
+          fitActiveTab();
+        }, wait);
+      }
+    };
+
+    const observer = new ResizeObserver(scheduleFit);
+    observer.observe(container);
+    resizeRef.current = observer;
+
     return () => {
-      resizeRef.current?.disconnect();
+      observer.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
+      if (timerId) clearTimeout(timerId);
       resizeRef.current = null;
     };
   }, []);

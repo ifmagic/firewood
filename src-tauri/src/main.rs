@@ -26,12 +26,15 @@ fn create_pty_session(
 }
 
 #[tauri::command]
-fn write_pty(
+async fn write_pty(
     pty_manager: State<'_, Arc<pty::PtyManager>>,
     id: String,
     data: String,
 ) -> Result<(), String> {
-    pty_manager.write(&id, &data)
+    let manager = pty_manager.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || manager.write(&id, &data))
+        .await
+        .map_err(|err| format!("PTY write task failed: {}", err))?
 }
 
 #[tauri::command]
@@ -45,11 +48,14 @@ fn resize_pty(
 }
 
 #[tauri::command]
-fn close_pty_session(
+async fn close_pty_session(
     pty_manager: State<'_, Arc<pty::PtyManager>>,
     id: String,
 ) -> Result<(), String> {
-    pty_manager.close_session(&id)
+    let manager = pty_manager.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || manager.close_session(&id))
+        .await
+        .map_err(|err| format!("PTY close task failed: {}", err))?
 }
 
 #[tauri::command]
