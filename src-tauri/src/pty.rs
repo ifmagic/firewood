@@ -1,7 +1,7 @@
 #[cfg(unix)]
 use libc::{
-    self, c_char, close, dup2, execvp, fork, ioctl, poll, pollfd, setsid, winsize, POLLIN,
-    TIOCSCTTY, TIOCSWINSZ,
+    self, c_char, close, dup2, execvp, fcntl, fork, ioctl, pipe, poll, pollfd, setsid, winsize,
+    FD_CLOEXEC, F_SETFD, POLLIN, TIOCSCTTY, TIOCSWINSZ, WNOHANG,
 };
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -38,8 +38,23 @@ pub struct PtyOutput {
 struct PtySession {
     #[cfg(unix)]
     master_fd: RawFd,
+    #[cfg(unix)]
+    pid: i32,
+    #[cfg(unix)]
+    exec_fd: RawFd,
     running: Arc<AtomicBool>,
     handle: Option<thread::JoinHandle<()>>,
+}
+
+#[cfg(unix)]
+fn reap_child(pid: i32) {
+    for _ in 0..20 {
+        let result = unsafe { libc::waitpid(pid, std::ptr::null_mut(), WNOHANG) };
+        if result != 0 {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
 }
 
 pub struct PtyManager {
@@ -221,14 +236,47 @@ impl PtyManager {
         // instead of the fresh PTY's 0x0 (which makes them render tiny).
         Self::set_winsize(master_fd, rows, cols)?;
 
+        // CLOEXEC pipe used to report exec failures back to the parent: the
+        // write end closes automatically on a successful exec, and the child
+        // writes the errno byte when execvp fails. Set FD_CLOEXEC manually
+        // because macOS's libc has no pipe2 wrapper.
+        let (exec_read_fd, exec_write_fd) = unsafe {
+            let mut fds = [0 as libc::c_int; 2];
+            if pipe(fds.as_mut_ptr()) != 0 {
+                close(master_fd);
+                close(slave_fd);
+                return Err(format!(
+                    "Failed to create exec status pipe: {}",
+                    Self::errno()
+                ));
+            }
+            if fcntl(fds[0], F_SETFD, FD_CLOEXEC) < 0 || fcntl(fds[1], F_SETFD, FD_CLOEXEC) < 0 {
+                close(fds[0]);
+                close(fds[1]);
+                close(master_fd);
+                close(slave_fd);
+                return Err(format!(
+                    "Failed to set CLOEXEC on exec status pipe: {}",
+                    Self::errno()
+                ));
+            }
+            (fds[0], fds[1])
+        };
+
+        let has_lang = std::env::var("LANG")
+            .map(|value| !value.is_empty())
+            .unwrap_or(false);
+
         let pid = unsafe { fork() };
 
         if pid < 0 {
             unsafe {
                 close(master_fd);
                 close(slave_fd);
+                close(exec_read_fd);
+                close(exec_write_fd);
             }
-            return Err(format!("Failed to fork: {}", pid));
+            return Err(format!("Failed to fork: {}", Self::errno()));
         }
 
         if pid == 0 {
@@ -261,27 +309,26 @@ impl PtyManager {
                     1,
                 );
 
-                libc::setenv(
-                    b"LANG\0".as_ptr() as *const c_char,
-                    b"en_US.UTF-8\0".as_ptr() as *const c_char,
-                    1,
-                );
-
-                libc::setenv(
-                    b"LC_ALL\0".as_ptr() as *const c_char,
-                    b"en_US.UTF-8\0".as_ptr() as *const c_char,
-                    1,
-                );
+                if !has_lang {
+                    libc::setenv(
+                        b"LANG\0".as_ptr() as *const c_char,
+                        b"en_US.UTF-8\0".as_ptr() as *const c_char,
+                        1,
+                    );
+                }
 
                 let login_flag = CString::new("-l").unwrap();
                 let args = [shell_cstr.as_ptr(), login_flag.as_ptr(), std::ptr::null()];
                 execvp(shell_cstr.as_ptr(), args.as_ptr());
+                let exec_errno = Self::errno() as u8;
+                libc::write(exec_write_fd, (&exec_errno as *const u8).cast(), 1);
                 libc::_exit(1);
             }
         }
 
         unsafe {
             close(slave_fd);
+            close(exec_write_fd);
         }
 
         let session_id = format!("pty-{}", Self::uuid_simple());
@@ -293,6 +340,8 @@ impl PtyManager {
                 session_id.clone(),
                 PtySession {
                     master_fd,
+                    pid,
+                    exec_fd: exec_read_fd,
                     running: running.clone(),
                     handle: None,
                 },
@@ -384,10 +433,15 @@ impl PtyManager {
 
     #[cfg(unix)]
     pub fn read_output(&self, id: &str, app: AppHandle) {
-        let (master_fd, running) = {
+        let (master_fd, pid, exec_fd, running) = {
             let sessions = self.sessions.lock();
             match sessions.get(id) {
-                Some(session) => (session.master_fd, session.running.clone()),
+                Some(session) => (
+                    session.master_fd,
+                    session.pid,
+                    session.exec_fd,
+                    session.running.clone(),
+                ),
                 None => return,
             }
         };
@@ -396,6 +450,46 @@ impl PtyManager {
         let app_clone = app.clone();
 
         let handle = thread::spawn(move || {
+            // Wait for the exec outcome first: the pipe's write end closes on
+            // a successful exec, or delivers the errno byte on failure. The
+            // bounded poll keeps the running flag responsive so a concurrent
+            // close cannot deadlock on this read.
+            let mut exec_err = [0u8; 1];
+            loop {
+                if !running.load(Ordering::Relaxed) {
+                    return;
+                }
+                let mut exec_pfd = pollfd {
+                    fd: exec_fd,
+                    events: POLLIN,
+                    revents: 0,
+                };
+                let exec_poll = unsafe { poll(&mut exec_pfd as *mut pollfd, 1, 500) };
+                if exec_poll < 0 {
+                    let err = std::io::Error::last_os_error();
+                    if err.kind() == std::io::ErrorKind::Interrupted {
+                        continue;
+                    }
+                    break;
+                }
+                if exec_poll == 0 {
+                    continue;
+                }
+                let exec_read = unsafe { libc::read(exec_fd, exec_err.as_mut_ptr().cast(), 1) };
+                if exec_read == 1 {
+                    let reason = std::io::Error::from_raw_os_error(exec_err[0] as i32);
+                    emit_pty_data(
+                        &app_clone,
+                        &id_clone,
+                        format!("\r\n[Failed to start shell: {}]\r\n", reason),
+                    );
+                    let _ = app_clone.emit(&format!("pty:exit:{}", id_clone), ());
+                    reap_child(pid);
+                    return;
+                }
+                break;
+            }
+
             let mut buf = [0u8; 8192];
             // PTY reads can split a single UTF-8 code point across buffers.
             // Keep the trailing partial bytes and decode them together with the next chunk.
@@ -430,6 +524,7 @@ impl PtyManager {
                         emit_pty_data(&app_clone, &id_clone, data);
                     }
                     let _ = app_clone.emit(&format!("pty:exit:{}", id_clone), ());
+                    reap_child(pid);
                     break;
                 }
 
@@ -449,6 +544,11 @@ impl PtyManager {
                             format!("\r\n[Read error: {}]\r\n", err),
                         );
                     }
+                    // The shell is gone for good (on Linux a dead child makes
+                    // the master read fail with EIO instead of returning 0),
+                    // so notify the frontend and reap the child here too.
+                    let _ = app_clone.emit(&format!("pty:exit:{}", id_clone), ());
+                    reap_child(pid);
                     break;
                 }
 
@@ -474,24 +574,34 @@ impl PtyManager {
 
     #[cfg(unix)]
     pub fn close_session(&self, id: &str) -> Result<(), String> {
-        let (master_fd, running, handle) = {
+        let (master_fd, pid, exec_fd, running, handle) = {
             let mut sessions = self.sessions.lock();
             match sessions.remove(id) {
-                Some(session) => (session.master_fd, session.running, session.handle),
+                Some(session) => (
+                    session.master_fd,
+                    session.pid,
+                    session.exec_fd,
+                    session.running,
+                    session.handle,
+                ),
                 None => return Err("Session not found".to_string()),
             }
         };
 
-        // Signal the read thread to stop, then close the fd
+        // Signal the read thread to stop and wait for it BEFORE closing the
+        // fds: closing first would let a new PTY reuse the fd numbers while
+        // the reader is still between poll() and read().
         running.store(false, Ordering::Relaxed);
-        unsafe {
-            close(master_fd);
-        }
-
-        // Wait for the read thread to exit (with implicit timeout from poll)
         if let Some(handle) = handle {
             let _ = handle.join();
         }
+
+        unsafe {
+            close(master_fd);
+            close(exec_fd);
+        }
+
+        reap_child(pid);
 
         Ok(())
     }
@@ -511,13 +621,14 @@ impl PtyManager {
         for session in sessions {
             session.running.store(false, Ordering::Relaxed);
 
+            if let Some(handle) = session.handle {
+                let _ = handle.join();
+            }
+
             #[cfg(unix)]
             unsafe {
                 close(session.master_fd);
-            }
-
-            if let Some(handle) = session.handle {
-                let _ = handle.join();
+                close(session.exec_fd);
             }
         }
     }
