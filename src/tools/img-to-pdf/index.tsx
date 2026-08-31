@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Radio, Upload, message, Typography, Slider, Switch, Input } from 'antd';
 import { FilePdfOutlined, PlusOutlined, LeftOutlined, RightOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
-import jsPDF from 'jspdf';
 import { save } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { useTranslation } from 'react-i18next';
@@ -123,6 +122,7 @@ async function buildPDF(
   const cellW = (usableW - (cols - 1) * GAP) / cols;
   const cellH = (usableH - (rows - 1) * GAP) / rows;
 
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
 
   for (let p = 0; p < items.length; p += perPage) {

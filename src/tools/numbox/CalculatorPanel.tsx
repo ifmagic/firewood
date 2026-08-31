@@ -1,7 +1,48 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Input, message, Tag, Tooltip, Button, type InputRef } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
-import { create, all } from 'mathjs/number';
+import {
+  create,
+  evaluateDependencies,
+  addDependencies,
+  subtractDependencies,
+  multiplyDependencies,
+  divideDependencies,
+  modDependencies,
+  powDependencies,
+  unaryMinusDependencies,
+  unaryPlusDependencies,
+  piDependencies,
+  eDependencies,
+  tauDependencies,
+  phiDependencies,
+  sqrtDependencies,
+  cbrtDependencies,
+  absDependencies,
+  expDependencies,
+  logDependencies,
+  log2Dependencies,
+  log10Dependencies,
+  sinDependencies,
+  cosDependencies,
+  tanDependencies,
+  asinDependencies,
+  acosDependencies,
+  atanDependencies,
+  atan2Dependencies,
+  sinhDependencies,
+  coshDependencies,
+  tanhDependencies,
+  floorDependencies,
+  ceilDependencies,
+  roundDependencies,
+  minDependencies,
+  maxDependencies,
+  factorialDependencies,
+  gcdDependencies,
+  lcmDependencies,
+  hypotDependencies,
+} from 'mathjs/number';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -9,7 +50,47 @@ import { type CalcRecord, formatRecordForCopy, useCalcHistory } from './history'
 import HistorySection from './HistorySection';
 import styles from './Numbox.module.css';
 
-const math = create(all);
+const math = create({
+  ...evaluateDependencies,
+  ...addDependencies,
+  ...subtractDependencies,
+  ...multiplyDependencies,
+  ...divideDependencies,
+  ...modDependencies,
+  ...powDependencies,
+  ...unaryMinusDependencies,
+  ...unaryPlusDependencies,
+  ...piDependencies,
+  ...eDependencies,
+  ...tauDependencies,
+  ...phiDependencies,
+  ...sqrtDependencies,
+  ...cbrtDependencies,
+  ...absDependencies,
+  ...expDependencies,
+  ...logDependencies,
+  ...log2Dependencies,
+  ...log10Dependencies,
+  ...sinDependencies,
+  ...cosDependencies,
+  ...tanDependencies,
+  ...asinDependencies,
+  ...acosDependencies,
+  ...atanDependencies,
+  ...atan2Dependencies,
+  ...sinhDependencies,
+  ...coshDependencies,
+  ...tanhDependencies,
+  ...floorDependencies,
+  ...ceilDependencies,
+  ...roundDependencies,
+  ...minDependencies,
+  ...maxDependencies,
+  ...factorialDependencies,
+  ...gcdDependencies,
+  ...lcmDependencies,
+  ...hypotDependencies,
+});
 const DEBOUNCE_MS = 300;
 const HOLD_DELAY_MS = 500;
 const HOLD_REPEAT_MS = 100;
