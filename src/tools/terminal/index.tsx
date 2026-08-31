@@ -21,7 +21,7 @@ interface PtyOutput {
   data: string;
 }
 
-type TerminalTabStatus = 'loading' | 'ready' | 'error';
+type TerminalTabStatus = 'loading' | 'ready' | 'error' | 'exited';
 
 interface TerminalTabState {
   id: string;
@@ -94,6 +94,11 @@ let _terminalTabs: TerminalTabState[] = [];
 let _activeTerminalTabId: string | null = null;
 let _nextTerminalTabNumber = 1;
 let _terminalContainer: HTMLElement | null = null;
+let _notifyTabsChanged: (() => void) | null = null;
+
+function notifyTabsChanged() {
+  _notifyTabsChanged?.();
+}
 
 function ensureActiveTabSelection() {
   if (_activeTerminalTabId && _terminalTabs.some((tab) => tab.id === _activeTerminalTabId)) {
@@ -359,8 +364,6 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
   clearBufferedOutput(tab);
   tab.term?.clear();
 
-  await destroyTabPty(tab);
-
   // True when a newer session start or a disposal has taken over the tab.
   // Once stale, this run must not touch tab fields: the new owner is
   // responsible for the resources stored on them (via destroyTabPty).
@@ -370,15 +373,18 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
     return;
   }
 
-  // The shell starts as soon as the PTY is created, so the terminal must be
-  // mounted and measured first: TUI apps query the terminal size at startup,
-  // and a PTY that is still 0x0 (or not yet resized) makes them render tiny.
-  await ensureFontsReady(fontFamily);
+  // Tear down the previous PTY while the fonts load in parallel. The shell
+  // starts as soon as the PTY is created, so the terminal must be mounted
+  // and measured first: TUI apps query the terminal size at startup, and a
+  // PTY that is still 0x0 (or not yet resized) makes them render tiny.
+  await Promise.all([destroyTabPty(tab), ensureFontsReady(fontFamily)]);
   if (isStale()) {
     return;
   }
 
-  if (!tab.mounted && _terminalContainer) {
+  // Only the active tab may mount into the shared container; a background
+  // tab waits for the mount effect to render it once it is activated.
+  if (!tab.mounted && _terminalContainer && _activeTerminalTabId === tab.id) {
     mountTerminalTab(tab, _terminalContainer, fontSize, fontFamily);
   }
   if (!tab.mounted) {
@@ -422,6 +428,8 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
       if (tab.disposed || tab.ptyId !== ptyId) return;
 
       tab.ptyId = null;
+      tab.status = 'exited';
+      tab.error = null;
       void invoke('close_pty_session', { id: ptyId }).catch(() => {});
 
       if (tab.mounted && tab.term) {
@@ -429,6 +437,7 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
       } else {
         appendBufferedOutput(tab, exitMessage);
       }
+      notifyTabsChanged();
     });
     tab.ptyListenReady = dataListener;
     tab.ptyExitListenReady = exitListener;
@@ -677,7 +686,8 @@ export default function TerminalPage() {
       if (!tab) return;
 
       const shellOverride = toShellOverride(value, defaultShell);
-      if (tab.shellPath === shellOverride) return;
+      const canRestart = tab.status === 'exited' || tab.status === 'error';
+      if (tab.shellPath === shellOverride && !canRestart) return;
 
       runTabSession(tab, shellOverride, 'Failed to switch shell');
     },
@@ -716,6 +726,13 @@ export default function TerminalPage() {
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    _notifyTabsChanged = refreshFromStore;
+    return () => {
+      _notifyTabsChanged = null;
+    };
+  }, [refreshFromStore]);
 
   useEffect(() => {
     if (_terminalTabs.length > 0) return;
@@ -864,10 +881,6 @@ export default function TerminalPage() {
       } else if (event.key === '0') {
         event.preventDefault();
         applyFontSize(DEFAULT_FONT_SIZE);
-      } else if (event.key === 'l' || event.key === 'L') {
-        event.preventDefault();
-        const tab = getTabState(_activeTerminalTabId);
-        tab?.term?.clear();
       }
     };
 
@@ -1122,6 +1135,17 @@ export default function TerminalPage() {
             </div>
           )}
 
+          {activeTabMeta?.status === 'exited' && (
+            <div className="firewood-terminal-exited-overlay">
+              <div className="firewood-terminal-exited-banner">
+                <span>Shell exited</span>
+                <button type="button" className="firewood-terminal-retry-btn" onClick={handleRetryActiveTab}>
+                  Restart
+                </button>
+              </div>
+            </div>
+          )}
+
           <div
             ref={(el) => {
               containerRef.current = el;
@@ -1132,7 +1156,7 @@ export default function TerminalPage() {
         </div>
 
         <div className="firewood-terminal-footer">
-          <span className="firewood-terminal-hint">⌘± resize · ⌘0 reset · Ctrl+L clear</span>
+          <span className="firewood-terminal-hint">⌘± resize · ⌘0 reset</span>
         </div>
       </div>
     </ToolLayout>

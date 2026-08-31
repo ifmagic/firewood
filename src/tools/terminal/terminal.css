@@ -111,6 +111,12 @@
 	box-shadow: 0 0 0 3px rgba(244, 135, 113, 0.14);
 }
 
+.firewood-terminal-tabStatus-exited,
+.firewood-terminal-tab.is-active .firewood-terminal-tabStatus-exited {
+	background: #808080;
+	box-shadow: 0 0 0 3px rgba(128, 128, 128, 0.14);
+}
+
 .firewood-terminal-tabTitle {
 	min-width: 0;
 	overflow: hidden;
@@ -396,6 +402,34 @@
 
 .firewood-terminal-retry-btn:active {
 	background: #0d5a8c;
+}
+
+.firewood-terminal-exited-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	z-index: 10;
+}
+
+.firewood-terminal-exited-banner {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 16px;
+	background: rgba(30, 30, 30, 0.92);
+	border: 1px solid #3c3c3c;
+	border-radius: 8px;
+	color: #cccccc;
+	font-size: 13px;
+	pointer-events: auto;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.firewood-terminal-exited-banner .firewood-terminal-retry-btn {
+	margin-top: 0;
 }
 
 .firewood-terminal-footer {
