@@ -5,6 +5,8 @@ const en = {
     hideAll: 'Hide All',
     collapse: 'Collapse sidebar',
     expand: 'Expand sidebar',
+    viewMenu: 'View menu',
+    allToolsHidden: 'All tools are hidden. Restore them from the top menu',
   },
 
   // Tool names

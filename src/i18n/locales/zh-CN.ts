@@ -5,6 +5,8 @@ const zhCN = {
     hideAll: '全部隐藏',
     collapse: '收起侧边栏',
     expand: '展开侧边栏',
+    viewMenu: '视图菜单',
+    allToolsHidden: '所有工具已隐藏，可从顶部菜单恢复',
   },
 
   // Tool names

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Layout, Button, Dropdown, Checkbox } from 'antd';
+import { Layout, Button, Dropdown, Checkbox, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FireOutlined, MenuOutlined, HolderOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -57,10 +57,7 @@ export default function Sidebar({
             e.stopPropagation();
           }}
         >
-          <Checkbox
-            checked={visibility[tool.id] ?? true}
-            onChange={() => onToggleToolVisibility(tool.id)}
-          />
+          <Checkbox checked={visibility[tool.id] ?? true} onChange={() => onToggleToolVisibility(tool.id)} />
           {tool.icon}
           <span>{getToolLabel(tool)}</span>
         </div>
@@ -131,7 +128,9 @@ export default function Sidebar({
         setDraggingToolId(origin.toolId);
       }
 
-      const targetElement = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('[data-tool-id]') as HTMLElement | null;
+      const targetElement = document
+        .elementFromPoint(moveEvent.clientX, moveEvent.clientY)
+        ?.closest('[data-tool-id]') as HTMLElement | null;
       const targetToolId = targetElement?.dataset.toolId ?? null;
       if (dragOverToolIdRef.current !== targetToolId) {
         dragOverToolIdRef.current = targetToolId;
@@ -177,10 +176,7 @@ export default function Sidebar({
   }, [draggingToolId]);
 
   return (
-    <Sider
-      width={collapsed ? 56 : 200}
-      className={`${styles.sider} ${collapsed ? styles.siderCollapsed : ''}`}
-    >
+    <Sider width={collapsed ? 56 : 200} className={`${styles.sider} ${collapsed ? styles.siderCollapsed : ''}`}>
       <div className={styles.logo}>
         <button
           type="button"
@@ -195,15 +191,12 @@ export default function Sidebar({
           {!collapsed && <span className={styles.logoText}>Firewood</span>}
         </button>
         {!collapsed && (
-          <Dropdown
-            menu={{ items: viewMenuItems }}
-            placement="bottomRight"
-            trigger={['click']}
-          >
+          <Dropdown menu={{ items: viewMenuItems }} placement="bottomRight" trigger={['click']}>
             <Button
               type="text"
               size="small"
               icon={<MenuOutlined />}
+              aria-label={t('sidebar.viewMenu')}
               className={styles.viewButton}
             />
           </Dropdown>
@@ -214,16 +207,25 @@ export default function Sidebar({
           const isSelected = tool.id === currentKey;
           const isDragOver = dragOverToolId === tool.id && draggingToolId !== tool.id;
           const isDragging = draggingToolId === tool.id;
-          return (
+          const toolItem = (
             <div
               key={tool.id}
               data-tool-id={tool.id}
+              role="button"
+              tabIndex={0}
+              aria-current={isSelected ? 'page' : undefined}
               className={`${styles.toolItem} ${isSelected ? styles.toolItemSelected : ''} ${isDragOver ? styles.toolItemDragOver : ''} ${isDragging ? styles.toolItemDragging : ''} ${collapsed ? styles.toolItemCollapsed : ''}`}
               onClick={() => {
                 if (draggingToolIdRef.current) {
                   return;
                 }
                 navigate(`/${tool.id}`);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  navigate(`/${tool.id}`);
+                }
               }}
             >
               {!collapsed && (
@@ -239,7 +241,17 @@ export default function Sidebar({
               {!collapsed && <span className={styles.toolName}>{getToolLabel(tool)}</span>}
             </div>
           );
+          return collapsed ? (
+            <Tooltip key={tool.id} title={getToolLabel(tool)} placement="right">
+              {toolItem}
+            </Tooltip>
+          ) : (
+            toolItem
+          );
         })}
+        {visibleTools.length === 0 && !collapsed && (
+          <div className={styles.toolListEmpty}>{t('sidebar.allToolsHidden')}</div>
+        )}
       </div>
       <div className={styles.siderFooter}>
         <SettingsMenuButton onOpenAbout={onOpenAbout} />

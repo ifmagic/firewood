@@ -4,11 +4,14 @@
 	color-scheme: light;
 	--fw-surface: #ffffff;
 	--fw-sidebar-bg: #1e1e1e;
-	--fw-border: #333333;
+	--fw-border: #3a3a3a;
 	--fw-divider: #eeeeee;
-	--fw-hover: rgba(255, 255, 255, 0.06);
+	--fw-hover: rgba(255, 255, 255, 0.1);
+	--fw-hover-strong: rgba(255, 255, 255, 0.12);
 	--fw-hover-light: #f2f3f5;
 	--fw-selected-bg: rgba(255, 107, 53, 0.16);
+	--fw-selected-bg-hover: rgba(255, 107, 53, 0.22);
+	--fw-popover-bg: #262626;
 	--fw-accent: #ff7a45;
 	--fw-text-primary: #f5f5f5;
 	--fw-text-secondary: rgba(245, 245, 245, 0.72);
