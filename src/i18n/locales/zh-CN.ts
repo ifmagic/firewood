@@ -16,6 +16,7 @@ const zhCN = {
     translate: '文本翻译',
     moxia: '墨匣',
     numbox: '算盘',
+    terminal: '终端',
   },
 
   // Common actions
@@ -46,6 +47,36 @@ const zhCN = {
   fontSizeControl: {
     decrease: '缩小字体',
     increase: '放大字体',
+  },
+
+  // Terminal
+  terminal: {
+    tabTitle: '终端 {{n}}',
+    defaultShellName: 'Shell',
+    exitedMessage: 'Shell 已退出',
+    renameHint: '双击重命名',
+    locked: '已锁定',
+    renameAria: '重命名 {{title}}',
+    lock: '锁定 {{title}}',
+    unlock: '解锁 {{title}}',
+    closeTab: '关闭 {{title}}',
+    newTerminal: '新建终端',
+    fontFamily: '字体',
+    systemDefaultFont: '系统默认',
+    fontSize: '字号',
+    shellPath: 'Shell 路径',
+    browseShell: '浏览 Shell 可执行文件',
+    selectShellTitle: '选择 Shell 可执行文件',
+    noTerminals: '没有打开的终端',
+    createTerminal: '创建终端',
+    connecting: '正在连接 Shell...',
+    connectFailed: '连接 PTY 失败',
+    switchFailed: '切换 Shell 失败',
+    renderFailed: '渲染终端失败: {{error}}',
+    retry: '重试',
+    shellExited: 'Shell 已退出',
+    restart: '重启',
+    hint: '⌘± 调整字号 · ⌘0 重置',
   },
 
   // JSON

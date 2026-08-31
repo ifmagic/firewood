@@ -16,6 +16,7 @@ const en = {
     translate: 'Translate',
     moxia: 'Moxia',
     numbox: 'Abacus',
+    terminal: 'Terminal',
   },
 
   // Common actions
@@ -46,6 +47,36 @@ const en = {
   fontSizeControl: {
     decrease: 'Decrease font size',
     increase: 'Increase font size',
+  },
+
+  // Terminal
+  terminal: {
+    tabTitle: 'Terminal {{n}}',
+    defaultShellName: 'Shell',
+    exitedMessage: 'Shell exited',
+    renameHint: 'Double-click to rename',
+    locked: 'Locked',
+    renameAria: 'Rename {{title}}',
+    lock: 'Lock {{title}}',
+    unlock: 'Unlock {{title}}',
+    closeTab: 'Close {{title}}',
+    newTerminal: 'New Terminal',
+    fontFamily: 'Font family',
+    systemDefaultFont: 'System Default',
+    fontSize: 'Font size',
+    shellPath: 'Shell path',
+    browseShell: 'Browse for shell executable',
+    selectShellTitle: 'Select Shell Executable',
+    noTerminals: 'No terminals open',
+    createTerminal: 'Create Terminal',
+    connecting: 'Connecting to shell...',
+    connectFailed: 'Failed to connect PTY',
+    switchFailed: 'Failed to switch shell',
+    renderFailed: 'Failed to render terminal: {{error}}',
+    retry: 'Retry',
+    shellExited: 'Shell exited',
+    restart: 'Restart',
+    hint: '⌘± resize · ⌘0 reset',
   },
 
   // JSON

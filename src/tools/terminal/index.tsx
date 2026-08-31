@@ -7,7 +7,9 @@ import { Terminal, type IDisposable } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
+import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import i18n from '../../i18n';
 import ToolLayout from '../../components/ToolLayout';
 import './terminal.css';
 import '@xterm/xterm/css/xterm.css';
@@ -136,7 +138,7 @@ function createTerminalHost() {
 function createTerminalTabState(shellPath: string | null): TerminalTabState {
   return {
     id: createTabId(),
-    title: `Terminal ${_nextTerminalTabNumber++}`,
+    title: i18n.t('terminal.tabTitle', { n: _nextTerminalTabNumber++ }),
     shellPath,
     term: null,
     fit: null,
@@ -160,7 +162,7 @@ function createTerminalTabState(shellPath: string | null): TerminalTabState {
 
 function getShellDisplayName(shellPath: string | null, defaultShell: string) {
   const target = shellPath || defaultShell;
-  if (!target) return 'Shell';
+  if (!target) return i18n.t('terminal.defaultShellName');
   return target.split(/[\\/]/).pop() || target;
 }
 
@@ -410,7 +412,6 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
     }
 
     const ptyId = info.id;
-    const exitMessage = '\r\n[Shell exited]\r\n';
 
     // Ownership handoff and listener registration happen in one synchronous
     // block: a concurrent session start or disposal can only observe the tab
@@ -432,6 +433,7 @@ async function startTabSession(tab: TerminalTabState, shellPath: string | null, 
       tab.error = null;
       void invoke('close_pty_session', { id: ptyId }).catch(() => {});
 
+      const exitMessage = `\r\n[${i18n.t('terminal.exitedMessage')}]\r\n`;
       if (tab.mounted && tab.term) {
         tab.term.write(exitMessage);
       } else {
@@ -492,6 +494,7 @@ function toShellOverride(selectedShell: string, defaultShell: string) {
 }
 
 export default function TerminalPage() {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<ResizeObserver | null>(null);
   const mountedRef = useRef(false);
@@ -582,9 +585,9 @@ export default function TerminalPage() {
       _terminalTabs = [..._terminalTabs, tab];
       _activeTerminalTabId = tab.id;
       refreshFromStore();
-      runTabSession(tab, shellPath, 'Failed to connect PTY');
+      runTabSession(tab, shellPath, t('terminal.connectFailed'));
     },
-    [refreshFromStore, runTabSession],
+    [refreshFromStore, runTabSession, t],
   );
 
   const handleActivateTab = useCallback(
@@ -661,8 +664,8 @@ export default function TerminalPage() {
   const handleRetryActiveTab = useCallback(() => {
     const tab = getTabState(_activeTerminalTabId);
     if (!tab) return;
-    runTabSession(tab, tab.shellPath, 'Failed to connect PTY');
-  }, [runTabSession]);
+    runTabSession(tab, tab.shellPath, t('terminal.connectFailed'));
+  }, [runTabSession, t]);
 
   const handleToggleTabLock = useCallback(
     (tabId: string) => {
@@ -689,9 +692,9 @@ export default function TerminalPage() {
       const canRestart = tab.status === 'exited' || tab.status === 'error';
       if (tab.shellPath === shellOverride && !canRestart) return;
 
-      runTabSession(tab, shellOverride, 'Failed to switch shell');
+      runTabSession(tab, shellOverride, t('terminal.switchFailed'));
     },
-    [defaultShell, runTabSession],
+    [defaultShell, runTabSession, t],
   );
 
   const handleBrowseShell = async () => {
@@ -701,14 +704,14 @@ export default function TerminalPage() {
     const baseShell = selectedShellValue || defaultShell || '/bin/zsh';
     const dir = baseShell.split('/').slice(0, -1).join('/') || '/bin';
     const file = await open({
-      title: 'Select Shell Executable',
+      title: t('terminal.selectShellTitle'),
       directory: false,
       multiple: false,
       defaultPath: dir,
     });
 
     if (typeof file === 'string' && file) {
-      runTabSession(tab, toShellOverride(file, defaultShell), 'Failed to switch shell');
+      runTabSession(tab, toShellOverride(file, defaultShell), t('terminal.switchFailed'));
     }
   };
 
@@ -795,7 +798,7 @@ export default function TerminalPage() {
         if (cancelled || tab.disposed) return;
         settleTabMountWaiters(tab, err);
         tab.status = 'error';
-        tab.error = `Failed to render terminal: ${String(err)}`;
+        tab.error = t('terminal.renderFailed', { error: String(err) });
         refreshFromStore();
       });
 
@@ -803,7 +806,7 @@ export default function TerminalPage() {
       cancelled = true;
       unmountTerminalTab(tab);
     };
-  }, [activeTabId, refreshFromStore]);
+  }, [activeTabId, refreshFromStore, t]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -889,7 +892,7 @@ export default function TerminalPage() {
   }, [applyFontSize]);
 
   return (
-    <ToolLayout title="Terminal">
+    <ToolLayout title={t('toolName.terminal', { defaultValue: 'Terminal' })}>
       <div className="firewood-terminal">
         <div className="firewood-terminal-header">
           <div className="firewood-terminal-tabStrip">
@@ -898,6 +901,7 @@ export default function TerminalPage() {
                 const isActive = tab.id === activeTabId;
                 const isEditing = editingTabId === tab.id;
                 const shellLabel = getShellDisplayName(tab.shellPath, defaultShell);
+                const lockedSuffix = tab.locked ? ` · ${t('terminal.locked')}` : '';
 
                 return (
                   <div
@@ -905,8 +909,8 @@ export default function TerminalPage() {
                     className={`firewood-terminal-tab${isActive ? ' is-active' : ''}${isEditing ? ' is-editing' : ''}${tab.locked ? ' is-locked' : ''}`}
                     title={
                       isActive
-                        ? `${tab.title} · ${shellLabel} · Double-click to rename${tab.locked ? ' · Locked' : ''}`
-                        : `${tab.title} · ${shellLabel}${tab.locked ? ' · Locked' : ''}`
+                        ? `${tab.title} · ${shellLabel} · ${t('terminal.renameHint')}${lockedSuffix}`
+                        : `${tab.title} · ${shellLabel}${lockedSuffix}`
                     }
                   >
                     {isEditing ? (
@@ -927,7 +931,7 @@ export default function TerminalPage() {
                               handleCancelRenameTab();
                             }
                           }}
-                          aria-label={`Rename ${tab.title}`}
+                          aria-label={t('terminal.renameAria', { title: tab.title })}
                         />
                       </div>
                     ) : (
@@ -956,8 +960,16 @@ export default function TerminalPage() {
                     <button
                       type="button"
                       className={`firewood-terminal-tabLock${tab.locked ? ' is-locked' : ''}`}
-                      title={tab.locked ? `Unlock ${tab.title}` : `Lock ${tab.title}`}
-                      aria-label={tab.locked ? `Unlock ${tab.title}` : `Lock ${tab.title}`}
+                      title={
+                        tab.locked
+                          ? t('terminal.unlock', { title: tab.title })
+                          : t('terminal.lock', { title: tab.title })
+                      }
+                      aria-label={
+                        tab.locked
+                          ? t('terminal.unlock', { title: tab.title })
+                          : t('terminal.lock', { title: tab.title })
+                      }
                       aria-pressed={tab.locked}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -969,8 +981,8 @@ export default function TerminalPage() {
                     <button
                       type="button"
                       className="firewood-terminal-tabClose"
-                      title={`Close ${tab.title}`}
-                      aria-label={`Close ${tab.title}`}
+                      title={t('terminal.closeTab', { title: tab.title })}
+                      aria-label={t('terminal.closeTab', { title: tab.title })}
                       onClick={(event) => {
                         event.stopPropagation();
                         handleCloseTab(tab.id);
@@ -987,8 +999,8 @@ export default function TerminalPage() {
               type="button"
               className="firewood-terminal-btn firewood-terminal-addTab"
               onClick={() => handleCreateTab(activeTabState?.shellPath ?? null)}
-              title="New Terminal"
-              aria-label="New Terminal"
+              title={t('terminal.newTerminal')}
+              aria-label={t('terminal.newTerminal')}
             >
               <PlusOutlined />
             </button>
@@ -1004,8 +1016,8 @@ export default function TerminalPage() {
                 if (showMenu) setShowMenu(false);
                 else openMenu();
               }}
-              title="Settings"
-              aria-label="Settings"
+              title={t('label.settings')}
+              aria-label={t('label.settings')}
             >
               ⋮
             </button>
@@ -1019,7 +1031,7 @@ export default function TerminalPage() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="firewood-terminal-menu-section">
-              <div className="firewood-terminal-menu-label">Font family</div>
+              <div className="firewood-terminal-menu-label">{t('terminal.fontFamily')}</div>
               <div className="firewood-terminal-menu-row">
                 <select
                   className="firewood-terminal-menu-select"
@@ -1028,7 +1040,7 @@ export default function TerminalPage() {
                   style={{ fontFamily, fontSize: 11 }}
                 >
                   <option value={DEFAULT_FONT_FAMILY} style={{ fontFamily: DEFAULT_FONT_FAMILY }}>
-                    System Default
+                    {t('terminal.systemDefaultFont')}
                   </option>
                   {systemFonts.length > 0 && <option disabled>──────────</option>}
                   {systemFonts.map((family) => (
@@ -1043,7 +1055,7 @@ export default function TerminalPage() {
             <div className="firewood-terminal-menu-divider" />
 
             <div className="firewood-terminal-menu-section">
-              <div className="firewood-terminal-menu-label">Font size</div>
+              <div className="firewood-terminal-menu-label">{t('terminal.fontSize')}</div>
               <div className="firewood-terminal-menu-row">
                 <div className="firewood-terminal-menu-input-group">
                   <button
@@ -1078,7 +1090,7 @@ export default function TerminalPage() {
             <div className="firewood-terminal-menu-divider" />
 
             <div className="firewood-terminal-menu-section">
-              <div className="firewood-terminal-menu-label">Shell path</div>
+              <div className="firewood-terminal-menu-label">{t('terminal.shellPath')}</div>
               <div className="firewood-terminal-menu-row">
                 <select
                   className="firewood-terminal-menu-select"
@@ -1098,7 +1110,7 @@ export default function TerminalPage() {
                   onClick={() => {
                     void handleBrowseShell();
                   }}
-                  title="Browse for shell executable"
+                  title={t('terminal.browseShell')}
                   disabled={!activeTabState}
                 >
                   📁
@@ -1111,9 +1123,9 @@ export default function TerminalPage() {
         <div className="firewood-terminal-body">
           {tabs.length === 0 && (
             <div className="firewood-terminal-emptyState">
-              <div className="firewood-terminal-emptyTitle">No terminals open</div>
+              <div className="firewood-terminal-emptyTitle">{t('terminal.noTerminals')}</div>
               <button type="button" className="firewood-terminal-emptyAction" onClick={() => handleCreateTab(null)}>
-                Create Terminal
+                {t('terminal.createTerminal')}
               </button>
             </div>
           )}
@@ -1121,7 +1133,7 @@ export default function TerminalPage() {
           {activeTabMeta?.status === 'loading' && (
             <div className="firewood-terminal-overlay">
               <div className="firewood-terminal-spinner" />
-              <span>Connecting to shell...</span>
+              <span>{t('terminal.connecting')}</span>
             </div>
           )}
 
@@ -1130,7 +1142,7 @@ export default function TerminalPage() {
               <div className="firewood-terminal-error-icon">!</div>
               <span>{activeTabMeta.error}</span>
               <button type="button" className="firewood-terminal-retry-btn" onClick={handleRetryActiveTab}>
-                Retry
+                {t('terminal.retry')}
               </button>
             </div>
           )}
@@ -1138,9 +1150,9 @@ export default function TerminalPage() {
           {activeTabMeta?.status === 'exited' && (
             <div className="firewood-terminal-exited-overlay">
               <div className="firewood-terminal-exited-banner">
-                <span>Shell exited</span>
+                <span>{t('terminal.shellExited')}</span>
                 <button type="button" className="firewood-terminal-retry-btn" onClick={handleRetryActiveTab}>
-                  Restart
+                  {t('terminal.restart')}
                 </button>
               </div>
             </div>
@@ -1156,7 +1168,7 @@ export default function TerminalPage() {
         </div>
 
         <div className="firewood-terminal-footer">
-          <span className="firewood-terminal-hint">⌘± resize · ⌘0 reset</span>
+          <span className="firewood-terminal-hint">{t('terminal.hint')}</span>
         </div>
       </div>
     </ToolLayout>
