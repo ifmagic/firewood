@@ -432,7 +432,7 @@ impl PtyManager {
     }
 
     #[cfg(unix)]
-    pub fn read_output(&self, id: &str, app: AppHandle) {
+    pub fn read_output(&self, id: &str, app: AppHandle) -> Result<(), String> {
         let (master_fd, pid, exec_fd, running) = {
             let sessions = self.sessions.lock();
             match sessions.get(id) {
@@ -442,7 +442,7 @@ impl PtyManager {
                     session.exec_fd,
                     session.running.clone(),
                 ),
-                None => return,
+                None => return Err("Session not found".to_string()),
             }
         };
 
@@ -565,11 +565,14 @@ impl PtyManager {
         if let Some(session) = sessions.get_mut(id) {
             session.handle = Some(handle);
         }
+
+        Ok(())
     }
 
     #[cfg(not(unix))]
-    pub fn read_output(&self, id: &str, app: AppHandle) {
+    pub fn read_output(&self, id: &str, app: AppHandle) -> Result<(), String> {
         let _ = (id, app);
+        Err(Self::unsupported_error())
     }
 
     #[cfg(unix)]

@@ -7,7 +7,7 @@ mod translate;
 
 use moxia::create_moxia_manager;
 use pty::create_pty_manager;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -59,8 +59,8 @@ async fn close_pty_session(
 }
 
 #[tauri::command]
-fn get_default_shell() -> String {
-    pty::PtyManager::get_default_shell()
+fn get_default_shell() -> Result<String, String> {
+    Ok(pty::PtyManager::get_default_shell())
 }
 
 #[tauri::command]
@@ -68,12 +68,12 @@ fn start_pty_reader(
     app: tauri::AppHandle,
     pty_manager: State<'_, Arc<pty::PtyManager>>,
     id: String,
-) {
-    pty_manager.read_output(&id, app);
+) -> Result<(), String> {
+    pty_manager.read_output(&id, app)
 }
 
 #[tauri::command]
-fn list_shells() -> Vec<String> {
+fn list_shells() -> Result<Vec<String>, String> {
     let candidates = vec![
         "/bin/zsh",
         "/bin/bash",
@@ -81,24 +81,62 @@ fn list_shells() -> Vec<String> {
         "/usr/local/bin/fish",
         "/opt/homebrew/bin/fish",
     ];
-    candidates
+    Ok(candidates
         .into_iter()
         .filter(|p| std::path::Path::new(p).exists())
         .map(|p| p.to_string())
-        .collect()
+        .collect())
+}
+
+static MONOSPACE_FONT_FAMILIES: OnceLock<Vec<String>> = OnceLock::new();
+
+fn font_is_monospace(font: &font_kit::font::Font) -> bool {
+    let (Some(i_glyph), Some(w_glyph)) = (font.glyph_for_char('i'), font.glyph_for_char('W'))
+    else {
+        return false;
+    };
+    let (Ok(i_advance), Ok(w_advance)) = (font.advance(i_glyph), font.advance(w_glyph)) else {
+        return false;
+    };
+    (i_advance.x() - w_advance.x()).abs() < 1e-4
+}
+
+fn family_is_monospace(source: &font_kit::source::SystemSource, family: &str) -> bool {
+    let Ok(handle) = source.select_family_by_name(family) else {
+        return false;
+    };
+    let Some(font) = handle.fonts().iter().find_map(|h| h.load().ok()) else {
+        return false;
+    };
+    font_is_monospace(&font)
+}
+
+fn scan_monospace_families() -> Vec<String> {
+    use font_kit::source::SystemSource;
+
+    let source = SystemSource::new();
+    let Ok(families) = source.all_families() else {
+        return vec!["monospace".to_string()];
+    };
+
+    let mut monospace: Vec<String> = families
+        .into_iter()
+        .filter(|family| family_is_monospace(&source, family))
+        .collect();
+    monospace.sort_by_key(|family| family.to_lowercase());
+    monospace
 }
 
 #[tauri::command]
-fn list_system_fonts() -> Vec<String> {
-    use font_kit::source::SystemSource;
-    match SystemSource::new().all_families() {
-        Ok(families) => {
-            let mut sorted = families;
-            sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
-            sorted
-        }
-        Err(_) => vec!["monospace".to_string()],
+async fn list_system_fonts() -> Result<Vec<String>, String> {
+    if let Some(fonts) = MONOSPACE_FONT_FAMILIES.get() {
+        return Ok(fonts.clone());
     }
+    let fonts = tauri::async_runtime::spawn_blocking(scan_monospace_families)
+        .await
+        .map_err(|err| format!("Font scan task failed: {}", err))?;
+    let _ = MONOSPACE_FONT_FAMILIES.set(fonts.clone());
+    Ok(fonts)
 }
 
 fn show_window(app: &tauri::AppHandle) {
