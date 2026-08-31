@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.8.1
+
+### ✨ Features
+
+- Localize the Terminal interface and add an option to lock individual terminal tabs.
+
+### 🐛 Bug Fixes
+
+- Improve terminal startup, command execution, shell lifecycle handling, and recovery from closed shells.
+- Preserve terminal scrollback when clearing the screen and limit font choices to compatible monospace families.
+- Prevent duplicate consecutive timestamp conversion entries.
+
+### 🔧 Chore / Updates
+
+- Refine sidebar hierarchy and settings-menu presentation.
+- Update the GitHub Actions `github-script` action to v9.
+
 ## v0.8.0
 
 ### ✨ Features
