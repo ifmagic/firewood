@@ -11,6 +11,14 @@ import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import i18n from '../../i18n';
 import ToolLayout from '../../components/ToolLayout';
+import {
+  appendBufferedOutput,
+  buildShellOptions,
+  clearBufferedOutput,
+  getShellDisplayName,
+  selectActiveTab,
+  toShellOverride,
+} from './helpers';
 import './terminal.css';
 import '@xterm/xterm/css/xterm.css';
 
@@ -60,7 +68,6 @@ interface TerminalTabView {
 const DEFAULT_FONT_SIZE = 14;
 const MIN_FONT_SIZE = 8;
 const MAX_FONT_SIZE = 32;
-const MAX_BUFFER_CHARS = 100_000;
 const RESIZE_FIT_THROTTLE_MS = 100;
 const DEFAULT_FONT_FAMILY =
   "'Hack Nerd Font Mono', 'Hack Nerd Font', 'Cascadia Code NF', 'Cascadia Code', Menlo, Consolas, monospace";
@@ -103,10 +110,7 @@ function notifyTabsChanged() {
 }
 
 function ensureActiveTabSelection() {
-  if (_activeTerminalTabId && _terminalTabs.some((tab) => tab.id === _activeTerminalTabId)) {
-    return;
-  }
-  _activeTerminalTabId = _terminalTabs[0]?.id ?? null;
+  _activeTerminalTabId = selectActiveTab(_terminalTabs, _activeTerminalTabId);
 }
 
 function getTabState(id: string | null) {
@@ -160,34 +164,12 @@ function createTerminalTabState(shellPath: string | null): TerminalTabState {
   };
 }
 
-function getShellDisplayName(shellPath: string | null, defaultShell: string) {
-  const target = shellPath || defaultShell;
-  if (!target) return i18n.t('terminal.defaultShellName');
-  return target.split(/[\\/]/).pop() || target;
-}
-
 function ensureFontsReady(fontFamily: string): Promise<void> {
   if (!_fontsReady || _fontsReadyKey !== fontFamily) {
     _fontsReadyKey = fontFamily;
     _fontsReady = document.fonts.ready.then(() => document.fonts.load(`16px ${fontFamily}`)).then(() => {});
   }
   return _fontsReady;
-}
-
-function appendBufferedOutput(tab: TerminalTabState, data: string) {
-  if (!data) return;
-  tab.bufferedOutput.push(data);
-  tab.bufferedChars += data.length;
-
-  while (tab.bufferedChars > MAX_BUFFER_CHARS && tab.bufferedOutput.length > 0) {
-    const removed = tab.bufferedOutput.shift() ?? '';
-    tab.bufferedChars -= removed.length;
-  }
-}
-
-function clearBufferedOutput(tab: TerminalTabState) {
-  tab.bufferedOutput = [];
-  tab.bufferedChars = 0;
 }
 
 function settleTabMountWaiters(tab: TerminalTabState, error?: unknown) {
@@ -483,14 +465,6 @@ function applyTerminalAppearance(fontSize: number, fontFamily: string) {
       fitTerminalTab(tab);
     }
   });
-}
-
-function buildShellOptions(defaultShell: string, availableShells: string[], currentShell: string) {
-  return [...new Set([defaultShell, ...availableShells, currentShell].filter(Boolean))];
-}
-
-function toShellOverride(selectedShell: string, defaultShell: string) {
-  return selectedShell === defaultShell ? null : selectedShell;
 }
 
 export default function TerminalPage() {
