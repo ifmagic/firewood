@@ -72,6 +72,7 @@ const zhCN = {
     unlock: '解锁 {{title}}',
     closeTab: '关闭 {{title}}',
     newTerminal: '新建终端',
+    refreshDisplay: '刷新显示',
     fontFamily: '字体',
     systemDefaultFont: '系统默认',
     fontSize: '字号',

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
-import { CloseOutlined, LockOutlined, PlusOutlined, UnlockOutlined } from '@ant-design/icons';
+import { CloseOutlined, LockOutlined, PlusOutlined, ReloadOutlined, UnlockOutlined } from '@ant-design/icons';
 import { Terminal, type IDisposable } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -48,6 +48,7 @@ interface TerminalTabState {
   bufferedOutput: string[];
   bufferedChars: number;
   mounted: boolean;
+  lastPaintedDpr: number | null;
   status: TerminalTabStatus;
   error: string | null;
   disposed: boolean;
@@ -155,6 +156,7 @@ function createTerminalTabState(shellPath: string | null): TerminalTabState {
     bufferedOutput: [],
     bufferedChars: 0,
     mounted: false,
+    lastPaintedDpr: null,
     status: 'loading',
     error: null,
     disposed: false,
@@ -238,12 +240,34 @@ function getOrCreateTerminal(tab: TerminalTabState, fontSize: number, fontFamily
 }
 
 function fitTerminalTab(tab: TerminalTabState) {
-  if (!tab.term || !tab.fit) return;
-
+  if (!tab.term || !tab.fit || !tab.mounted) return;
+  // PTY notification is centralized in the tab's onResize handler (attached
+  // only while mounted); fit() itself never needs to invoke resize_pty.
   tab.fit.fit();
-  if (tab.ptyId) {
-    invoke('resize_pty', { id: tab.ptyId, rows: tab.term.rows, cols: tab.term.cols }).catch(console.error);
-  }
+}
+
+function forceTerminalRedraw(tab: TerminalTabState) {
+  const term = tab.term;
+  if (!term || !tab.mounted) return;
+
+  // In @xterm/xterm 6.0.0, Terminal.resize() with unchanged dimensions is a
+  // no-op (CoreBrowserTerminal early-returns), and a same-size TIOCSWINSZ
+  // delivers no SIGWINCH — so re-issuing the current size can never reproduce
+  // what a window resize does. Round-trip the width instead: both resizes take
+  // the full path (renderer handleResize → row rebuild + dimension recompute)
+  // and notify the PTY, so TUI apps redraw exactly as they do on a window
+  // resize. The buffer reflow round-trips losslessly (verified against 6.0.0
+  // buffer reflow, incl. wide chars and full scrollback).
+  const { cols, rows } = term;
+  term.resize(cols + 1, rows);
+  term.resize(cols, rows);
+  term.refresh(0, term.rows - 1);
+  tab.lastPaintedDpr = window.devicePixelRatio;
+}
+
+function refreshTerminalDisplay(tab: TerminalTabState) {
+  fitTerminalTab(tab);
+  forceTerminalRedraw(tab);
 }
 
 function mountTerminalTab(tab: TerminalTabState, container: HTMLElement, fontSize: number, fontFamily: string) {
@@ -276,6 +300,12 @@ function mountTerminalTab(tab: TerminalTabState, container: HTMLElement, fontSiz
   term.options.fontSize = fontSize;
   term.options.fontFamily = fontFamily;
   fitTerminalTab(tab);
+  if (tab.lastPaintedDpr !== null && tab.lastPaintedDpr !== window.devicePixelRatio) {
+    // devicePixelRatio changed while this tab was unmounted; with the
+    // container size unchanged, nothing else would repaint it.
+    forceTerminalRedraw(tab);
+  }
+  tab.lastPaintedDpr = window.devicePixelRatio;
   settleTabMountWaiters(tab);
 
   setTimeout(() => term.focus(), 50);
@@ -641,6 +671,12 @@ export default function TerminalPage() {
     runTabSession(tab, tab.shellPath, t('terminal.connectFailed'));
   }, [runTabSession, t]);
 
+  const handleRefreshTerminal = useCallback(() => {
+    const tab = getTabState(_activeTerminalTabId);
+    if (!tab) return;
+    refreshTerminalDisplay(tab);
+  }, []);
+
   const handleToggleTabLock = useCallback(
     (tabId: string) => {
       const tab = getTabState(tabId);
@@ -836,6 +872,41 @@ export default function TerminalPage() {
   }, []);
 
   useEffect(() => {
+    // WKWebView host-level zoom can leave the terminal and the TUI app it
+    // hosts stale even when the container size — and therefore FitAddon —
+    // sees no change. xterm's built-in ScreenDprMonitor recomputes render
+    // dimensions on DPR changes but never notifies the PTY, so this watch is
+    // the only SIGWINCH path on DPR-only changes; it makes TUI apps redraw
+    // just like a window resize would.
+    let lastDpr = window.devicePixelRatio;
+    let mql: MediaQueryList | null = null;
+
+    const syncDpr = () => {
+      const dpr = window.devicePixelRatio;
+      if (dpr === lastDpr) return;
+      lastDpr = dpr;
+      attachMediaQuery();
+      _terminalTabs.forEach((tab) => {
+        if (tab.mounted && !tab.disposed) refreshTerminalDisplay(tab);
+      });
+    };
+
+    const attachMediaQuery = () => {
+      mql?.removeEventListener('change', syncDpr);
+      if (typeof window.matchMedia !== 'function') return;
+      mql = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      mql.addEventListener('change', syncDpr);
+    };
+
+    attachMediaQuery();
+    window.addEventListener('resize', syncDpr);
+    return () => {
+      mql?.removeEventListener('change', syncDpr);
+      window.removeEventListener('resize', syncDpr);
+    };
+  }, []);
+
+  useEffect(() => {
     void ensureFontsReady(fontFamily)
       .then(() => {
         applyTerminalAppearance(fontSize, fontFamily);
@@ -969,6 +1040,16 @@ export default function TerminalPage() {
               })}
             </div>
 
+            <button
+              type="button"
+              className="firewood-terminal-btn firewood-terminal-refresh"
+              onClick={handleRefreshTerminal}
+              title={t('terminal.refreshDisplay')}
+              aria-label={t('terminal.refreshDisplay')}
+              disabled={!activeTabState}
+            >
+              <ReloadOutlined />
+            </button>
             <button
               type="button"
               className="firewood-terminal-btn firewood-terminal-addTab"

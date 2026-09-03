@@ -271,6 +271,16 @@
 	background: #505050;
 }
 
+.firewood-terminal-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.firewood-terminal-refresh {
+	align-self: center;
+	margin-left: 2px;
+}
+
 .firewood-terminal-addTab {
 	align-self: center;
 	margin-left: 2px;

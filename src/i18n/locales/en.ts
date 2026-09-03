@@ -72,6 +72,7 @@ const en = {
     unlock: 'Unlock {{title}}',
     closeTab: 'Close {{title}}',
     newTerminal: 'New Terminal',
+    refreshDisplay: 'Refresh display',
     fontFamily: 'Font family',
     systemDefaultFont: 'System Default',
     fontSize: 'Font size',

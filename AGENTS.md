@@ -36,6 +36,12 @@ WKWebView (Tauri's webview) hard constraints:
 - code variant does not use `drawSelection()`: its selection layer relies on getClientRects measurement, which renders wrong under WKWebView; native selection rendering (same as the writing variant) is reliable.
 - `src/utils/wkWebViewFocusShim.ts` must be kept, installed at startup in `main.tsx`: the Safari 26 engine ignores `focus({preventScroll: true})` and scrolls the old caret back into view; CM's built-in Safari-26 workaround depends on the `Version/<n>` token in the UA, which Tauri WKWebView's UA lacks, so it always fails. The shim wraps `focus` to save/restore ancestor scroll positions on `preventScroll: true` calls — removing it reintroduces "long document scrolled far, click → viewport jumps back to the old caret line". Dev verification: the `JumpDebugger` overlay in json-formatter (auto-mounted under `import.meta.env.DEV`).
 
+### Terminal (xterm.js)
+
+- Forced repaints go through `forceTerminalRedraw` in `src/tools/terminal/index.tsx`: in @xterm/xterm 6.0.0 a same-size `Terminal.resize()` is a no-op (`CoreBrowserTerminal` early-returns) and a same-size `TIOCSWINSZ` delivers no SIGWINCH, so it round-trips the width (`resize(cols+1, rows)`, then back). Both resizes take the full renderer path (row rebuild + dimension recompute) and notify the PTY, so TUI apps redraw exactly as they do on a window resize; the buffer reflow round-trips losslessly. The header refresh button, the `devicePixelRatio`-change fallback, and the remount DPR check all go through `refreshTerminalDisplay` (fit + `forceTerminalRedraw`) to clear WKWebView ghosting (e.g. after host zoom changes). The app-level DPR watch exists because xterm's built-in `ScreenDprMonitor` never notifies the PTY.
+- PTY resize notification lives solely in each tab's `onResize` handler; `fit()` never invokes `resize_pty` itself.
+- Never call `fit()` on a hidden/unmounted tab: its measurements are garbage (`display: none` plus the inline `height: 100%` host parses as ~100px) and can shrink the PTY to a few rows.
+
 ### Tauri Rust Commands
 
 New commands follow the two existing patterns: `pty.rs` (stateful resource pool) and `translate.rs` (stateless call):

@@ -9,6 +9,8 @@ const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness } = 
     write: ReturnType<typeof vi.fn>;
     clear: ReturnType<typeof vi.fn>;
     focus: ReturnType<typeof vi.fn>;
+    resize: ReturnType<typeof vi.fn>;
+    refresh: ReturnType<typeof vi.fn>;
   }[] = [];
   const callLog: string[] = [];
   let sessionCounter = 0;
@@ -52,17 +54,35 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: listenMock }));
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }));
 vi.mock('@xterm/xterm', () => ({
+  // Mirrors @xterm/xterm 6.0.0 CoreBrowserTerminal.resize: same-size resize
+  // is a no-op (no onResize fire); real changes fire handlers synchronously.
   Terminal: class {
     options: Record<string, unknown> = {};
     rows = 24;
     cols = 80;
     unicode = { activeVersion: '' };
+    private resizeHandlers: Array<(event: { cols: number; rows: number }) => void> = [];
     onData = vi.fn(() => ({ dispose: vi.fn() }));
-    onResize = vi.fn(() => ({ dispose: vi.fn() }));
+    onResize = vi.fn((callback: (event: { cols: number; rows: number }) => void) => {
+      this.resizeHandlers.push(callback);
+      return {
+        dispose: () => {
+          const index = this.resizeHandlers.indexOf(callback);
+          if (index >= 0) this.resizeHandlers.splice(index, 1);
+        },
+      };
+    });
     loadAddon = vi.fn();
     open = vi.fn();
     write = vi.fn();
     clear = vi.fn();
+    resize = vi.fn((cols: number, rows: number) => {
+      if (cols === this.cols && rows === this.rows) return;
+      this.cols = cols;
+      this.rows = rows;
+      this.resizeHandlers.slice().forEach((handler) => handler({ cols, rows }));
+    });
+    refresh = vi.fn();
     dispose = vi.fn();
     focus = vi.fn();
 
@@ -186,6 +206,65 @@ describe('terminal lifecycle', () => {
     });
 
     expect(terminals[0].write).toHaveBeenCalledWith('hello pty');
+  });
+
+  it('refresh button round-trips terminal size and notifies the pty in order', async () => {
+    mountPage();
+    await flush();
+
+    const refreshButton = container?.querySelector('.firewood-terminal-refresh');
+    expect(refreshButton, 'refresh button').toBeTruthy();
+    expect((refreshButton as HTMLButtonElement).disabled).toBe(false);
+    click(refreshButton!);
+
+    expect(terminals[0].resize).toHaveBeenCalledTimes(2);
+    expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+    expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
+    expect(terminals[0].refresh).toHaveBeenCalledWith(0, 23);
+    expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 81 });
+    expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 80 });
+    // fit() on unchanged dimensions must not add a third notification
+    expect(invokeMock.mock.calls.filter(([cmd]) => cmd === 'resize_pty')).toHaveLength(2);
+  });
+
+  it('repaints mounted terminals when devicePixelRatio changes', async () => {
+    mountPage();
+    await flush();
+
+    terminals[0].resize.mockClear();
+    try {
+      act(() => {
+        Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+      expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
+      expect(terminals[0].refresh).toHaveBeenCalledWith(0, 23);
+      expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 81 });
+      expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 80 });
+    } finally {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
+    }
+  });
+
+  it('repaints a tab on remount when devicePixelRatio changed while hidden', async () => {
+    mountPage();
+    await flush();
+
+    clickAddTab();
+    await flush();
+    expect(tabCount()).toBe(2);
+
+    act(() => {
+      Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });
+    });
+    click(tabButtons()[0]);
+    await flush();
+
+    expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+    expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
+    Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
   });
 
   it('marks the tab exited and restarts on demand', async () => {
