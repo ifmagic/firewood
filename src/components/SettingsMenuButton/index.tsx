@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { Tooltip } from 'antd';
-import { CheckOutlined, GlobalOutlined, InfoCircleOutlined, RightOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  GlobalOutlined,
+  InfoCircleOutlined,
+  RightOutlined,
+  SettingOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { setStoredLanguage } from '../../i18n';
 import { emit } from '@tauri-apps/api/event';
@@ -46,7 +53,15 @@ export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonPr
 
   return (
     <>
-      {open && <div className={styles.overlay} onClick={() => { setOpen(false); setLanguageOpen(false); }} />}
+      {open && (
+        <div
+          className={styles.overlay}
+          onClick={() => {
+            setOpen(false);
+            setLanguageOpen(false);
+          }}
+        />
+      )}
       <Tooltip title={t('label.settings')} placement="right">
         <button
           type="button"
@@ -67,12 +82,10 @@ export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonPr
       {open && (
         <div className={styles.menuPanel}>
           <div className={styles.menuItemWrap}>
-            <button
-              type="button"
-              className={styles.menuItem}
-              onClick={() => setLanguageOpen((prev) => !prev)}
-            >
-              <span className={styles.menuIcon}><GlobalOutlined /></span>
+            <button type="button" className={styles.menuItem} onClick={() => setLanguageOpen((prev) => !prev)}>
+              <span className={styles.menuIcon}>
+                <GlobalOutlined />
+              </span>
               <span className={styles.menuLabel}>{t('settings.language')}</span>
               <span className={`${styles.menuArrow} ${languageOpen ? styles.menuArrowOpen : ''}`}>
                 <RightOutlined />
@@ -91,9 +104,7 @@ export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonPr
                       void handleLanguageChange(opt.value);
                     }}
                   >
-                    <span className={styles.checkIcon}>
-                      {i18n.language === opt.value ? <CheckOutlined /> : null}
-                    </span>
+                    <span className={styles.checkIcon}>{i18n.language === opt.value ? <CheckOutlined /> : null}</span>
                     <span>{opt.label}</span>
                   </button>
                 ))}
@@ -103,13 +114,23 @@ export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonPr
 
           <div className={styles.menuDivider} />
 
-          <button type="button" className={styles.menuItem} onClick={() => { void handleCheckForUpdates(); }}>
-            <span className={styles.menuIcon}><SyncOutlined /></span>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              void handleCheckForUpdates();
+            }}
+          >
+            <span className={styles.menuIcon}>
+              <SyncOutlined />
+            </span>
             <span className={styles.menuLabel}>{t('settings.checkForUpdates')}</span>
           </button>
 
           <button type="button" className={styles.menuItem} onClick={handleOpenAbout}>
-            <span className={styles.menuIcon}><InfoCircleOutlined /></span>
+            <span className={styles.menuIcon}>
+              <InfoCircleOutlined />
+            </span>
             <span className={styles.menuLabel}>{t('settings.aboutApp')}</span>
           </button>
         </div>

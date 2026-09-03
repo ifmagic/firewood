@@ -1,309 +1,314 @@
 /* ── Main layout: left controls + right preview ── */
 .mainLayout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 16px;
-  height: 100%;
-  min-height: 0;
+	display: grid;
+	grid-template-columns: 280px 1fr;
+	gap: 16px;
+	height: 100%;
+	min-height: 0;
 }
 
 /* ── Left control panel ── */
 .controlPanel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  padding-right: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	overflow-y: auto;
+	padding-right: 4px;
 }
 
 /* Upload area */
 .uploadArea {
-  border-radius: 10px;
-  flex-shrink: 0;
+	border-radius: 10px;
+	flex-shrink: 0;
 }
 
 .uploadArea :global(.ant-upload.ant-upload-drag) {
-  min-height: 108px;
-  max-height: 108px;
-  border-radius: 12px;
-  border-style: dashed;
-  border-color: #d0d5dd;
-  background: var(--fw-panel-subtle);
-  transition: border-color 0.2s, background 0.2s;
+	min-height: 108px;
+	max-height: 108px;
+	border-radius: 12px;
+	border-style: dashed;
+	border-color: #d0d5dd;
+	background: var(--fw-panel-subtle);
+	transition:
+		border-color 0.2s,
+		background 0.2s;
 }
 
 .uploadArea :global(.ant-upload.ant-upload-drag:hover) {
-  border-color: var(--fw-accent);
-  background: #fff7f2;
+	border-color: var(--fw-accent);
+	background: #fff7f2;
 }
 
 .uploadArea :global(.ant-upload-btn) {
-  padding: 0 !important;
-  height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+	padding: 0 !important;
+	height: 96px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .uploadHint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
 }
 
 .uploadIcon {
-  font-size: 22px;
-  color: rgba(0, 0, 0, 0.25);
-  margin-bottom: 2px;
+	font-size: 22px;
+	color: rgba(0, 0, 0, 0.25);
+	margin-bottom: 2px;
 }
 
 .uploadText {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--fw-text-body);
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--fw-text-body);
 }
 
 .uploadSubText {
-  font-size: 11px;
-  color: var(--fw-text-tertiary);
+	font-size: 11px;
+	color: var(--fw-text-tertiary);
 }
 
 /* Thumbnail area */
 .thumbSection {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid var(--fw-divider);
-  border-radius: 12px;
-  background: var(--fw-surface);
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	background: var(--fw-surface);
 }
 
 .thumbHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 .thumbGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 6px;
 }
 
 .thumbCard {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--fw-divider);
-  background: var(--fw-panel-subtle);
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-  transition: transform 120ms ease, opacity 120ms ease, border-color 120ms ease;
+	position: relative;
+	aspect-ratio: 1;
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid var(--fw-divider);
+	background: var(--fw-panel-subtle);
+	cursor: grab;
+	user-select: none;
+	touch-action: none;
+	transition:
+		transform 120ms ease,
+		opacity 120ms ease,
+		border-color 120ms ease;
 }
 
 .thumbCard:hover {
-  border-color: #d0d5dd;
+	border-color: #d0d5dd;
 }
 
 .thumbCard:hover .thumbRemove {
-  opacity: 1;
+	opacity: 1;
 }
 
 .thumbImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
 
 .thumbIdx {
-  position: absolute;
-  bottom: 2px;
-  left: 3px;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 3px;
-  padding: 0 4px;
-  font-size: 10px;
-  color: #fff;
-  line-height: 16px;
-  user-select: none;
+	position: absolute;
+	bottom: 2px;
+	left: 3px;
+	background: rgba(0, 0, 0, 0.45);
+	border-radius: 3px;
+	padding: 0 4px;
+	font-size: 10px;
+	color: #fff;
+	line-height: 16px;
+	user-select: none;
 }
 
 .thumbRemove {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.4);
-  color: #fff;
-  cursor: pointer;
-  font-size: 11px;
-  line-height: 16px;
-  text-align: center;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s;
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	border: none;
+	background: rgba(0, 0, 0, 0.4);
+	color: #fff;
+	cursor: pointer;
+	font-size: 11px;
+	line-height: 16px;
+	text-align: center;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.15s;
 }
 
 /* Settings area */
 .settingsSection {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  background: var(--fw-panel-subtle);
-  border-radius: 12px;
-  border: 1px solid var(--fw-divider);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 14px;
+	background: var(--fw-panel-subtle);
+	border-radius: 12px;
+	border: 1px solid var(--fw-divider);
 }
 
 .settingRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .settingCol {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 }
 
 .settingLabel {
-  font-size: 12px;
-  color: var(--fw-text-tertiary);
-  flex-shrink: 0;
+	font-size: 12px;
+	color: var(--fw-text-tertiary);
+	flex-shrink: 0;
 }
 
 .settingValue {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--fw-text-body);
+	margin-left: auto;
+	font-size: 12px;
+	color: var(--fw-text-body);
 }
 
 .settingTip {
-  font-size: 11px;
+	font-size: 11px;
 }
 
 .settingActions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 
 .settingActions :global(.ant-btn) {
-  white-space: nowrap;
+	white-space: nowrap;
 }
 
 /* Export button */
 .exportGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	flex-shrink: 0;
 }
 
 .exportBtn {
-  flex-shrink: 0;
-  border-radius: 8px;
-  height: 40px;
-  font-weight: 500;
+	flex-shrink: 0;
+	border-radius: 8px;
+	height: 40px;
+	font-weight: 500;
 }
 
 .sizeInput {
-  width: 120px;
-  margin-left: auto;
+	width: 120px;
+	margin-left: auto;
 }
 
 /* ── Right preview panel ── */
 .previewPanel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 0;
-  padding: 16px;
-  border: 1px solid var(--fw-divider);
-  border-radius: 12px;
-  background: var(--fw-panel-subtle);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	min-height: 0;
+	padding: 16px;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	background: var(--fw-panel-subtle);
 }
 
 .previewEmpty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	flex: 1;
 }
 
 .previewEmptyIcon {
-  font-size: 48px;
-  color: rgba(0, 0, 0, 0.08);
+	font-size: 48px;
+	color: rgba(0, 0, 0, 0.08);
 }
 
 .previewPaper {
-  width: 100%;
-  max-width: 420px;
-  aspect-ratio: 210 / 297;
-  border-radius: 6px;
-  background: #fff;
-  border: 1px solid var(--fw-divider);
-  box-shadow: var(--fw-panel-shadow);
-  padding: 6%;
+	width: 100%;
+	max-width: 420px;
+	aspect-ratio: 210 / 297;
+	border-radius: 6px;
+	background: #fff;
+	border: 1px solid var(--fw-divider);
+	box-shadow: var(--fw-panel-shadow);
+	padding: 6%;
 }
 
 .previewCanvas {
-  position: relative;
-  width: 100%;
-  height: 100%;
+	position: relative;
+	width: 100%;
+	height: 100%;
 }
 
 .previewCell {
-  position: absolute;
-  border: 1px solid var(--fw-divider);
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--fw-panel-subtle);
+	position: absolute;
+	border: 1px solid var(--fw-divider);
+	border-radius: 3px;
+	overflow: hidden;
+	background: var(--fw-panel-subtle);
 }
 
 .previewImage {
-  position: absolute;
-  object-fit: contain;
-  display: block;
+	position: absolute;
+	object-fit: contain;
+	display: block;
 }
 
 .previewPager {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-top: 12px;
 }
 
 /* ── Responsive ── */
 @media (max-width: 680px) {
-  .mainLayout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-  }
+	.mainLayout {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto 1fr;
+	}
 
-  .previewPanel {
-    max-height: 50vh;
-  }
+	.previewPanel {
+		max-height: 50vh;
+	}
 
-  .thumbGrid {
-    grid-template-columns: repeat(5, 1fr);
-  }
+	.thumbGrid {
+		grid-template-columns: repeat(5, 1fr);
+	}
 }

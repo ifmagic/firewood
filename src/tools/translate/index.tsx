@@ -1,12 +1,6 @@
 import { useState, useCallback, useLayoutEffect, useRef } from 'react';
 import { Input, Button, Select, message, Tooltip, Space, Tag, Empty } from 'antd';
-import {
-  SwapOutlined,
-  CopyOutlined,
-  SettingOutlined,
-  DeleteOutlined,
-  SwapRightOutlined,
-} from '@ant-design/icons';
+import { SwapOutlined, CopyOutlined, SettingOutlined, DeleteOutlined, SwapRightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
@@ -94,9 +88,7 @@ function HistoryPreviewText({ content }: { content: string }) {
 
     const frameId = window.requestAnimationFrame(checkTruncation);
 
-    const observer = typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(checkTruncation)
-      : null;
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(checkTruncation) : null;
 
     observer?.observe(element);
     window.addEventListener('resize', checkTruncation);
@@ -109,10 +101,7 @@ function HistoryPreviewText({ content }: { content: string }) {
   }, [content]);
 
   return (
-    <Tooltip
-      placement="topLeft"
-      title={isTruncated ? <div className={styles.historyPreview}>{content}</div> : null}
-    >
+    <Tooltip placement="topLeft" title={isTruncated ? <div className={styles.historyPreview}>{content}</div> : null}>
       <span className={styles.historyTextWrap}>
         <span
           ref={textRef}
@@ -149,9 +138,7 @@ export default function Translate() {
   const increaseFontSize = useCallback(() => setFontSize((s: number) => Math.min(s + 1, 32)), [setFontSize]);
   const decreaseFontSize = useCallback(() => setFontSize((s: number) => Math.max(s - 1, 10)), [setFontSize]);
 
-  const isConfigured = provider === 'tencent'
-    ? tencentSecretId && tencentSecretKey
-    : baiduAppId && baiduSecret;
+  const isConfigured = provider === 'tencent' ? tencentSecretId && tencentSecretKey : baiduAppId && baiduSecret;
 
   const addHistory = (record: Omit<TranslateHistoryRecord, 'id' | 'convertedAt'>) => {
     const newRecord: TranslateHistoryRecord = {
@@ -264,10 +251,7 @@ export default function Translate() {
             options={TARGET_LANG_VALUES.map((l) => ({ value: l.value, label: t(l.label) }))}
           />
           <div style={{ flex: 1 }} />
-          <span
-            className={styles.configToggle}
-            onClick={() => setShowConfig(!showConfig)}
-          >
+          <span className={styles.configToggle} onClick={() => setShowConfig(!showConfig)}>
             <SettingOutlined />
             {showConfig ? t('translate.collapseConfig') : t('translate.apiConfig')}
           </span>
@@ -278,7 +262,10 @@ export default function Translate() {
           <div className={styles.configSection}>
             {provider === 'tencent' ? (
               <>
-                <div className={styles.configGuide} style={{ borderLeftColor: '#1677ff', background: 'rgba(22, 119, 255, 0.04)' }}>
+                <div
+                  className={styles.configGuide}
+                  style={{ borderLeftColor: '#1677ff', background: 'rgba(22, 119, 255, 0.04)' }}
+                >
                   {t('translate.tencentGuide', { link: '' }).split('{link}')[0]}
                   <a href="https://console.cloud.tencent.com/cam/capi" target="_blank" rel="noreferrer">
                     {t('translate.tencentLink')}
@@ -322,7 +309,10 @@ export default function Translate() {
               </>
             ) : (
               <>
-                <div className={styles.configGuide} style={{ borderLeftColor: '#f5a623', background: 'rgba(245, 166, 35, 0.04)' }}>
+                <div
+                  className={styles.configGuide}
+                  style={{ borderLeftColor: '#f5a623', background: 'rgba(245, 166, 35, 0.04)' }}
+                >
                   {t('translate.baiduGuide', { link: '' }).split('{link}')[0]}
                   <a href="https://fanyi-api.baidu.com/manage/developer" target="_blank" rel="noreferrer">
                     {t('translate.baiduLink')}
@@ -376,7 +366,10 @@ export default function Translate() {
                     className="fw-tool-iconDangerButton"
                     title={t('action.clear')}
                     aria-label={t('action.clear')}
-                    onClick={() => { setInput(''); setOutput(''); }}
+                    onClick={() => {
+                      setInput('');
+                      setOutput('');
+                    }}
                     disabled={!input && !output}
                   />
                 </Space>
@@ -410,7 +403,13 @@ export default function Translate() {
                   />
                 </Tooltip>
               </div>
-              <TextArea className={styles.editorTextarea} value={output} readOnly placeholder={t('translate.translationResult')} style={{ fontSize }} />
+              <TextArea
+                className={styles.editorTextarea}
+                value={output}
+                readOnly
+                placeholder={t('translate.translationResult')}
+                style={{ fontSize }}
+              />
             </div>
           </div>
           <StatusBar
@@ -448,10 +447,7 @@ export default function Translate() {
               {history.map((record) => (
                 <div key={record.id} className={styles.historyItem}>
                   <div className={styles.historyItemMain}>
-                    <Tag
-                      color={record.provider === 'tencent' ? 'blue' : 'orange'}
-                      className={styles.historyTag}
-                    >
+                    <Tag color={record.provider === 'tencent' ? 'blue' : 'orange'} className={styles.historyTag}>
                       {record.provider === 'tencent' ? t('translate.tencent') : t('translate.baidu')}
                     </Tag>
                     <span className={styles.historyLang}>
@@ -462,9 +458,7 @@ export default function Translate() {
                     <HistoryPreviewText content={record.input} />
                     <SwapRightOutlined className={styles.historyArrow} />
                     <HistoryPreviewText content={record.output} />
-                    <span className={styles.historyTime}>
-                      {dayjs(record.convertedAt).format('HH:mm:ss')}
-                    </span>
+                    <span className={styles.historyTime}>{dayjs(record.convertedAt).format('HH:mm:ss')}</span>
                   </div>
                   <Tooltip title={t('translate.copyDetails')}>
                     <Button

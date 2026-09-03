@@ -66,11 +66,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Navigate to={`/${tools[0].id}`} replace />} />
                 {tools.map((tool) => (
-                  <Route
-                    key={tool.id}
-                    path={`/${tool.id}`}
-                    element={<tool.component />}
-                  />
+                  <Route key={tool.id} path={`/${tool.id}`} element={<tool.component />} />
                 ))}
               </Routes>
             </Suspense>

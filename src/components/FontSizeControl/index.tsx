@@ -35,9 +35,13 @@ export default function FontSizeControl({ fontSize, onIncrease, onDecrease }: Pr
 
   return (
     <div ref={ref} className={styles.control} tabIndex={0}>
-      <button className={styles.btn} onClick={onDecrease} title={t('fontSizeControl.decrease')}>−</button>
+      <button className={styles.btn} onClick={onDecrease} title={t('fontSizeControl.decrease')}>
+        −
+      </button>
       <span className={styles.size}>{fontSize}px</span>
-      <button className={styles.btn} onClick={onIncrease} title={t('fontSizeControl.increase')}>+</button>
+      <button className={styles.btn} onClick={onIncrease} title={t('fontSizeControl.increase')}>
+        +
+      </button>
     </div>
   );
 }

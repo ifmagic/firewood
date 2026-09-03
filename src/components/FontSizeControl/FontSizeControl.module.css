@@ -1,41 +1,43 @@
 .control {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding-left: 10px;
-  border-left: 1px solid var(--fw-divider);
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding-left: 10px;
+	border-left: 1px solid var(--fw-divider);
 }
 
 .btn {
-  background: transparent;
-  border: none;
-  color: var(--fw-status-text);
-  font-size: 15px;
-  line-height: 1;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background 0.15s, color 0.15s;
+	background: transparent;
+	border: none;
+	color: var(--fw-status-text);
+	font-size: 15px;
+	line-height: 1;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	border-radius: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	transition:
+		background 0.15s,
+		color 0.15s;
 }
 
 .btn:hover {
-  background: var(--fw-hover-light);
-  color: var(--fw-text-strong);
+	background: var(--fw-hover-light);
+	color: var(--fw-text-strong);
 }
 
 .size {
-  font-size: 12px;
-  color: var(--fw-status-text);
-  min-width: 42px;
-  text-align: center;
-  user-select: none;
+	font-size: 12px;
+	color: var(--fw-status-text);
+	min-width: 42px;
+	text-align: center;
+	user-select: none;
 }
 
 .control:focus {
-  outline: none;
+	outline: none;
 }

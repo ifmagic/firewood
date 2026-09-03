@@ -1,303 +1,305 @@
 .container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	height: 100%;
 }
 
 .settingsBar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 8px 12px;
-  border: 1px solid var(--fw-divider);
-  border-radius: 12px;
-  background: var(--fw-panel-subtle);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 8px 12px;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	background: var(--fw-panel-subtle);
 }
 
 .settingsBar > span {
-  color: var(--fw-text-tertiary);
-  font-size: 13px;
+	color: var(--fw-text-tertiary);
+	font-size: 13px;
 }
 
 .editorShell {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border: 1px solid var(--fw-divider);
-  border-radius: 12px;
-  background: var(--fw-surface);
-  overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	background: var(--fw-surface);
+	overflow: hidden;
 }
 
 .editorArea {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  min-height: 180px;
-  max-height: 360px;
-  padding: 16px;
-  background: var(--fw-editor-bg);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	min-height: 180px;
+	max-height: 360px;
+	padding: 16px;
+	background: var(--fw-editor-bg);
 }
 
 .panel {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border: 1px solid var(--fw-divider);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--fw-surface);
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--fw-surface);
 }
 
 .panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--fw-divider);
-  background: var(--fw-panel-subtle);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 12px 14px;
+	border-bottom: 1px solid var(--fw-divider);
+	background: var(--fw-panel-subtle);
 }
 
 .panelLabel {
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--fw-text-tertiary);
-  letter-spacing: 0.02em;
+	font-weight: 600;
+	font-size: 12px;
+	color: var(--fw-text-tertiary);
+	letter-spacing: 0.02em;
 }
 
 .editorTextarea {
-  flex: 1;
-  min-height: 220px !important;
-  resize: none;
-  font-size: 14px;
-  line-height: 1.7;
-  border: none !important;
-  border-radius: 0 !important;
-  background: var(--fw-panel-subtle) !important;
+	flex: 1;
+	min-height: 220px !important;
+	resize: none;
+	font-size: 14px;
+	line-height: 1.7;
+	border: none !important;
+	border-radius: 0 !important;
+	background: var(--fw-panel-subtle) !important;
 }
 
 .actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .configSection {
-  background: var(--fw-panel-subtle);
-  border: 1px solid var(--fw-divider);
-  border-radius: 12px;
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+	background: var(--fw-panel-subtle);
+	border: 1px solid var(--fw-divider);
+	border-radius: 12px;
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }
 
 .configRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .configRow > label {
-  width: 80px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--fw-text-tertiary);
-  font-weight: 600;
+	width: 80px;
+	flex-shrink: 0;
+	font-size: 12px;
+	color: var(--fw-text-tertiary);
+	font-weight: 600;
 }
 
 .configRow > :global(.ant-input),
 .configRow > :global(.ant-input-password) {
-  flex: 1;
+	flex: 1;
 }
 
 .configToggle {
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--fw-text-body);
-  user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: background 0.15s ease, color 0.15s ease;
+	cursor: pointer;
+	font-size: 13px;
+	color: var(--fw-text-body);
+	user-select: none;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 10px;
+	border-radius: 8px;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease;
 }
 
 .configToggle:hover {
-  background: var(--fw-hover-light);
-  color: var(--fw-text-strong);
+	background: var(--fw-hover-light);
+	color: var(--fw-text-strong);
 }
 
 .configGuide {
-  font-size: 12px;
-  color: var(--fw-text-body);
-  line-height: 1.6;
-  padding: 8px 12px;
-  border-left: 3px solid;
-  border-radius: 0 8px 8px 0;
+	font-size: 12px;
+	color: var(--fw-text-body);
+	line-height: 1.6;
+	padding: 8px 12px;
+	border-left: 3px solid;
+	border-radius: 0 8px 8px 0;
 }
 
 .configGuide a {
-  font-weight: 500;
+	font-weight: 500;
 }
 
 /* History section */
 .historySection {
-  background: var(--fw-surface);
-  border-radius: 12px;
-  border: 1px solid var(--fw-divider);
-  overflow: hidden;
+	background: var(--fw-surface);
+	border-radius: 12px;
+	border: 1px solid var(--fw-divider);
+	overflow: hidden;
 }
 
 .historyHeader {
-  display: flex;
-  align-items: center;
-  padding: 0;
-  border-bottom: 1px solid var(--fw-divider);
+	display: flex;
+	align-items: center;
+	padding: 0;
+	border-bottom: 1px solid var(--fw-divider);
 }
 
 .historyTitle {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 14px 16px;
-  margin: 0;
-  background: var(--fw-panel-subtle);
+	flex: 1;
+	font-size: 14px;
+	font-weight: 600;
+	padding: 14px 16px;
+	margin: 0;
+	background: var(--fw-panel-subtle);
 }
 
 .historyCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  margin-left: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1;
-  color: var(--fw-text-tertiary);
-  background: var(--fw-hover-light);
-  border-radius: 10px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	margin-left: 8px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--fw-text-tertiary);
+	background: var(--fw-hover-light);
+	border-radius: 10px;
 }
 
 .clearBtn {
-  margin-right: 12px;
-  font-size: 12px;
+	margin-right: 12px;
+	font-size: 12px;
 }
 
 .historyEmpty {
-  padding: 24px 0;
+	padding: 24px 0;
 }
 
 .historyList {
-  max-height: 400px;
-  overflow-y: auto;
+	max-height: 400px;
+	overflow-y: auto;
 }
 
 .historyItem {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  gap: 8px;
-  border-bottom: 1px solid var(--fw-divider);
-  transition: background 0.15s;
+	display: flex;
+	align-items: center;
+	padding: 12px 16px;
+	gap: 8px;
+	border-bottom: 1px solid var(--fw-divider);
+	transition: background 0.15s;
 }
 
 .historyItem:last-child {
-  border-bottom: none;
+	border-bottom: none;
 }
 
 .historyItem:hover {
-  background: var(--fw-panel-subtle);
+	background: var(--fw-panel-subtle);
 }
 
 .historyItemMain {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  overflow: hidden;
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	overflow: hidden;
 }
 
 .historyTag {
-  flex-shrink: 0;
-  margin: 0 !important;
-  font-size: 12px;
+	flex-shrink: 0;
+	margin: 0 !important;
+	font-size: 12px;
 }
 
 .historyLang {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--fw-text-tertiary);
-  white-space: nowrap;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: var(--fw-text-tertiary);
+	white-space: nowrap;
 }
 
 .historyTextWrap {
-  flex: 1;
-  min-width: 0;
-  display: block;
+	flex: 1;
+	min-width: 0;
+	display: block;
 }
 
 .historyText {
-  display: block;
-  width: 100%;
-  font-size: 13px;
-  color: var(--fw-text-body);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+	display: block;
+	width: 100%;
+	font-size: 13px;
+	color: var(--fw-text-body);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .historyTextTruncated {
-  cursor: pointer;
+	cursor: pointer;
 }
 
 .historyPreview {
-  max-width: min(560px, 70vw);
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.6;
+	max-width: min(560px, 70vw);
+	white-space: pre-wrap;
+	word-break: break-word;
+	line-height: 1.6;
 }
 
 .historyArrow {
-  flex-shrink: 0;
-  color: #bfbfbf;
-  font-size: 12px;
+	flex-shrink: 0;
+	color: #bfbfbf;
+	font-size: 12px;
 }
 
 .historyTime {
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--fw-text-tertiary);
+	flex-shrink: 0;
+	font-size: 12px;
+	color: var(--fw-text-tertiary);
 }
 
 .historyCopyBtn {
-  flex-shrink: 0;
-  color: var(--fw-text-tertiary);
+	flex-shrink: 0;
+	color: var(--fw-text-tertiary);
 }
 
 .historyCopyBtn:hover {
-  color: var(--fw-text-strong) !important;
+	color: var(--fw-text-strong) !important;
 }
 
 .statusHint {
-  color: var(--fw-text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+	color: var(--fw-text-tertiary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 @media (max-width: 768px) {
-  .editorArea {
-    grid-template-columns: 1fr;
-  }
+	.editorArea {
+		grid-template-columns: 1fr;
+	}
 }

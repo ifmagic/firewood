@@ -31,13 +31,7 @@
     "category": "DeveloperTool",
     "copyright": "",
     "createUpdaterArtifacts": true,
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "linux": {
       "deb": {
         "depends": []
@@ -48,11 +42,7 @@
       "signingIdentity": "-"
     },
     "resources": [],
-    "targets": [
-      "app",
-      "dmg",
-      "nsis"
-    ],
+    "targets": ["app", "dmg", "nsis"],
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
@@ -65,9 +55,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCREFCN0MxQjA3RTZFMjEKUldRaGJuNnd3YmZheTM0TzRkdFFuNDRwcW4wZ3VrZnJOb2FPMjV2OGtWZG5yQ3FrUjFYaU04TlMK",
-      "endpoints": [
-        "https://github.com/ifmagic/firewood/releases/latest/download/latest.json"
-      ]
+      "endpoints": ["https://github.com/ifmagic/firewood/releases/latest/download/latest.json"]
     }
   }
 }

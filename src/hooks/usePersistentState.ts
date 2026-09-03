@@ -4,7 +4,7 @@ export function usePersistentState<T>(key: string, initialValue: T) {
   const [state, setState] = useState<T>(() => {
     try {
       const saved = localStorage.getItem(key);
-      return saved === null ? initialValue : JSON.parse(saved) as T;
+      return saved === null ? initialValue : (JSON.parse(saved) as T);
     } catch {
       return initialValue;
     }
