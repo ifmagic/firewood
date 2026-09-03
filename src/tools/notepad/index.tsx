@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Editor, { type BeforeMount, type OnMount } from '@monaco-editor/react';
 import { DeleteOutlined, FolderOpenOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
-import type { InputRef } from 'antd';
-import type * as Monaco from 'monaco-editor';
+import type { InputRef, MenuProps } from 'antd';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
+import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
+import EditorContextMenu from '../../components/EditorContextMenu';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import ToolLayout from '../../components/ToolLayout';
+import { useCodemirror, type CodemirrorLanguage } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
-import { useMonacoCompat } from '../../hooks/useMonacoCompat';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import { bestEffortFormatJson, countCodePoints, detectLanguage, getUrlAtColumn, normalizeUrl } from './helpers';
 import './notepad.css';
 
 interface NoteTab {
@@ -68,116 +69,7 @@ function getPreferredSaveName(tab: NoteTab | null, fallbackName: string) {
     return tab.sourceName.trim();
   }
 
-  return tab?.name?.trim() || fallbackName.trim();
-}
-
-function getUrlAtColumn(line: string, column: number) {
-  const urlRegex = /(https?:\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+)/g;
-  let match = urlRegex.exec(line);
-  while (match) {
-    const start = match.index + 1;
-    const end = start + match[0].length - 1;
-    if (column >= start && column <= end) {
-      return match[0];
-    }
-    match = urlRegex.exec(line);
-  }
-  return null;
-}
-
-function normalizeUrl(raw: string) {
-  const trimmed = raw.trim().replace(/[),.;:!?\]}]+$/g, '');
-  return trimmed.startsWith('www.') ? `https://${trimmed}` : trimmed;
-}
-
-function detectLanguage(text: string) {
-  const trimmed = text.trimStart();
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'json';
-  if (
-    /^<(!doctype|html|div|span|head|body|p\b|ul|ol|li|table|form|a\b|img|section|article|nav|header|footer)/i.test(
-      trimmed,
-    )
-  )
-    return 'html';
-  if (/^(import |export |const |let |var |function |class |=>|\/\/)/.test(trimmed)) return 'javascript';
-  return 'plaintext';
-}
-
-function countCodePoints(text: string) {
-  let count = 0;
-  for (let i = 0; i < text.length; ) {
-    const code = text.charCodeAt(i);
-    i += code >= 0xd800 && code <= 0xdbff ? 2 : 1;
-    count++;
-  }
-  return count;
-}
-
-/**
- * Best-effort JSON formatter: tries strict parse first, falls back to a
- * character-level pretty-printer that tolerates invalid / partial JSON.
- */
-function bestEffortFormatJson(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) return text;
-
-  try {
-    return JSON.stringify(JSON.parse(trimmed), null, 2);
-  } catch {
-    // fall through
-  }
-
-  let result = '';
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  const indent = () => '  '.repeat(depth);
-
-  for (let i = 0; i < trimmed.length; i++) {
-    const ch = trimmed[i];
-
-    if (escaped) {
-      result += ch;
-      escaped = false;
-      continue;
-    }
-
-    if (ch === '\\' && inString) {
-      result += ch;
-      escaped = true;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = !inString;
-      result += ch;
-      continue;
-    }
-
-    if (inString) {
-      result += ch;
-      continue;
-    }
-
-    if (/\s/.test(ch)) continue;
-
-    if (ch === '{' || ch === '[') {
-      result += ch;
-      depth++;
-      result += '\n' + indent();
-    } else if (ch === '}' || ch === ']') {
-      depth = Math.max(0, depth - 1);
-      result += '\n' + indent() + ch;
-    } else if (ch === ',') {
-      result += ',\n' + indent();
-    } else if (ch === ':') {
-      result += ': ';
-    } else {
-      result += ch;
-    }
-  }
-
-  return result;
+  return tab?.name.trim() || fallbackName.trim();
 }
 
 export default function Notepad() {
@@ -198,34 +90,23 @@ export default function Notepad() {
     lines: 1,
     selected: 0,
   });
-  const [activeLanguage, setActiveLanguage] = useState('plaintext');
+  const [activeLanguage, setActiveLanguage] = useState<CodemirrorLanguage>('plaintext');
+  const [content, setContent] = useState(() =>
+    activeTabId ? (localStorage.getItem(getContentKey(activeTabId)) ?? '') : '',
+  );
 
-  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const activeTabIdRef = useRef(activeTabId);
-  const activeContentRef = useRef('');
   const persistTimerRef = useRef<number | null>(null);
   const persistPayloadRef = useRef<{ id: string; value: string }>({
     id: '',
     value: '',
   });
   const statsRafRef = useRef<number | null>(null);
-  const isComposingRef = useRef(false);
-
-  const [initialContent] = useState(() => {
-    const saved = activeTabId ? (localStorage.getItem(getContentKey(activeTabId)) ?? '') : '';
-    activeContentRef.current = saved;
-    return saved;
-  });
+  // Indirection so callbacks passed into useCodemirror can reach the stats scheduler,
+  // which itself needs the viewRef returned by the hook.
+  const scheduleStatsRef = useRef<() => void>(() => {});
 
   const activeTab = useMemo(() => tabs.find((tab) => tab.id === activeTabId) ?? null, [activeTabId, tabs]);
-
-  useEffect(() => {
-    document.body.classList.add('firewood-notepad-active');
-
-    return () => {
-      document.body.classList.remove('firewood-notepad-active');
-    };
-  }, []);
 
   const flushPersist = useCallback(() => {
     if (persistTimerRef.current !== null) {
@@ -257,26 +138,83 @@ export default function Notepad() {
     }, PERSIST_DEBOUNCE_MS);
   }, []);
 
-  const updateStats = useCallback(() => {
-    const editor = editorRef.current;
-    const model = editor?.getModel();
-    const value = model?.getValue() ?? '';
-    const selections = editor?.getSelections() ?? [];
-    let selected = 0;
-    if (model) {
-      for (const selection of selections) {
-        if (selection.isEmpty()) {
-          continue;
-        }
-        selected += countCodePoints(model.getValueInRange(selection).replace(/\r?\n/g, ''));
-      }
+  const handleEditorUpdate = useCallback((update: ViewUpdate) => {
+    if (!update.docChanged && !update.selectionSet) {
+      return;
     }
+
+    scheduleStatsRef.current();
+  }, []);
+
+  const handleEditorReady = useCallback(() => {
+    scheduleStatsRef.current();
+  }, []);
+
+  const onContentChange = useCallback(
+    (value: string) => {
+      setContent(value);
+      const id = activeTabIdRef.current;
+      if (id) {
+        schedulePersist(id, value);
+      }
+    },
+    [schedulePersist],
+  );
+
+  const urlClickExtension = useMemo(
+    () =>
+      EditorView.domEventHandlers({
+        mousedown: (event, view) => {
+          if (event.button !== 0) return;
+          const isModifierPressed = isMac ? event.metaKey : event.ctrlKey;
+          if (!isModifierPressed) return;
+          const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+          if (pos === null) return;
+          const line = view.state.doc.lineAt(pos);
+          const matched = getUrlAtColumn(line.text, pos - line.from + 1);
+          if (!matched) return;
+          event.preventDefault();
+          void openExternal(normalizeUrl(matched)).catch((error) => {
+            message.error(`Failed to open link: ${String(error)}`);
+          });
+        },
+      }),
+    [isMac],
+  );
+
+  const { hostRef, viewRef } = useCodemirror({
+    value: content,
+    onChange: onContentChange,
+    variant: 'code',
+    language: activeLanguage,
+    fontSize,
+    extensions: [urlClickExtension],
+    onUpdate: handleEditorUpdate,
+    onReady: handleEditorReady,
+  });
+
+  const updateStats = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) {
+      setStats({ chars: 0, lines: 1, selected: 0 });
+      return;
+    }
+
+    const { doc, selection } = view.state;
+    let selected = 0;
+    for (const range of selection.ranges) {
+      if (range.empty) {
+        continue;
+      }
+      selected += countCodePoints(doc.sliceString(range.from, range.to).replace(/\r?\n/g, ''));
+    }
+
     setStats({
-      chars: countCodePoints(value),
-      lines: model?.getLineCount() ?? 1,
+      chars: countCodePoints(doc.toString()),
+      lines: doc.lines,
       selected,
     });
-  }, []);
+  }, [viewRef]);
 
   const cancelScheduledStatsUpdate = useCallback(() => {
     if (statsRafRef.current === null) {
@@ -288,24 +226,19 @@ export default function Notepad() {
   }, []);
 
   const scheduleStatsUpdate = useCallback(() => {
-    if (isComposingRef.current) {
-      return;
-    }
-
     if (statsRafRef.current !== null) {
       return;
     }
 
     statsRafRef.current = requestAnimationFrame(() => {
       statsRafRef.current = null;
-
-      if (isComposingRef.current) {
-        return;
-      }
-
       updateStats();
     });
   }, [updateStats]);
+
+  useEffect(() => {
+    scheduleStatsRef.current = scheduleStatsUpdate;
+  }, [scheduleStatsUpdate]);
 
   // Resolve activeTabId when it becomes invalid (tab deleted / list emptied).
   useEffect(() => {
@@ -327,18 +260,15 @@ export default function Notepad() {
     flushPersist();
 
     if (!activeTabId) {
-      activeContentRef.current = '';
+      setContent('');
+      setActiveLanguage('plaintext');
       scheduleStatsUpdate();
       return;
     }
 
     const saved = localStorage.getItem(getContentKey(activeTabId)) ?? '';
-    activeContentRef.current = saved;
+    setContent(saved);
     setActiveLanguage(detectLanguage(saved));
-    const editor = editorRef.current;
-    if (editor && editor.getValue() !== saved) {
-      editor.setValue(saved);
-    }
     scheduleStatsUpdate();
   }, [activeTabId, flushPersist, scheduleStatsUpdate]);
 
@@ -349,19 +279,6 @@ export default function Notepad() {
       cancelScheduledStatsUpdate();
     },
     [cancelScheduledStatsUpdate, flushPersist],
-  );
-
-  const onContentChange = useCallback(
-    (value: string | undefined) => {
-      const text = value ?? '';
-      activeContentRef.current = text;
-      const id = activeTabIdRef.current;
-      if (id) {
-        schedulePersist(id, text);
-      }
-      scheduleStatsUpdate();
-    },
-    [schedulePersist, scheduleStatsUpdate],
   );
 
   const handleOpenLocalFile = useCallback(async () => {
@@ -399,11 +316,12 @@ export default function Notepad() {
           }),
         );
         localStorage.setItem(getContentKey(existingTab.id), fileText);
-        activeContentRef.current = fileText;
-        if (editorRef.current) {
-          editorRef.current.setValue(fileText);
-        }
+        // Supersede any pending debounced write so stale text cannot overwrite the reload.
+        schedulePersist(existingTab.id, fileText);
+        setContent(fileText);
+        setActiveLanguage(detectLanguage(fileText));
         setActiveTabId(existingTab.id);
+        scheduleStatsUpdate();
         message.success(successMessage);
         return;
       }
@@ -432,7 +350,7 @@ export default function Notepad() {
         }),
       );
     }
-  }, [setActiveTabId, setTabs, t, tabs]);
+  }, [schedulePersist, scheduleStatsUpdate, setActiveTabId, setTabs, t, tabs]);
 
   const handleSaveAs = useCallback(async () => {
     if (!activeTabId) {
@@ -449,7 +367,7 @@ export default function Notepad() {
     }
 
     try {
-      await writeTextFile(targetPath, activeContentRef.current);
+      await writeTextFile(targetPath, content);
       const fileName = getFileNameFromPath(targetPath);
 
       setTabs((currentTabs) =>
@@ -475,7 +393,7 @@ export default function Notepad() {
         }),
       );
     }
-  }, [activeTab, activeTabId, setTabs, t]);
+  }, [activeTab, activeTabId, content, setTabs, t]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -502,6 +420,16 @@ export default function Notepad() {
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [handleOpenLocalFile, handleSaveAs, isMac]);
+
+  const runFormatJson = useCallback(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const text = view.state.doc.toString();
+    const formatted = bestEffortFormatJson(text);
+    if (formatted !== text) {
+      view.dispatch({ changes: { from: 0, to: text.length, insert: formatted } });
+    }
+  }, [viewRef]);
 
   const tabItems = useMemo(
     () =>
@@ -628,10 +556,8 @@ export default function Notepad() {
     }
     flushPersist();
     localStorage.removeItem(getContentKey(activeTabId));
-    activeContentRef.current = '';
-    if (editorRef.current) {
-      editorRef.current.setValue('');
-    }
+    setContent('');
+    setActiveLanguage('plaintext');
     scheduleStatsUpdate();
   }, [activeTabId, flushPersist, scheduleStatsUpdate]);
 
@@ -652,145 +578,15 @@ export default function Notepad() {
     });
   }, [dialogMode]);
 
-  const handleEditorBeforeMount = useCallback<BeforeMount>((monaco) => {
-    monaco.editor.defineTheme('firewood-contrast-light', {
-      base: 'vs',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: '6B7280', fontStyle: 'italic' },
-        { token: 'keyword', foreground: '7C3AED' },
-        { token: 'number', foreground: 'B45309' },
-        { token: 'string', foreground: '047857' },
-        { token: 'regexp', foreground: '0369A1' },
-        { token: 'type.identifier', foreground: '1D4ED8' },
-      ],
-      colors: {
-        'editor.background': '#FBFBFC',
-        'editor.foreground': '#0F172A',
-        'editorCursor.foreground': '#EF4444',
-        'editorCursor.background': '#FFFFFF',
-        'editorMultiCursor.primary.foreground': '#EF4444',
-        'editorMultiCursor.secondary.foreground': '#DC2626',
-        'editorLineNumber.foreground': '#94A3B8',
-        'editorLineNumber.activeForeground': '#334155',
-        'editor.selectionBackground': '#CBD5E199',
-        'editor.inactiveSelectionBackground': '#E2E8F099',
-        'editor.selectionHighlightBackground': '#E2E8F055',
-        'editor.selectionHighlightBorder': '#94A3B8',
-        'editor.lineHighlightBackground': '#F5F6F8',
-        'editorIndentGuide.background1': '#E2E8F0',
-      },
-    });
-  }, []);
-
-  const handleEditorMount = useCallback<OnMount>(
-    (editor, monaco) => {
-      editorRef.current = editor;
-      isComposingRef.current = false;
-      cancelScheduledStatsUpdate();
-      monaco.editor.setTheme('firewood-contrast-light');
-
-      // Keep React out of the IME hot path: defer status-bar stats refreshes
-      // until composition ends so WKWebView doesn't relayout the active line.
-      const compositionStartDisposable = editor.onDidCompositionStart(() => {
-        isComposingRef.current = true;
-        cancelScheduledStatsUpdate();
-      });
-
-      const compositionEndDisposable = editor.onDidCompositionEnd(() => {
-        isComposingRef.current = false;
-        scheduleStatsUpdate();
-      });
-
-      editor.onDidChangeCursorPosition(() => scheduleStatsUpdate());
-      editor.onDidChangeCursorSelection(() => scheduleStatsUpdate());
-      editor.onDidChangeModelContent(() => scheduleStatsUpdate());
-
-      const mouseDownDisposable = editor.onMouseDown(async (event) => {
-        const isModifierPressed = isMac ? event.event.metaKey : event.event.ctrlKey;
-        if (!event.event.leftButton || !isModifierPressed) return;
-        if (!event.target.position) return;
-        const model = editor.getModel();
-        if (!model) return;
-
-        const line = model.getLineContent(event.target.position.lineNumber);
-        const matched = getUrlAtColumn(line, event.target.position.column);
-        if (!matched) return;
-
-        try {
-          await openExternal(normalizeUrl(matched));
-        } catch (error) {
-          message.error(`Failed to open link: ${String(error)}`);
-        }
-      });
-
-      const formatActionDisposable = editor.addAction({
-        id: 'firewood.formatJson',
-        label: t('notepad.formatJson'),
-        contextMenuGroupId: 'modification',
-        contextMenuOrder: 1,
-        run: (ed) => {
-          const model = ed.getModel();
-          if (!model) return;
-          const fullRange = model.getFullModelRange();
-          const text = model.getValue();
-          const formatted = bestEffortFormatJson(text);
-          if (formatted !== text) {
-            ed.executeEdits('firewood.formatJson', [{ range: fullRange, text: formatted }]);
-          }
-        },
-      });
-
-      editor.onDidDispose(() => {
-        isComposingRef.current = false;
-        cancelScheduledStatsUpdate();
-        editorRef.current = null;
-        compositionStartDisposable.dispose();
-        compositionEndDisposable.dispose();
-        mouseDownDisposable.dispose();
-        formatActionDisposable.dispose();
-      });
-
-      updateStats();
-    },
-    [cancelScheduledStatsUpdate, isMac, scheduleStatsUpdate, t, updateStats],
-  );
-
-  const baseEditorOptions = useMemo(
-    () => ({
-      minimap: { enabled: false },
-      // Wrapped CJK IME input becomes unstable with Monaco's monospace fast-path.
-      letterSpacing: 0,
-      wrappingStrategy: 'advanced' as const,
-      disableMonospaceOptimizations: true,
-      cursorStyle: 'line' as const,
-      cursorWidth: 3,
-      cursorBlinking: 'solid' as const,
-      lineNumbers: 'on' as const,
-      glyphMargin: false,
-      folding: true,
-      lineDecorationsWidth: 8,
-      lineNumbersMinChars: 3,
-      wordWrap: 'on' as const,
-      scrollBeyondLastLine: false,
-      unicodeHighlight: {
-        invisibleCharacters: false,
-        ambiguousCharacters: false,
-        nonBasicASCII: false,
-      },
-    }),
-    [],
-  );
-
-  const { editorClassName, editorOptions } = useMonacoCompat({
-    fontSize,
-    options: baseEditorOptions,
-  });
-
   const activeExists = tabs.some((tab) => tab.id === activeTabId);
   const effectiveActive = activeExists ? activeTabId : undefined;
   const modalTitle = dialogMode === 'rename' ? t('action.rename') : t('notepad.newTab');
   const modalOkText = dialogMode === 'rename' ? t('action.save') : t('action.ok');
+
+  const contextMenuExtraItems: MenuProps['items'] = useMemo(
+    () => [{ type: 'divider' }, { key: 'formatJson', label: t('notepad.formatJson') }],
+    [t],
+  );
 
   const statusMeta = (
     <span className="firewood-notepad-statusMeta">
@@ -858,29 +654,30 @@ export default function Notepad() {
           onChange={setActiveTabId}
         />
 
-        <div className="firewood-notepad-workspace">
-          <div className={`firewood-notepad-stage${activeTabId ? '' : ' firewood-notepad-stageEmpty'}`}>
-            {activeTabId ? (
-              <Editor
-                className={editorClassName}
-                height="100%"
-                language={activeLanguage}
-                defaultValue={initialContent}
-                onChange={onContentChange}
-                beforeMount={handleEditorBeforeMount}
-                onMount={handleEditorMount}
-                theme="firewood-contrast-light"
-                options={editorOptions}
-              />
-            ) : (
-              <Empty description={t('notepad.newTab')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            )}
-          </div>
-          <StatusBar
-            left={statusMeta}
-            right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
-          />
+        <div className={`firewood-notepad-stage${activeTabId ? '' : ' firewood-notepad-stageEmpty'}`}>
+          <EditorContextMenu
+            viewRef={viewRef}
+            hasSelection={stats.selected > 0}
+            extraItems={contextMenuExtraItems}
+            onExtraItemClick={(key) => {
+              if (key === 'formatJson') {
+                runFormatJson();
+              }
+            }}
+          >
+            {/*
+              The host div must stay mounted for the whole Notepad lifetime: the EditorView
+              created by useCodemirror is parented to this node once, so hiding it (instead
+              of unmounting) keeps the view valid when all tabs are removed.
+            */}
+            <div ref={hostRef} className="fw-cm-host" style={activeTabId ? undefined : { display: 'none' }} />
+          </EditorContextMenu>
+          {!activeTabId && <Empty description={t('notepad.newTab')} image={Empty.PRESENTED_IMAGE_SIMPLE} />}
         </div>
+        <StatusBar
+          left={statusMeta}
+          right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />}
+        />
       </div>
 
       <Modal

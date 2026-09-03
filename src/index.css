@@ -48,3 +48,18 @@ body {
 	height: 100vh;
 	display: flex;
 }
+
+/* CodeMirror host container (shared by notepad / json-formatter; mirrors moxia's .cmHost) */
+.fw-cm-host {
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.fw-cm-host .cm-editor {
+	height: 100%;
+}
+
+.fw-cm-host .cm-scroller {
+	overflow: auto;
+}

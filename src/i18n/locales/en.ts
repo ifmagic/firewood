@@ -30,12 +30,21 @@ const en = {
     convert: 'Convert',
     copy: 'Copy',
     copied: 'Copied',
+    cut: 'Cut',
+    paste: 'Paste',
+    selectAll: 'Select All',
+    find: 'Find',
     rename: 'Rename',
     cancel: 'Cancel',
     ok: 'OK',
     save: 'Save',
     delete: 'Delete',
     translate: 'Translate',
+  },
+
+  // Editor
+  editor: {
+    pasteFailed: 'Paste failed. Please check clipboard permission',
   },
 
   // Common labels

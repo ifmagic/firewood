@@ -30,12 +30,21 @@ const zhCN = {
     convert: '转 换',
     copy: '复制',
     copied: '已复制',
+    cut: '剪切',
+    paste: '粘贴',
+    selectAll: '全选',
+    find: '查找',
     rename: '重命名',
     cancel: '取消',
     ok: '确定',
     save: '保存',
     delete: '删除',
     translate: '翻 译',
+  },
+
+  // Editor
+  editor: {
+    pasteFailed: '粘贴失败，请检查剪贴板权限',
   },
 
   // Common labels

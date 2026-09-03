@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Empty, Tooltip } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
-import Editor, { type OnMount } from '@monaco-editor/react';
-import { format as formatJsonc, type EditOperation } from 'monaco-editor/esm/external/jsonc-parser/lib/esm/main.js';
+import { applyEdits, format as formatJsonc } from 'jsonc-parser';
+import { linter } from '@codemirror/lint';
+import { jsonParseLinter } from '@codemirror/lang-json';
+import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
-import ToolLayout from '../../components/ToolLayout';
+import EditorContextMenu from '../../components/EditorContextMenu';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
+import ToolLayout from '../../components/ToolLayout';
+import { useCodemirror } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
-import { useMonacoCompat } from '../../hooks/useMonacoCompat';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import './json-formatter.css';
 
 const jsoncFormatOptions = {
   tabSize: 2,
@@ -19,34 +21,42 @@ const jsoncFormatOptions = {
   keepLines: false,
 } as const;
 
-function applyJsoncEdits(text: string, edits: EditOperation[]) {
-  return edits
-    .slice()
-    .sort((left, right) => right.offset - left.offset)
-    .reduce(
-      (current, edit) => `${current.slice(0, edit.offset)}${edit.content}${current.slice(edit.offset + edit.length)}`,
-      text,
-    );
-}
-
 export default function JsonFormatter() {
   const { t } = useTranslation();
   const [content, setContent] = usePersistentState('tool:json-formatter:input', '');
   const [viewportResetVersion, setViewportResetVersion] = useState(0);
+  const [hasSelection, setHasSelection] = useState(false);
   const { fontSize, increase, decrease } = useEditorFontSize();
-  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+
+  const handleContentChange = (value: string) => {
+    setContent(value);
+  };
+
+  const handleEditorUpdate = (update: ViewUpdate) => {
+    if (!update.docChanged && !update.selectionSet) {
+      return;
+    }
+
+    const next = update.state.selection.ranges.some((range) => !range.empty);
+    setHasSelection((prev) => (prev === next ? prev : next));
+  };
+
+  const lintExtensions = useMemo(() => [linter(jsonParseLinter())], []);
+
+  const { hostRef, viewRef } = useCodemirror({
+    value: content,
+    onChange: handleContentChange,
+    variant: 'code',
+    language: 'json',
+    wrap: false,
+    fontSize,
+    extensions: lintExtensions,
+    onUpdate: handleEditorUpdate,
+  });
 
   const requestViewportReset = () => {
     setViewportResetVersion((version) => version + 1);
   };
-
-  useEffect(() => {
-    document.body.classList.add('firewood-json-formatter-active');
-
-    return () => {
-      document.body.classList.remove('firewood-json-formatter-active');
-    };
-  }, []);
 
   useEffect(() => {
     if (viewportResetVersion === 0) {
@@ -54,21 +64,21 @@ export default function JsonFormatter() {
     }
 
     const frameId = window.requestAnimationFrame(() => {
-      const editor = editorRef.current;
-      if (!editor) {
+      const view = viewRef.current;
+      if (!view) {
         return;
       }
 
-      const startPosition = { lineNumber: 1, column: 1 };
-      editor.setPosition(startPosition);
-      editor.setScrollPosition({ scrollTop: 0, scrollLeft: 0 });
-      editor.revealPosition(startPosition);
+      view.dispatch({
+        selection: { anchor: 0, head: 0 },
+        effects: EditorView.scrollIntoView(0, { y: 'start' }),
+      });
     });
 
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [viewportResetVersion]);
+  }, [viewportResetVersion, viewRef]);
 
   const applyTransform = (transform: (text: string) => string) => {
     if (!content.trim()) {
@@ -91,7 +101,7 @@ export default function JsonFormatter() {
       try {
         return JSON.stringify(JSON.parse(text), null, 2);
       } catch {
-        return applyJsoncEdits(text, formatJsonc(text, undefined, jsoncFormatOptions));
+        return applyEdits(text, formatJsonc(text, undefined, jsoncFormatOptions));
       }
     });
   };
@@ -121,29 +131,6 @@ export default function JsonFormatter() {
     setContent('');
     requestViewportReset();
   };
-
-  const handleContentChange = (value?: string) => {
-    const nextValue = value ?? '';
-    setContent(nextValue);
-  };
-
-  const handleEditorMount: OnMount = (editor) => {
-    editorRef.current = editor;
-  };
-
-  const baseEditorOptions = useMemo(
-    () => ({
-      minimap: { enabled: false },
-      letterSpacing: 0.5,
-      automaticLayout: true,
-    }),
-    [],
-  );
-
-  const { editorClassName, editorOptions } = useMonacoCompat({
-    fontSize,
-    options: baseEditorOptions,
-  });
 
   return (
     <ToolLayout title={t('jsonFormatter.title')}>
@@ -200,16 +187,9 @@ export default function JsonFormatter() {
                   <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('jsonFormatter.emptyHint')} />
                 </div>
               )}
-              <Editor
-                className={editorClassName}
-                height="100%"
-                language="json"
-                value={content}
-                onChange={handleContentChange}
-                onMount={handleEditorMount}
-                theme="vs-light"
-                options={editorOptions}
-              />
+              <EditorContextMenu viewRef={viewRef} hasSelection={hasSelection}>
+                <div ref={hostRef} className="fw-cm-host" />
+              </EditorContextMenu>
             </div>
           </div>
           <StatusBar right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />} />

@@ -1,18 +1,34 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Compartment, EditorState, Transaction, type Extension } from '@codemirror/state';
-import { EditorView, keymap, lineNumbers, placeholder as cmPlaceholder } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  EditorView,
+  ViewUpdate,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  keymap,
+  lineNumbers,
+  placeholder as cmPlaceholder,
+} from '@codemirror/view';
+import { defaultKeymap, history, historyKeymap, isolateHistory } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
+import { HighlightStyle, bracketMatching, foldGutter, indentUnit, syntaxHighlighting } from '@codemirror/language';
+import { autocompletion, closeBrackets } from '@codemirror/autocomplete';
+import { json } from '@codemirror/lang-json';
+import { html } from '@codemirror/lang-html';
+import { javascript } from '@codemirror/lang-javascript';
+import { tags as t } from '@lezer/highlight';
+
+export type CodemirrorVariant = 'writing' | 'code';
+export type CodemirrorLanguage = 'json' | 'html' | 'javascript' | 'plaintext';
 
 // Writing font stack: PingFang SC first for macOS CJK rendering; Source Han Sans SC as a
-// cross-platform fallback; SF Pro Text for Latin glyphs. Unlike useMonacoCompat, a
-// proportional font is more appropriate for long-form writing.
+// cross-platform fallback; SF Pro Text for Latin glyphs. A proportional font is more
+// appropriate for long-form writing.
 const WRITING_FONT_FAMILY =
   "'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'Microsoft YaHei', 'SF Pro Text', system-ui, sans-serif";
 
-// Static theme: font stack, line height, caret color, focus outline removal.
-// lineHeight 1.7 is the lower bound for PingFang SC in WKWebView without clipping descenders,
-// matching the 1.6x multiplier in useMonacoCompat (CM6's default 1.4 would clip).
+// Static writing theme: font stack, line height, caret color, focus outline removal.
+// lineHeight 1.7 is the lower bound for PingFang SC in WKWebView without clipping descenders.
 const WRITING_THEME = EditorView.theme({
   '&': {
     fontFamily: WRITING_FONT_FAMILY,
@@ -44,32 +60,121 @@ const WRITING_THEME = EditorView.theme({
   },
 });
 
+// Code font stacks mirror the former useMonacoCompat layer: on Tauri macOS (WKWebView) the
+// CJK-aware fallbacks keep mixed Latin+CJK from falling back to a system font mid-line.
+// navigator.platform is deprecated but is the only reliable signal in WKWebView; do not
+// "modernize" this or Mac detection breaks silently.
+const IS_TAURI_MAC =
+  typeof window !== 'undefined' && navigator.platform.toLowerCase().includes('mac') && '__TAURI_INTERNALS__' in window;
+
+const CODE_FONT_FAMILY = "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace";
+const TAURI_MAC_CODE_FONT_FAMILY =
+  "'JetBrains Mono', 'Fira Code', 'SFMono-Regular', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', ui-monospace, monospace";
+
+const CODE_FONT = IS_TAURI_MAC ? TAURI_MAC_CODE_FONT_FAMILY : CODE_FONT_FAMILY;
+
+// Code theme ports the former Monaco `firewood-contrast-light` theme one-to-one. lineHeight 1.6
+// matches the WKWebView-safe multiplier the Monaco layer required.
+const CODE_THEME = EditorView.theme({
+  '&': {
+    fontFamily: CODE_FONT,
+    height: '100%',
+    backgroundColor: '#FBFBFC',
+    color: '#0F172A',
+  },
+  '.cm-content': {
+    fontFamily: CODE_FONT,
+    lineHeight: '1.6',
+    caretColor: '#EF4444',
+  },
+  '.cm-cursor': {
+    borderLeftColor: '#EF4444',
+    borderLeftWidth: '2px',
+  },
+  '&.cm-focused': { outline: 'none' },
+  '.cm-gutters': {
+    backgroundColor: '#FBFBFC',
+    color: '#94A3B8',
+  },
+  '.cm-activeLineGutter': { color: '#334155' },
+  '.cm-activeLine': { backgroundColor: '#F5F6F8' },
+  '.cm-selectionBackground': {
+    backgroundColor: '#CBD5E199 !important',
+  },
+  '.cm-matchingBracket': { backgroundColor: '#E2E8F0' },
+  '.cm-placeholder': {
+    color: '#94A3B8',
+    fontStyle: 'italic',
+  },
+});
+
+// Token colors port the Monaco firewood-contrast-light rules.
+const CODE_HIGHLIGHT_STYLE = HighlightStyle.define([
+  { tag: t.comment, color: '#6B7280', fontStyle: 'italic' },
+  { tag: t.keyword, color: '#7C3AED' },
+  { tag: t.number, color: '#B45309' },
+  { tag: t.string, color: '#047857' },
+  { tag: t.regexp, color: '#0369A1' },
+  { tag: [t.typeName, t.className], color: '#1D4ED8' },
+]);
+
+function codeLanguageExtension(language: CodemirrorLanguage): Extension {
+  switch (language) {
+    case 'json':
+      return json();
+    case 'html':
+      return html();
+    case 'javascript':
+      return javascript();
+    default:
+      return [];
+  }
+}
+
+function fontSizeTheme(fontSize: number): Extension {
+  return EditorView.theme({
+    '&': { fontSize: `${fontSize}px` },
+    '.cm-content': { fontSize: `${fontSize}px` },
+  });
+}
+
 interface UseCodemirrorOptions {
   /** Controlled value. Parent changes are pushed down via a `changes` transaction; cursor is preserved when possible. */
   value: string;
   /** Callback on doc change; not fired during IME composition, fired once when composition ends. */
   onChange?: (value: string) => void;
+  /**
+   * Callback on doc/selection change with the same IME deferral as onChange. For stats-style
+   * consumers (status bars); fires on selection-only changes too, unlike onChange.
+   */
+  onUpdate?: (update: ViewUpdate) => void;
   placeholder?: string;
   /** Font size in px; runtime changes are reconfigured via Compartment without rebuilding the editor. */
   fontSize?: number;
-  /** Show line numbers; defaults to false for writing editors. */
+  /** 'writing': proportional plain-text editor; 'code': monospace + line numbers + folding + highlighting. Defaults to 'writing'. */
+  variant?: CodemirrorVariant;
+  /** Syntax language for variant 'code'; runtime changes are reconfigured via Compartment. Defaults to 'plaintext'. */
+  language?: CodemirrorLanguage;
+  /** Soft-wrap lines. Defaults to true. Mount-only. */
+  wrap?: boolean;
+  /** Show line numbers; defaults to false for 'writing' and true for 'code'. Mount-only. */
   showLineNumbers?: boolean;
   readOnly?: boolean;
-  /** Extra extensions (e.g. lang-markdown in the future); only applied at mount time. */
+  /** Extra extensions (e.g. linters); only applied at mount time. */
   extensions?: Extension[];
   /** Callback after EditorView is created; callers should stabilize via useCallback. */
   onReady?: (view: EditorView) => void;
   autoFocus?: boolean;
   /**
-   * When the content switches (e.g. between chapters), whether the external value pushed down
-   * enters the undo history. Defaults to false (excluded from history) so Ctrl+Z does not
-   * revert to the previous chapter's content. Set to true to allow undoing external changes.
+   * When the content switches (e.g. between chapters/tabs), whether the external value pushed down
+   * enters the undo history. Defaults to false (excluded from history, and the transaction is marked
+   * isolateHistory 'before' so undo cannot cross the content boundary).
    */
   externalChangeInHistory?: boolean;
 }
 
 /**
- * CodeMirror 6 wrapper hook. Corresponds to moxia QML's Editor.qml + firewood's useMonacoCompat.
+ * CodeMirror 6 wrapper hook. The single entry point for all editor scenarios (AGENTS convention).
  *
  * Handles:
  * - Multiple instances: each hook call gets its own EditorView, isolated.
@@ -78,17 +183,19 @@ interface UseCodemirrorOptions {
  *   interrupted by parent re-renders.
  * - Dynamic font size: Compartment + EditorView.theme reconfigure, no editor rebuild.
  * - StrictMode double-mount: requestAnimationFrame + cancelled flag.
- * - Cross-chapter undo isolation: Transaction.addToHistory.of(false).
- *
- * AGENTS convention: any CodeMirror 6 integration must use this hook; do not reconfigure
- * fontFamily / lineHeight / fontSize / IME handling per tool.
+ * - Cross-content undo isolation: external pushes are excluded from history and marked
+ *   isolateHistory 'before', so Ctrl+Z cannot revert into the previous chapter/tab content.
  */
 export function useCodemirror({
   value,
   onChange,
+  onUpdate,
   placeholder: placeholderText,
   fontSize = 16,
-  showLineNumbers = false,
+  variant = 'writing',
+  language = 'plaintext',
+  wrap = true,
+  showLineNumbers,
   readOnly = false,
   extensions: extraExtensions = [],
   onReady,
@@ -102,13 +209,18 @@ export function useCodemirror({
   const fontSizeCompartment = useRef(new Compartment()).current;
   const placeholderCompartment = useRef(new Compartment()).current;
   const readOnlyCompartment = useRef(new Compartment()).current;
+  const languageCompartment = useRef(new Compartment()).current;
 
   // Mirror the latest props into refs so updateListener doesn't re-subscribe on every render.
   const onChangeRef = useRef(onChange);
+  const onUpdateRef = useRef(onUpdate);
   const onReadyRef = useRef(onReady);
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
   useEffect(() => {
     onReadyRef.current = onReady;
   }, [onReady]);
@@ -120,6 +232,8 @@ export function useCodemirror({
   const isComposingRef = useRef(false);
   // docChanged events accumulated during composition; fired as a single onChange on compositionend.
   const pendingCompositionChangeRef = useRef(false);
+  // Last update accumulated during composition, replayed to onUpdate on compositionend.
+  const pendingCompositionUpdateRef = useRef<ViewUpdate | null>(null);
 
   // Ref for externalChangeInHistory to avoid re-subscribing after mount.
   const inHistoryRef = useRef(externalChangeInHistory);
@@ -127,18 +241,13 @@ export function useCodemirror({
     inHistoryRef.current = externalChangeInHistory;
   }, [externalChangeInHistory]);
 
+  const resolvedShowLineNumbers = showLineNumbers ?? variant === 'code';
+
   // ---- font size live reconfigure ----
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    view.dispatch({
-      effects: fontSizeCompartment.reconfigure(
-        EditorView.theme({
-          '&': { fontSize: `${fontSize}px` },
-          '.cm-content': { fontSize: `${fontSize}px` },
-        }),
-      ),
-    });
+    view.dispatch({ effects: fontSizeCompartment.reconfigure(fontSizeTheme(fontSize)) });
   }, [fontSize, fontSizeCompartment]);
 
   // ---- placeholder live reconfigure ----
@@ -154,10 +263,15 @@ export function useCodemirror({
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
-    view.dispatch({
-      effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)),
-    });
+    view.dispatch({ effects: readOnlyCompartment.reconfigure(EditorState.readOnly.of(readOnly)) });
   }, [readOnly, readOnlyCompartment]);
+
+  // ---- language live reconfigure (code variant) ----
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    view.dispatch({ effects: languageCompartment.reconfigure(codeLanguageExtension(language)) });
+  }, [language, languageCompartment]);
 
   // ---- controlled value sync: push down only when external value differs from current doc, preserve cursor ----
   useEffect(() => {
@@ -175,7 +289,10 @@ export function useCodemirror({
         anchor: Math.min(prevSel.anchor, value.length),
         head: Math.min(prevSel.head, value.length),
       },
-      annotations: Transaction.addToHistory.of(inHistoryRef.current),
+      annotations: [
+        Transaction.addToHistory.of(inHistoryRef.current),
+        ...(inHistoryRef.current ? [] : [isolateHistory.of('before')]),
+      ],
     });
     view.dispatch(tr);
     applyingExternalValueRef.current = false;
@@ -189,53 +306,78 @@ export function useCodemirror({
     let view: EditorView | null = null;
     let cancelled = false;
 
-    const state = EditorState.create({
-      doc: value,
-      extensions: [
-        WRITING_THEME,
-        EditorView.lineWrapping,
-        history(),
-        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
-        highlightSelectionMatches(),
-        fontSizeCompartment.of(
-          EditorView.theme({
-            '&': { fontSize: `${fontSize}px` },
-            '.cm-content': { fontSize: `${fontSize}px` },
-          }),
-        ),
-        placeholderCompartment.of(placeholderText ? cmPlaceholder(placeholderText) : []),
-        readOnlyCompartment.of(EditorState.readOnly.of(readOnly)),
-        showLineNumbers ? lineNumbers() : [],
-        ...extraExtensions,
-        // Single registration point: subscribe once at mount; onChange is read through the ref.
-        EditorView.updateListener.of((u) => {
-          if (!u.docChanged) return;
-          if (applyingExternalValueRef.current) return;
-          if (isComposingRef.current) {
-            pendingCompositionChangeRef.current = true;
-            return;
-          }
+    const extensions: Extension[] = [
+      variant === 'code' ? CODE_THEME : WRITING_THEME,
+      wrap ? EditorView.lineWrapping : [],
+      history(),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+      highlightSelectionMatches(),
+      fontSizeCompartment.of(fontSizeTheme(fontSize)),
+      placeholderCompartment.of(placeholderText ? cmPlaceholder(placeholderText) : []),
+      readOnlyCompartment.of(EditorState.readOnly.of(readOnly)),
+      resolvedShowLineNumbers ? lineNumbers() : [],
+    ];
+
+    // Code variant deliberately does NOT use drawSelection(): its cursor/selection layers are
+    // positioned from getClientRects() measurements, which misrender in Tauri's WKWebView
+    // (cursor drawn at a wrong spot after clicking doc start; selection background not
+    // painted, so Shift+Arrow looks dead). Native caret/selection rendering — as used by
+    // the writing variant — is reliable there. Do not re-add.
+    if (variant === 'code') {
+      extensions.push(
+        syntaxHighlighting(CODE_HIGHLIGHT_STYLE),
+        languageCompartment.of(codeLanguageExtension(language)),
+        foldGutter(),
+        highlightActiveLine(),
+        highlightActiveLineGutter(),
+        bracketMatching(),
+        closeBrackets(),
+        autocompletion(),
+        indentUnit.of('  '),
+      );
+    }
+
+    extensions.push(
+      ...extraExtensions,
+      // Single registration point: subscribe once at mount; callbacks are read through refs.
+      EditorView.updateListener.of((u) => {
+        if (!u.docChanged && !u.selectionSet) return;
+        if (applyingExternalValueRef.current) return;
+        if (isComposingRef.current) {
+          pendingCompositionChangeRef.current = true;
+          pendingCompositionUpdateRef.current = u;
+          return;
+        }
+        if (u.docChanged) {
           onChangeRef.current?.(u.state.doc.toString());
-          pendingCompositionChangeRef.current = false;
-        }),
-        // IME: CodeMirror 6's native IME in WKWebView goes through the contentEditable path,
-        // which is more stable than Monaco's EditContext. We only maintain isComposingRef so
-        // updateListener does not fire onChange during composition, preventing CJK input from
-        // being interrupted by parent re-renders.
-        EditorView.domEventHandlers({
-          compositionstart: () => {
-            isComposingRef.current = true;
-          },
-          compositionend: (_event, v) => {
-            isComposingRef.current = false;
-            if (pendingCompositionChangeRef.current) {
-              pendingCompositionChangeRef.current = false;
-              onChangeRef.current?.(v.state.doc.toString());
+        }
+        pendingCompositionChangeRef.current = false;
+        onUpdateRef.current?.(u);
+      }),
+      // IME: CodeMirror 6's native IME in WKWebView goes through the contentEditable path,
+      // which is more stable than Monaco's EditContext. We only maintain isComposingRef so
+      // updateListener does not fire onChange during composition, preventing CJK input from
+      // being interrupted by parent re-renders.
+      EditorView.domEventHandlers({
+        compositionstart: () => {
+          isComposingRef.current = true;
+        },
+        compositionend: (_event, v) => {
+          isComposingRef.current = false;
+          if (pendingCompositionChangeRef.current) {
+            pendingCompositionChangeRef.current = false;
+            onChangeRef.current?.(v.state.doc.toString());
+            const pendingUpdate = pendingCompositionUpdateRef.current;
+            pendingCompositionUpdateRef.current = null;
+            if (pendingUpdate) {
+              onUpdateRef.current?.(pendingUpdate);
             }
-          },
-        }),
-      ],
-    });
+          }
+        },
+      }),
+    );
+
+    const state = EditorState.create({ doc: value, extensions });
 
     // StrictMode in dev does mount → cleanup → mount. Use rAF + a cancelled flag so the
     // first mount does not create an EditorView after cleanup has run.
@@ -254,6 +396,7 @@ export function useCodemirror({
       viewRef.current = null;
       isComposingRef.current = false;
       pendingCompositionChangeRef.current = false;
+      pendingCompositionUpdateRef.current = null;
     };
     // Mount once. Re-running would destroy the editor and lose IME / cursor / scroll state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
