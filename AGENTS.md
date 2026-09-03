@@ -38,6 +38,7 @@ CM6 平台注意事项（WKWebView）：
 
 - `@codemirror/view` 版本下限 6.43.7：6.43.7–6.43.10 修复了 WebKit 下"滚动后首次点击 → 视口跳动/光标定位到错误行"（上游 #170/#1384/#1673 一族，涉及滚动锚定补偿与 posAtCoords 行内扫描），不要降级。
 - code variant 禁用 `drawSelection()`：其光标/选区层依赖 getClientRects 测量，在 WKWebView 下画错位置；原生选区渲染（writing variant 同款）可靠，不要重新引入。
+- WKWebView 的 focus/preventScroll shim 必须保留（`src/utils/wkWebViewFocusShim.ts`，在 `main.tsx` 启动时安装）：Safari 26 引擎忽略 `focus({preventScroll: true})` 并把旧光标滚回视口；CM 的 Safari-26 规避依赖 UA 里的 `Version/<n>`，而 Tauri WKWebView 的 UA 没有该 token（`safari_version` 解析为 0），CM 的规避在 Tauri 内必然失效。该 shim 包装 `HTMLElement.prototype.focus`，对 `preventScroll: true` 的调用做祖先滚动位置 save/restore（与 CM 内置 fallback 同款），修复"长文档滚到远处后点击 → 视口跳回旧光标行"的 bug。验证工具：json-formatter 内 dev-only 的 `JumpDebugger` 浮层（`import.meta.env.DEV` 下自动挂载）。
 
 ### Tauri Rust 命令
 

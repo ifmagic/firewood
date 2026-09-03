@@ -13,6 +13,8 @@ import ToolLayout from '../../components/ToolLayout';
 import { useCodemirror } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import JumpDebugger from './JumpDebugger';
+import { jumpDebuggerExtension } from './jumpDebuggerExtension';
 
 const jsoncFormatOptions = {
   tabSize: 2,
@@ -41,7 +43,10 @@ export default function JsonFormatter() {
     setHasSelection((prev) => (prev === next ? prev : next));
   };
 
-  const lintExtensions = useMemo(() => [linter(jsonParseLinter())], []);
+  const lintExtensions = useMemo(
+    () => (import.meta.env.DEV ? [linter(jsonParseLinter()), jumpDebuggerExtension()] : [linter(jsonParseLinter())]),
+    [],
+  );
 
   const { hostRef, viewRef } = useCodemirror({
     value: content,
@@ -194,6 +199,7 @@ export default function JsonFormatter() {
           </div>
           <StatusBar right={<FontSizeControl fontSize={fontSize} onIncrease={increase} onDecrease={decrease} />} />
         </div>
+        <JumpDebugger />
       </div>
     </ToolLayout>
   );
