@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.8.2
+
+### ✨ Features
+
+- Migrate Notepad and JSON Formatter to CodeMirror 6, with code-focused JSON editing features such as syntax highlighting, folding, bracket matching, and completion.
+- Add a Terminal refresh control and automatic display repainting after display-scale changes.
+
+### 🐛 Bug Fixes
+
+- Prevent long documents in Tauri's WKWebView from jumping back to the previous caret position after a click.
+- Align JSON Formatter diagnostics with its JSONC support so valid comments and trailing commas are not reported as errors.
+
+### 🔧 Chore / Updates
+
+- Reduce oversized bundles for the Abacus and Image-to-PDF tools.
+
 ## v0.8.1
 
 ### ✨ Features
