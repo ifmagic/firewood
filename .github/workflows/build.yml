@@ -16,18 +16,26 @@ jobs:
       release_id: ${{ steps.create-release.outputs.result }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
       - name: Create release
         id: create-release
         uses: actions/github-script@v9
         with:
           script: |
-            const fs = require('fs');
-            const changelog = fs.readFileSync('CHANGELOG.md', 'utf-8');
             const tag = context.ref.replace('refs/tags/', '');
             const version = tag.replace(/^v/, '');
+            const { data: changelogFile } = await github.rest.repos.getContent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: 'CHANGELOG.md',
+              ref: tag,
+            });
+            if (Array.isArray(changelogFile) || changelogFile.type !== 'file') {
+              throw new Error(`Unable to read CHANGELOG.md for ${tag}`);
+            }
+            const changelog = Buffer.from(
+              changelogFile.content,
+              changelogFile.encoding,
+            ).toString('utf-8');
 
             // Extract the section matching this version: "## v{version}" until next "## "
             const lines = changelog.split('\n');
@@ -69,9 +77,6 @@ jobs:
           - platform: macos-latest
             args: '--target aarch64-apple-darwin'
             rust-targets: 'aarch64-apple-darwin'
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-            rust-targets: 'x86_64-apple-darwin'
           - platform: windows-latest
             args: ''
             rust-targets: ''
@@ -87,6 +92,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -99,7 +105,7 @@ jobs:
           workspaces: './src-tauri -> target'
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
