@@ -15,7 +15,7 @@ Firewood 是基于 Tauri 2 + React 19 + TypeScript 的本地优先桌面工具�
 
 - 格式化代码：`npx prettier --write .`（配置见 `.prettierrc.json`，CSS 文件使用 tab 缩进）
 - Lint 检查：`npm run lint`
-- 类型检查：`npx tsc --noEmit`
+- 类型检查：`npx tsc -b`（注意：根 tsconfig 是 `files: []` 的引用式壳，直接跑 `tsc --noEmit` 不检查任何文件，会假通过）
 - 前端单元测试：`npm test`（vitest，单次运行）/ `npm run test:watch`（监听模式）
 - Rust 测试：`cargo test --manifest-path src-tauri/Cargo.toml`
 

@@ -3,8 +3,8 @@
  * Shared log buffer + CM extension. Never used in production builds
  * (`import.meta.env.DEV` gates the call site in index.tsx).
  */
-import { EditorView, ViewPlugin, type Extension, type ViewUpdate } from '@codemirror/view';
-import { Transaction } from '@codemirror/state';
+import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { Transaction, type Extension } from '@codemirror/state';
 import { isTauriWKWebView, isShimActive } from '../../utils/wkWebViewFocusShim';
 
 export interface LogEntry {

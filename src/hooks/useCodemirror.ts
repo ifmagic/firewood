@@ -14,8 +14,6 @@ import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { HighlightStyle, bracketMatching, foldGutter, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { autocompletion, closeBrackets } from '@codemirror/autocomplete';
 import { json } from '@codemirror/lang-json';
-import { html } from '@codemirror/lang-html';
-import { javascript } from '@codemirror/lang-javascript';
 import { tags as t } from '@lezer/highlight';
 
 export type CodemirrorVariant = 'writing' | 'code';
@@ -106,6 +104,14 @@ const CODE_THEME = EditorView.theme({
     color: '#94A3B8',
     fontStyle: 'italic',
   },
+  // CM's lint squiggle is a 6x3px SVG at background-position "left bottom".
+  // With lineHeight 1.6 the line box has tall bottom leading, so the squiggle
+  // rendered ~6px below the text and read as a detached grey box. Anchor it
+  // just under the text baseline instead.
+  '.cm-lintRange': {
+    backgroundPosition: 'left calc(100% - 3px)',
+    paddingBottom: '0px',
+  },
 });
 
 // Token colors port the Monaco firewood-contrast-light rules.
@@ -118,14 +124,25 @@ const CODE_HIGHLIGHT_STYLE = HighlightStyle.define([
   { tag: [t.typeName, t.className], color: '#1D4ED8' },
 ]);
 
+/**
+ * Language parsers, keyed by language. json is tiny and used by json-formatter,
+ * so it stays static; html/javascript parsers are heavy (~230KB raw combined,
+ * only notepad uses them) and load lazily so they stay out of the shared
+ * useCodemirror chunk (keeps it under the 500KB chunk warning threshold).
+ */
+const lazyLanguageExtensions: Partial<Record<CodemirrorLanguage, () => Promise<{ extension: Extension }>>> = {
+  html: async () => ({ extension: (await import('@codemirror/lang-html')).html() }),
+  javascript: async () => ({ extension: (await import('@codemirror/lang-javascript')).javascript() }),
+};
+
 function codeLanguageExtension(language: CodemirrorLanguage): Extension {
   switch (language) {
     case 'json':
       return json();
     case 'html':
-      return html();
     case 'javascript':
-      return javascript();
+      // Placeholder until the async load lands; reconfigured by the load effect below.
+      return [];
     default:
       return [];
   }
@@ -270,7 +287,23 @@ export function useCodemirror({
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
+    let cancelled = false;
+    // Instantly apply the static part (json or empty placeholder), then upgrade
+    // to the lazy parser when it arrives. Guarded against races when the user
+    // flips languages faster than the dynamic import resolves.
     view.dispatch({ effects: languageCompartment.reconfigure(codeLanguageExtension(language)) });
+    const lazy = lazyLanguageExtensions[language];
+    if (lazy) {
+      lazy().then(({ extension }) => {
+        if (cancelled) return;
+        const current = viewRef.current;
+        if (!current) return;
+        current.dispatch({ effects: languageCompartment.reconfigure(extension) });
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
   }, [language, languageCompartment]);
 
   // ---- controlled value sync: push down only when external value differs from current doc, preserve cursor ----

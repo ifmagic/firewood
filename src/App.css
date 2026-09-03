@@ -183,7 +183,9 @@ body {
 	min-height: 0;
 	border: 1px solid var(--fw-divider);
 	border-radius: 12px;
-	overflow: hidden;
+	/* No overflow:hidden: it would clip editor tooltips (lint/autocomplete)
+	   that render past the shell edge (e.g. above line 1). Rounded corners are
+	   kept by the editors' own border-radius (see .fw-cm-host / .cmHost). */
 	background: var(--fw-surface);
 }
 

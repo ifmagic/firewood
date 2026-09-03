@@ -366,7 +366,7 @@
 .cmHost {
 	height: 100%;
 	min-height: 200px;
-	overflow: hidden;
+	/* No overflow:hidden — it clips CM tooltips (hover/lint) at the host edge. */
 }
 
 .cmHost .cm-editor {

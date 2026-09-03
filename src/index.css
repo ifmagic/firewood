@@ -49,17 +49,16 @@ body {
 	display: flex;
 }
 
-/* CodeMirror host container (shared by notepad / json-formatter; mirrors moxia's .cmHost) */
+/* CodeMirror host container (shared by notepad / json-formatter; mirrors moxia's .cmHost)
+   NO overflow:hidden here: CM mounts tooltips (lint hover, autocomplete) inside the
+   editor DOM, and any overflow:hidden ancestor clips them — e.g. a lint tooltip for an
+   error on line 1 renders above the editor top and would be cut off. Scrolling is
+   handled by .cm-scroller itself. */
 .fw-cm-host {
 	height: 100%;
 	min-height: 0;
-	overflow: hidden;
 }
 
 .fw-cm-host .cm-editor {
 	height: 100%;
-}
-
-.fw-cm-host .cm-scroller {
-	overflow: auto;
 }

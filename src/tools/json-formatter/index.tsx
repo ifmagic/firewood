@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Empty, Tooltip } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { applyEdits, format as formatJsonc } from 'jsonc-parser';
-import { linter } from '@codemirror/lint';
-import { jsonParseLinter } from '@codemirror/lang-json';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
 import EditorContextMenu from '../../components/EditorContextMenu';
@@ -15,6 +13,7 @@ import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import JumpDebugger from './JumpDebugger';
 import { jumpDebuggerExtension } from './jumpDebuggerExtension';
+import { jsoncLinter } from './jsoncLinter';
 
 const jsoncFormatOptions = {
   tabSize: 2,
@@ -44,7 +43,7 @@ export default function JsonFormatter() {
   };
 
   const lintExtensions = useMemo(
-    () => (import.meta.env.DEV ? [linter(jsonParseLinter()), jumpDebuggerExtension()] : [linter(jsonParseLinter())]),
+    () => (import.meta.env.DEV ? [jsoncLinter(), jumpDebuggerExtension()] : [jsoncLinter()]),
     [],
   );
 
