@@ -9,7 +9,7 @@ const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness } = 
     write: ReturnType<typeof vi.fn>;
     clear: ReturnType<typeof vi.fn>;
     focus: ReturnType<typeof vi.fn>;
-    resize: ReturnType<typeof vi.fn>;
+    resize: ReturnType<typeof vi.fn> & ((cols: number, rows: number) => void);
     refresh: ReturnType<typeof vi.fn>;
   }[] = [];
   const callLog: string[] = [];
@@ -136,6 +136,16 @@ async function flush(ms = 25) {
   });
 }
 
+// forceTerminalRedraw restores on the second requestAnimationFrame after the
+// trigger (the intermediate size must survive one real frame so WKWebView
+// recomposites it). rAF callbacks run FIFO, so waiting for two further rAFs
+// guarantees the restore callback has already run.
+async function awaitRedrawRoundTrip() {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
 beforeAll(() => {
   Object.defineProperty(document, 'fonts', {
     configurable: true,
@@ -208,7 +218,7 @@ describe('terminal lifecycle', () => {
     expect(terminals[0].write).toHaveBeenCalledWith('hello pty');
   });
 
-  it('refresh button round-trips terminal size and notifies the pty in order', async () => {
+  it('refresh button round-trips terminal size across two frames and notifies the pty in order', async () => {
     mountPage();
     await flush();
 
@@ -217,14 +227,66 @@ describe('terminal lifecycle', () => {
     expect((refreshButton as HTMLButtonElement).disabled).toBe(false);
     click(refreshButton!);
 
-    expect(terminals[0].resize).toHaveBeenCalledTimes(2);
+    // First leg is synchronous: grow one column so this frame's layout
+    // really changes (a same-frame round-trip is a net-zero layout change
+    // and WKWebView would keep its stale composited output).
+    expect(terminals[0].resize).toHaveBeenCalledTimes(1);
     expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+    expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 81 });
+
+    await awaitRedrawRoundTrip();
+
+    expect(terminals[0].resize).toHaveBeenCalledTimes(2);
     expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
     expect(terminals[0].refresh).toHaveBeenCalledWith(0, 23);
-    expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 81 });
     expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 80 });
     // fit() on unchanged dimensions must not add a third notification
     expect(invokeMock.mock.calls.filter(([cmd]) => cmd === 'resize_pty')).toHaveLength(2);
+  });
+
+  it('ignores refresh requests while a redraw round-trip is pending', async () => {
+    mountPage();
+    await flush();
+
+    const refreshButton = container?.querySelector('.firewood-terminal-refresh');
+    click(refreshButton!);
+    // Rapid double click before the intermediate frame is painted: the
+    // second request must not stack another round-trip.
+    click(refreshButton!);
+    expect(terminals[0].resize).toHaveBeenCalledTimes(1);
+
+    await awaitRedrawRoundTrip();
+
+    expect(terminals[0].resize).toHaveBeenCalledTimes(2);
+    expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+    expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
+    expect(invokeMock.mock.calls.filter(([cmd]) => cmd === 'resize_pty')).toHaveLength(2);
+  });
+
+  it('does not fight an external resize that took over the intermediate state', async () => {
+    mountPage();
+    await flush();
+
+    const refreshButton = container?.querySelector('.firewood-terminal-refresh');
+    click(refreshButton!);
+
+    // Wait one frame (the intermediate 81-col state is now live), then let
+    // an external fit() resize win — e.g. the user changed font size while
+    // the round-trip was in flight. The restore leg must stand aside.
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    terminals[0].resize(120, 30);
+
+    await awaitRedrawRoundTrip();
+
+    // Only the first leg (81, 24) ran; the restore to (80, 24) must stand
+    // aside because the external resize now owns the terminal size.
+    const resizeCalls = terminals[0].resize.mock.calls as Array<[number, number]>;
+    expect(resizeCalls).toContainEqual([81, 24]);
+    expect(resizeCalls).toContainEqual([120, 30]);
+    expect(resizeCalls).not.toContainEqual([80, 24]);
+    expect(invokeMock).not.toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 80 });
   });
 
   it('repaints mounted terminals when devicePixelRatio changes', async () => {
@@ -239,6 +301,7 @@ describe('terminal lifecycle', () => {
       });
 
       expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+      await awaitRedrawRoundTrip();
       expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
       expect(terminals[0].refresh).toHaveBeenCalledWith(0, 23);
       expect(invokeMock).toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 81 });
@@ -263,6 +326,7 @@ describe('terminal lifecycle', () => {
     await flush();
 
     expect(terminals[0].resize).toHaveBeenNthCalledWith(1, 81, 24);
+    await awaitRedrawRoundTrip();
     expect(terminals[0].resize).toHaveBeenNthCalledWith(2, 80, 24);
     Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
   });

@@ -49,6 +49,7 @@ interface TerminalTabState {
   bufferedChars: number;
   mounted: boolean;
   lastPaintedDpr: number | null;
+  redrawPending: boolean;
   status: TerminalTabStatus;
   error: string | null;
   disposed: boolean;
@@ -157,6 +158,7 @@ function createTerminalTabState(shellPath: string | null): TerminalTabState {
     bufferedChars: 0,
     mounted: false,
     lastPaintedDpr: null,
+    redrawPending: false,
     status: 'loading',
     error: null,
     disposed: false,
@@ -249,6 +251,9 @@ function fitTerminalTab(tab: TerminalTabState) {
 function forceTerminalRedraw(tab: TerminalTabState) {
   const term = tab.term;
   if (!term || !tab.mounted) return;
+  // A round-trip is already in flight for this tab; the pending restore
+  // completes the repaint, so an extra request adds nothing.
+  if (tab.redrawPending) return;
 
   // In @xterm/xterm 6.0.0, Terminal.resize() with unchanged dimensions is a
   // no-op (CoreBrowserTerminal early-returns), and a same-size TIOCSWINSZ
@@ -258,11 +263,34 @@ function forceTerminalRedraw(tab: TerminalTabState) {
   // and notify the PTY, so TUI apps redraw exactly as they do on a window
   // resize. The buffer reflow round-trips losslessly (verified against 6.0.0
   // buffer reflow, incl. wide chars and full scrollback).
+  //
+  // The two resizes MUST NOT run in the same JS task: the browser only runs
+  // style/layout/paint once per task, so a same-frame round-trip is a net-zero
+  // layout change and WKWebView keeps its stale composited output — exactly
+  // the ghosting this repaint exists to clear. Splitting across frames makes
+  // the (cols+1) layout real for one frame (the container clips the extra
+  // cell), which is what a manual window shrink/grow does. A single rAF is
+  // not enough either: rAF callbacks run before the frame's style/layout, so
+  // the intermediate state would still never be painted. Restore on the
+  // second rAF, after the intermediate frame has been composited.
   const { cols, rows } = term;
+  tab.redrawPending = true;
   term.resize(cols + 1, rows);
-  term.resize(cols, rows);
-  term.refresh(0, term.rows - 1);
-  tab.lastPaintedDpr = window.devicePixelRatio;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      tab.redrawPending = false;
+      // The tab may have been disposed or remounted with a new Terminal, or
+      // an external resize (fit on container/font change) may have taken
+      // over while the intermediate state was on screen — only restore the
+      // size this round-trip actually changed.
+      if (tab.disposed || tab.term !== term || !tab.mounted) return;
+      if (term.cols !== cols + 1 || term.rows !== rows) return;
+      term.resize(cols, rows);
+      term.refresh(0, term.rows - 1);
+      tab.lastPaintedDpr = window.devicePixelRatio;
+    });
+  });
 }
 
 function refreshTerminalDisplay(tab: TerminalTabState) {
