@@ -153,6 +153,10 @@ export default function Notepad() {
   const onContentChange = useCallback(
     (value: string) => {
       setContent(value);
+      // Re-detect on every change (typing, paste, and the format-JSON context action
+      // all flow through here); otherwise a JSON body pasted into a plaintext tab
+      // never gains highlighting/folding even after formatting.
+      setActiveLanguage(detectLanguage(value));
       const id = activeTabIdRef.current;
       if (id) {
         schedulePersist(id, value);

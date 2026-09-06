@@ -11,7 +11,14 @@ import {
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, isolateHistory } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
-import { HighlightStyle, bracketMatching, foldGutter, indentUnit, syntaxHighlighting } from '@codemirror/language';
+import {
+  HighlightStyle,
+  bracketMatching,
+  foldGutter,
+  foldKeymap,
+  indentUnit,
+  syntaxHighlighting,
+} from '@codemirror/language';
 import { autocompletion, closeBrackets } from '@codemirror/autocomplete';
 import { json } from '@codemirror/lang-json';
 import { tags as t } from '@lezer/highlight';
@@ -361,6 +368,7 @@ export function useCodemirror({
         syntaxHighlighting(CODE_HIGHLIGHT_STYLE),
         languageCompartment.of(codeLanguageExtension(language)),
         foldGutter(),
+        keymap.of(foldKeymap),
         highlightActiveLine(),
         highlightActiveLineGutter(),
         bracketMatching(),
