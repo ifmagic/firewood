@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.8.3
+
+### ✨ Features
+
+- Add a macOS overlay title bar with a persistent always-on-top control.
+
+### 🐛 Bug Fixes
+
+- Restore Notepad JSON syntax highlighting and code folding when content is edited.
+- Ensure Terminal refreshes repaint reliably in Tauri's WKWebView.
+
+### 🔧 Chore / Updates
+
+- Improve release changelog retrieval and refine the macOS CI build matrix.
+
 ## v0.8.2
 
 ### ✨ Features
