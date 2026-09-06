@@ -1,0 +1,16 @@
+/* Height matches the standard macOS titlebar so the native traffic lights
+   (fixed top-left, above the webview) sit vertically centered in the strip.
+   Pin button styles live in PinToggle/PinToggle.module.css (shared). */
+.strip {
+	height: 28px;
+	flex-shrink: 0;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0 12px;
+	background: var(--fw-surface);
+	border-bottom: 1px solid var(--fw-divider);
+	user-select: none;
+	-webkit-user-select: none;
+}

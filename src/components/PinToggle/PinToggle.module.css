@@ -1,0 +1,65 @@
+/* Shared always-on-top pin button (see PinToggle/index.tsx). The variants
+   differ only in footprint and surface tokens: "titleBar" sits on the light
+   titlebar strip, "sidebar" on the dark sidebar footer. */
+.pinButton {
+	border: none;
+	background: transparent;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition:
+		color 0.15s,
+		background 0.15s;
+	flex-shrink: 0;
+}
+
+.titleBar {
+	width: 24px;
+	height: 24px;
+	font-size: 13px;
+	border-radius: 6px;
+	color: var(--fw-text-tertiary);
+}
+
+.titleBar:hover {
+	color: var(--fw-text-strong);
+	background: var(--fw-hover-light);
+}
+
+.titleBar:active {
+	background: var(--fw-panel-muted);
+}
+
+.titleBar:focus-visible {
+	outline: 1px solid var(--fw-accent);
+	outline-offset: -1px;
+}
+
+.sidebar {
+	width: 32px;
+	height: 32px;
+	font-size: 15px;
+	border-radius: 8px;
+	color: var(--fw-text-secondary);
+}
+
+.sidebar:hover {
+	color: var(--fw-text-primary);
+	background: var(--fw-hover);
+}
+
+.sidebar:focus-visible {
+	box-shadow: var(--fw-focus-ring);
+}
+
+/* Pinned accent. The :hover rule must come AFTER the variant :hover rules
+   (equal specificity, later wins) so a pinned pin keeps its accent on hover. */
+.pinButtonActive {
+	color: var(--fw-accent);
+}
+
+.pinButtonActive:hover {
+	color: var(--fw-accent);
+	background: var(--fw-selected-bg);
+}

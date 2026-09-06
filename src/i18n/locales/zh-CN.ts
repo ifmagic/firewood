@@ -9,6 +9,12 @@ const zhCN = {
     allToolsHidden: '所有工具已隐藏，可从顶部菜单恢复',
   },
 
+  // Window titlebar (macOS overlay strip + non-macOS sidebar fallback)
+  titleBar: {
+    pin: '置顶',
+    unpin: '取消置顶',
+  },
+
   // Tool names
   toolName: {
     'json-formatter': 'JSON',

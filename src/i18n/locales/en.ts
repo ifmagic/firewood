@@ -9,6 +9,12 @@ const en = {
     allToolsHidden: 'All tools are hidden. Restore them from the top menu',
   },
 
+  // Window titlebar (macOS overlay strip + non-macOS sidebar fallback)
+  titleBar: {
+    pin: 'Pin',
+    unpin: 'Unpin',
+  },
+
   // Tool names
   toolName: {
     'json-formatter': 'JSON',

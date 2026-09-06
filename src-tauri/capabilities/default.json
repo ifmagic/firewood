@@ -19,6 +19,8 @@
       "allow": [{ "event": "pty:*" }]
     },
     "updater:default",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-start-dragging",
     {
       "identifier": "fs:allow-write-text-file",
       "allow": [

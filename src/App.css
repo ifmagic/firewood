@@ -3,6 +3,21 @@ body {
 	color: var(--fw-text-body);
 }
 
+/* Column shell hosting the macOS overlay titlebar strip above the main
+   sidebar/content layout (see App.tsx / components/TitleBar).
+   width:100% is required: this div is a flex item of #root (a ROW flex
+   container), and without it the .ant-layout-content { width:0; flex:auto }
+   div has no free space to grow into, collapsing the tool pane to width 0
+   (white screen). */
+.app-shell {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+}
+
 .ant-btn {
 	border-radius: 8px;
 	box-shadow: none;

@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import type { MenuProps } from 'antd';
 import type { ToolMeta } from '../../types/tool';
 import SettingsMenuButton from '../SettingsMenuButton';
+import PinToggle from '../PinToggle';
+import { isMacPlatform } from '../../utils/platform';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -254,6 +256,10 @@ export default function Sidebar({
         )}
       </div>
       <div className={styles.siderFooter}>
+        {/* Non-macOS fallback pin (native title bar remains there); macOS
+            hosts the pin in the overlay TitleBar strip — exactly one PinToggle
+            may mount per platform. */}
+        {!isMacPlatform() && <PinToggle variant="sidebar" placement="right" />}
         <SettingsMenuButton onOpenAbout={onOpenAbout} />
       </div>
     </Sider>

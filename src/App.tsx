@@ -2,6 +2,7 @@ import { Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, Layout, Spin } from 'antd';
 import Sidebar from './components/Sidebar';
+import TitleBar from './components/TitleBar';
 import AboutDialog from './components/AboutDialog';
 import Updater from './components/Updater';
 import tools from './router/tools';
@@ -51,27 +52,32 @@ function App() {
       <BrowserRouter>
         <Updater />
         <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
-        <Layout style={{ height: '100vh' }}>
-          <Sidebar
-            tools={orderedTools}
-            visibility={visibility}
-            onToggleToolVisibility={toggleToolVisibility}
-            onReorder={reorder}
-            onOpenAbout={() => setAboutOpen(true)}
-            collapsed={collapsed}
-            onToggleCollapsed={toggle}
-          />
-          <Content style={{ overflow: 'auto', background: 'var(--fw-surface)' }}>
-            <Suspense fallback={<Spin style={{ margin: 40 }} />}>
-              <Routes>
-                <Route path="/" element={<Navigate to={`/${tools[0].id}`} replace />} />
-                {tools.map((tool) => (
-                  <Route key={tool.id} path={`/${tool.id}`} element={<tool.component />} />
-                ))}
-              </Routes>
-            </Suspense>
-          </Content>
-        </Layout>
+        {/* Column shell: the macOS overlay titlebar strip (drag region +
+            always-on-top pin) sits above the sidebar/content layout. */}
+        <div className="app-shell">
+          <TitleBar />
+          <Layout style={{ flex: 1, minHeight: 0 }}>
+            <Sidebar
+              tools={orderedTools}
+              visibility={visibility}
+              onToggleToolVisibility={toggleToolVisibility}
+              onReorder={reorder}
+              onOpenAbout={() => setAboutOpen(true)}
+              collapsed={collapsed}
+              onToggleCollapsed={toggle}
+            />
+            <Content style={{ overflow: 'auto', background: 'var(--fw-surface)' }}>
+              <Suspense fallback={<Spin style={{ margin: 40 }} />}>
+                <Routes>
+                  <Route path="/" element={<Navigate to={`/${tools[0].id}`} replace />} />
+                  {tools.map((tool) => (
+                    <Route key={tool.id} path={`/${tool.id}`} element={<tool.component />} />
+                  ))}
+                </Routes>
+              </Suspense>
+            </Content>
+          </Layout>
+        </div>
       </BrowserRouter>
     </ConfigProvider>
   );

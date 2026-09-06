@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
 
-export function usePersistentState<T>(key: string, initialValue: T) {
+/**
+ * localStorage-backed state. The optional `isValid` guard rejects stored
+ * values that parse as valid JSON but have the wrong shape (e.g. "null" or
+ * 0 for a boolean flag) — without it a tampered/legacy value flows through
+ * unvalidated and gets re-persisted. Values that fail JSON.parse fall back
+ * to `initialValue` regardless.
+ */
+export function usePersistentState<T>(key: string, initialValue: T, isValid?: (value: unknown) => value is T) {
   const [state, setState] = useState<T>(() => {
     try {
       const saved = localStorage.getItem(key);
-      return saved === null ? initialValue : (JSON.parse(saved) as T);
+      if (saved === null) return initialValue;
+      const parsed: unknown = JSON.parse(saved);
+      if (isValid && !isValid(parsed)) return initialValue;
+      return parsed as T;
     } catch {
       return initialValue;
     }
