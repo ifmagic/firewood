@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.8.4
+
+### 🐛 Bug Fixes
+
+- Restore macOS title-bar double-click zooming and reliable window dragging.
+- Ensure Terminal refreshes clear persistent WKWebView rendering artifacts.
+
+### 🔧 Chore / Updates
+
+- Streamline tool screens by removing redundant breadcrumbs and descriptions.
+- Update npm and Cargo dependencies.
+
 ## v0.8.3
 
 ### ✨ Features
