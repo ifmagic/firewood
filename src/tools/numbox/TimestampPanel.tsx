@@ -220,7 +220,6 @@ export default function TimestampPanel() {
 
         {/* Quick timestamp pills (copy on click) */}
         <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>{t('timestamp.quickTitle')}</h4>
           <div className={styles.quickPills}>
             {quickItems.map((item) => (
               <button
@@ -228,6 +227,7 @@ export default function TimestampPanel() {
                 type="button"
                 className={styles.quickPill}
                 onClick={() => copy(item.value)}
+                title={`${t('action.copy')} ${item.label}`}
                 aria-label={`${t('action.copy')} ${item.label}`}
               >
                 {item.label}
@@ -241,7 +241,6 @@ export default function TimestampPanel() {
           {/* Timestamp -> Date */}
           <div className={styles.tsColumn}>
             <div className={styles.section}>
-              <h4 className={styles.sectionTitle}>{t('timestamp.tsToDate')}</h4>
               <div className={styles.tsInputRow}>
                 <Input
                   value={ts}
@@ -249,6 +248,7 @@ export default function TimestampPanel() {
                   placeholder={t('timestamp.enterTsHint')}
                   onPressEnter={commitTsToDate}
                   className={styles.monoInput}
+                  title={t('timestamp.tsToDate')}
                   aria-label={t('timestamp.enterTs')}
                 />
                 {tsOutputs && (
@@ -277,7 +277,6 @@ export default function TimestampPanel() {
           {/* Date -> Timestamp */}
           <div className={styles.tsColumn}>
             <div className={styles.section}>
-              <h4 className={styles.sectionTitle}>{t('timestamp.dateToTs')}</h4>
               <div className={styles.tsInputRow}>
                 <DatePicker
                   value={date}
@@ -285,6 +284,7 @@ export default function TimestampPanel() {
                   getPopupContainer={() => document.body}
                   onChange={(d) => setDateValue(d ? d.toISOString() : null)}
                   style={{ flex: 1 }}
+                  title={t('timestamp.dateToTs')}
                   aria-label={t('timestamp.selectDate')}
                 />
               </div>

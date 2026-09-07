@@ -1001,7 +1001,7 @@ export default function TerminalPage() {
   }, [applyFontSize]);
 
   return (
-    <ToolLayout title={t('toolName.terminal', { defaultValue: 'Terminal' })}>
+    <ToolLayout>
       <div className="firewood-terminal">
         <div className="firewood-terminal-header">
           <div className="firewood-terminal-tabStrip">

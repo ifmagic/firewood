@@ -220,16 +220,6 @@ body {
 	min-height: 0;
 }
 
-.fw-tool-paneLabel {
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--fw-divider);
-	background: var(--fw-panel-subtle);
-	color: var(--fw-text-tertiary);
-	font-size: 12px;
-	font-weight: 600;
-	letter-spacing: 0.02em;
-}
-
 .fw-tool-paneBody {
 	position: relative;
 	flex: 1;

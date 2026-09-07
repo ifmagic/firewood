@@ -104,7 +104,7 @@ export default function TextDiff() {
   const status = `Original ${countLines(original)} · Modified ${countLines(modified)}`;
 
   return (
-    <ToolLayout title="DIFF">
+    <ToolLayout>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">
@@ -149,7 +149,6 @@ export default function TextDiff() {
             {!compared ? (
               <>
                 <div className="fw-tool-pane" style={{ width: `${leftPercent}%` }}>
-                  <div className="fw-tool-paneLabel">Original</div>
                   <div className="fw-tool-paneBody">
                     <TextArea
                       value={original}
@@ -165,7 +164,6 @@ export default function TextDiff() {
                   <div className="fw-tool-dividerGrip" />
                 </div>
                 <div className="fw-tool-pane" style={{ flex: 1 }}>
-                  <div className="fw-tool-paneLabel">Modified</div>
                   <div className="fw-tool-paneBody">
                     <TextArea
                       value={modified}

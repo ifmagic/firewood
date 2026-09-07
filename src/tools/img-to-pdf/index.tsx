@@ -362,7 +362,7 @@ export default function ImgToPdf() {
   const hasImages = items.length > 0;
 
   return (
-    <ToolLayout title={t('imgToPdf.title')}>
+    <ToolLayout>
       <div className={styles.mainLayout}>
         {/* ── Left control panel ── */}
         <div className={styles.controlPanel}>
@@ -506,7 +506,7 @@ export default function ImgToPdf() {
                   <Switch size="small" checked={lockUniformWhenTwo} onChange={setLockUniformWhenTwo} />
                 </div>
               )}
-              <div className={styles.settingActions}>
+              <div className={styles.settingActions} title={t('imgToPdf.previewTip')}>
                 <Button size="small" onClick={applyPhonePreset}>
                   {t('imgToPdf.phonePreset')}
                 </Button>
@@ -517,9 +517,6 @@ export default function ImgToPdf() {
                   {t('imgToPdf.resetDefault')}
                 </Button>
               </div>
-              <Text type="secondary" className={styles.settingTip}>
-                {t('imgToPdf.previewTip')}
-              </Text>
             </div>
           )}
 
@@ -534,13 +531,11 @@ export default function ImgToPdf() {
                   placeholder={t('imgToPdf.sizePlaceholder')}
                   value={maxSizeInput}
                   onChange={(e) => setMaxSizeInput(e.target.value)}
+                  title={t('imgToPdf.sizeHint')}
                   suffix="MB"
                   allowClear
                 />
               </div>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                {t('imgToPdf.sizeHint')}
-              </Text>
             </div>
           )}
 

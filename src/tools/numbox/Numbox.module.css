@@ -22,15 +22,6 @@
 	flex-shrink: 0;
 }
 
-.sectionTitle {
-	font-size: 14px;
-	font-weight: 600;
-	padding: 14px 16px;
-	border-bottom: 1px solid var(--fw-divider);
-	margin: 0;
-	background: var(--fw-panel-subtle);
-}
-
 .monoInput,
 .monoInput:global(.ant-input) {
 	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'JetBrains Mono', monospace;

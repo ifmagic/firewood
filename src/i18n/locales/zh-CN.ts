@@ -123,7 +123,6 @@ const zhCN = {
     quickTodayEnd: '今天 23:59',
     quickWeekStart: '本周一 00:00',
     quickMonthStart: '本月 1 日 00:00',
-    quickTitle: '快捷时间戳（点击复制）',
     justNow: '刚刚',
     inSeconds: '{{n}} 秒后',
     minutesAgo: '{{n}} 分钟前',

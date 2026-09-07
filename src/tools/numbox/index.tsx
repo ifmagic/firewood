@@ -13,7 +13,7 @@ export default function Numbox() {
   const [tab, setTab] = usePersistentState<TabKey>('tool:numbox:tab', 'calc');
 
   return (
-    <ToolLayout title={t('toolName.numbox', { defaultValue: 'Abacus' })}>
+    <ToolLayout>
       <div className={styles.container}>
         <Tabs
           activeKey={tab}

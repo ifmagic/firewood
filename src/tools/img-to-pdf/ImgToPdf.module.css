@@ -196,10 +196,6 @@
 	color: var(--fw-text-body);
 }
 
-.settingTip {
-	font-size: 11px;
-}
-
 .settingActions {
 	display: flex;
 	align-items: center;

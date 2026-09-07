@@ -137,7 +137,7 @@ export default function JsonFormatter() {
   };
 
   return (
-    <ToolLayout title={t('jsonFormatter.title')}>
+    <ToolLayout>
       <div className="fw-tool-stack">
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">

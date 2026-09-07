@@ -231,7 +231,8 @@ export default function Moxia() {
     [t, bookPath],
   );
 
-  // Promoted menu bar: replaces the default ToolLayout breadcrumb and the old internal topBar.
+  // Promoted menu bar: spans the ToolLayout custom header slot edge-to-edge
+  // (the old default breadcrumb row has been removed app-wide).
   const menuBar = (
     <div className={styles.topBar}>
       <Dropdown menu={{ items: bookMenuItems }} trigger={['click']}>
@@ -262,7 +263,7 @@ export default function Moxia() {
   );
 
   return (
-    <ToolLayout title={t('toolName.moxia', { defaultValue: 'Moxia' })} header={menuBar}>
+    <ToolLayout header={menuBar}>
       <div className={styles.wrapper}>
         {/* Two-column body (left nav + center panel). The right AI sidebar was removed; AI tool triggers now live inside page content. */}
         <div className={styles.body}>

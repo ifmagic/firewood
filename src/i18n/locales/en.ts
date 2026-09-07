@@ -123,7 +123,6 @@ const en = {
     quickTodayEnd: 'Today 23:59',
     quickWeekStart: 'Mon 00:00',
     quickMonthStart: '1st 00:00',
-    quickTitle: 'Quick timestamps (click to copy)',
     justNow: 'just now',
     inSeconds: 'in {{n}}s',
     minutesAgo: '{{n}} min ago',

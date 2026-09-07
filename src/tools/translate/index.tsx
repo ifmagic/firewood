@@ -212,7 +212,7 @@ export default function Translate() {
   const statusText = `${providerLabel} · ${getLangLabel(sourceLang, t)} → ${getLangLabel(targetLang, t)}`;
 
   return (
-    <ToolLayout title={t('translate.title')}>
+    <ToolLayout>
       <div className={styles.container}>
         {/* Settings bar */}
         <div className={styles.settingsBar}>
