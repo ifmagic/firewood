@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Compartment, EditorState, Transaction, type Extension } from '@codemirror/state';
 import {
   EditorView,
@@ -230,10 +230,12 @@ export function useCodemirror({
   const viewRef = useRef<EditorView | null>(null);
 
   // Compartment instances must be stable across renders, otherwise reconfigure has no effect.
-  const fontSizeCompartment = useRef(new Compartment()).current;
-  const placeholderCompartment = useRef(new Compartment()).current;
-  const readOnlyCompartment = useRef(new Compartment()).current;
-  const languageCompartment = useRef(new Compartment()).current;
+  // useState with a lazy initializer gives one instance per mount without touching refs during
+  // render (react-hooks/refs forbids `useRef(...).current` reads in the render body).
+  const [fontSizeCompartment] = useState(() => new Compartment());
+  const [placeholderCompartment] = useState(() => new Compartment());
+  const [readOnlyCompartment] = useState(() => new Compartment());
+  const [languageCompartment] = useState(() => new Compartment());
 
   // Mirror the latest props into refs so updateListener doesn't re-subscribe on every render.
   const onChangeRef = useRef(onChange);

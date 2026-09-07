@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Button, Radio, Upload, message, Typography, Slider, Switch, Input } from 'antd';
 import { FilePdfOutlined, PlusOutlined, LeftOutlined, RightOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
@@ -342,7 +342,10 @@ export default function ImgToPdf() {
   const showLayoutOption = perPage > 1 && perPage < 4;
   const pageCount = Math.ceil(items.length / perPage) || 0;
   const { cols: previewCols, rows: previewRows } = getGrid(perPage, layoutDir);
-  const previewStart = (previewPage - 1) * perPage;
+  // Clamp during render instead of an effect (react-hooks/set-state-in-effect):
+  // previewPage can point past the end when images are removed or per-page count grows.
+  const effectivePreviewPage = Math.min(previewPage, Math.max(pageCount, 1));
+  const previewStart = (effectivePreviewPage - 1) * perPage;
   const previewItems = items.slice(previewStart, previewStart + perPage);
   const previewUsableW = A4_W - 2 * pageMargin;
   const previewUsableH = A4_H - 2 * pageMargin;
@@ -355,14 +358,6 @@ export default function ImgToPdf() {
     imageScalePct / 100,
     lockUniformWhenTwo && perPage === 2,
   );
-
-  useEffect(() => {
-    if (pageCount === 0) {
-      setPreviewPage(1);
-      return;
-    }
-    if (previewPage > pageCount) setPreviewPage(pageCount);
-  }, [pageCount, previewPage]);
 
   const hasImages = items.length > 0;
 
@@ -620,18 +615,18 @@ export default function ImgToPdf() {
                   size="small"
                   type="text"
                   icon={<LeftOutlined />}
-                  onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
-                  disabled={previewPage <= 1}
+                  onClick={() => setPreviewPage((p) => Math.max(1, Math.min(pageCount, p) - 1))}
+                  disabled={effectivePreviewPage <= 1}
                 />
                 <Text type="secondary" style={{ fontSize: 13 }}>
-                  {previewPage} / {pageCount}
+                  {effectivePreviewPage} / {pageCount}
                 </Text>
                 <Button
                   size="small"
                   type="text"
                   icon={<RightOutlined />}
-                  onClick={() => setPreviewPage((p) => Math.min(pageCount, p + 1))}
-                  disabled={previewPage >= pageCount}
+                  onClick={() => setPreviewPage((p) => Math.min(pageCount, Math.min(pageCount, p) + 1))}
+                  disabled={effectivePreviewPage >= pageCount}
                 />
               </div>
             </>

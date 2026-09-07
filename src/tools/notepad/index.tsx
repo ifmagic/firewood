@@ -258,21 +258,29 @@ export default function Notepad() {
     }
   }, [tabs, activeTabId, setActiveTabId]);
 
-  // Load content into the editor whenever the active tab changes.
-  useEffect(() => {
-    activeTabIdRef.current = activeTabId;
-    flushPersist();
-
-    if (!activeTabId) {
+  // Load content into the editor whenever the active tab changes. The reload happens during
+  // render (React's "adjust state when a value changes" pattern) so no frame ever shows the
+  // outgoing tab's content under the new tab; the effect below handles the side effects.
+  const [loadedTabId, setLoadedTabId] = useState(activeTabId);
+  if (loadedTabId !== activeTabId) {
+    setLoadedTabId(activeTabId);
+    if (activeTabId) {
+      const saved = localStorage.getItem(getContentKey(activeTabId)) ?? '';
+      setContent(saved);
+      setActiveLanguage(detectLanguage(saved));
+    } else {
       setContent('');
       setActiveLanguage('plaintext');
-      scheduleStatsUpdate();
-      return;
     }
+  }
 
-    const saved = localStorage.getItem(getContentKey(activeTabId)) ?? '';
-    setContent(saved);
-    setActiveLanguage(detectLanguage(saved));
+  useEffect(() => {
+    activeTabIdRef.current = activeTabId;
+    // Flush the outgoing tab's pending debounced writes before the new tab's edits can
+    // replace the pending payload.
+    flushPersist();
+    // External value pushes are marked applyingExternalValue in useCodemirror and skip the
+    // updateListener, so the stats bar must be refreshed explicitly on tab switches.
     scheduleStatsUpdate();
   }, [activeTabId, flushPersist, scheduleStatsUpdate]);
 

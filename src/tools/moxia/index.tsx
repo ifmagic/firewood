@@ -126,7 +126,7 @@ export default function Moxia() {
   }, []);
 
   const handleOpenBook = async () => {
-    let path: string | null = null;
+    let path: string | null;
     try {
       path = await openDialog({
         filters: [MOXIA_FILTER],
@@ -149,7 +149,7 @@ export default function Moxia() {
   };
 
   const handleNewBook = async () => {
-    let path: string | null = null;
+    let path: string | null;
     try {
       path = await saveDialog({
         filters: [MOXIA_FILTER],
