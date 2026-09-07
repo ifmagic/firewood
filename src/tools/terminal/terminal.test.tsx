@@ -244,6 +244,37 @@ describe('terminal lifecycle', () => {
     expect(invokeMock.mock.calls.filter(([cmd]) => cmd === 'resize_pty')).toHaveLength(2);
   });
 
+  it('round-trips the host through a 1px shrink and a fresh compositing layer', async () => {
+    mountPage();
+    await flush();
+
+    const host = container?.querySelector('.firewood-terminal-container > div') as HTMLElement;
+    expect(host, 'terminal host div').toBeTruthy();
+    expect(host.style.width).toBe('100%');
+    expect(host.style.height).toBe('100%');
+
+    const refreshButton = container?.querySelector('.firewood-terminal-refresh');
+    expect(refreshButton, 'refresh button').toBeTruthy();
+    click(refreshButton!);
+
+    // Intermediate frame: the host is 1px smaller on both axes and pinned to
+    // its own compositing layer — the DOM-level equivalent of a window
+    // resize, the only thing that reliably clears WKWebView's cached tiles
+    // for the terminal subtree (incl. the .xterm-viewport async scroller,
+    // which the cols round-trip never re-layouts).
+    expect(host.style.width).toBe('calc(100% - 1px)');
+    expect(host.style.height).toBe('calc(100% - 1px)');
+    expect(host.style.transform).toBe('translateZ(0)');
+
+    await awaitRedrawRoundTrip();
+
+    // Restored to the exact inline values createTerminalHost set (clearing
+    // with '' would drop the height and collapse the terminal).
+    expect(host.style.width).toBe('100%');
+    expect(host.style.height).toBe('100%');
+    expect(host.style.transform).toBe('');
+  });
+
   it('ignores refresh requests while a redraw round-trip is pending', async () => {
     mountPage();
     await flush();
@@ -267,6 +298,7 @@ describe('terminal lifecycle', () => {
     mountPage();
     await flush();
 
+    const host = container?.querySelector('.firewood-terminal-container > div') as HTMLElement;
     const refreshButton = container?.querySelector('.firewood-terminal-refresh');
     click(refreshButton!);
 
@@ -287,6 +319,13 @@ describe('terminal lifecycle', () => {
     expect(resizeCalls).toContainEqual([120, 30]);
     expect(resizeCalls).not.toContainEqual([80, 24]);
     expect(invokeMock).not.toHaveBeenCalledWith('resize_pty', { id: 'pty-1', rows: 24, cols: 80 });
+
+    // The transient host styles must still be dropped even though the
+    // term-level restore stood aside — leaking them would permanently
+    // shrink the terminal and pin a compositing layer.
+    expect(host.style.width).toBe('100%');
+    expect(host.style.height).toBe('100%');
+    expect(host.style.transform).toBe('');
   });
 
   it('repaints mounted terminals when devicePixelRatio changes', async () => {

@@ -274,12 +274,48 @@ function forceTerminalRedraw(tab: TerminalTabState) {
   // the intermediate state would still never be painted. Restore on the
   // second rAF, after the intermediate frame has been composited.
   const { cols, rows } = term;
+  const host = tab.div;
   tab.redrawPending = true;
   term.resize(cols + 1, rows);
+
+  // The cols round-trip above only re-layouts xterm's internals: .xterm-screen
+  // grows one cell, the extra width is clipped away, and the visible pixels are
+  // unchanged. The elements a real window resize re-layouts — the host div,
+  // .xterm, and above all .xterm-viewport (overflow-y: scroll, the node WebKit
+  // promotes to async scrolling) — all keep their exact size. WKWebView's
+  // UI-side compositor keeps serving its cached tiles for that unchanged
+  // subtree, which is why ghosts of full-screen TUI content (e.g. a commit
+  // editor's input box) survive this resize round-trip while a manual window
+  // shrink/grow clears them instantly.
+  //
+  // So the intermediate frame also forces a host-level invalidation, the
+  // DOM-level equivalent of a window resize:
+  // - shrink the host by 1px on both axes, re-layouting the whole terminal
+  //   subtree including the scroller (margins would be ignored: the host
+  //   carries inline width/height 100%, an over-constrained box);
+  // - pin the host onto a fresh compositing layer (translateZ(0)) for that
+  //   frame, forcing the compositor to re-rasterize the entire subtree, then
+  //   destroy the layer on restore.
+  if (host) {
+    host.style.width = 'calc(100% - 1px)';
+    host.style.height = 'calc(100% - 1px)';
+    host.style.transform = 'translateZ(0)';
+  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       tab.redrawPending = false;
+      // Drop the transient host styles unconditionally — even when the
+      // term-level restore below stands aside (an external resize took over
+      // the intermediate state) or the tab is gone, leaking them would
+      // permanently shrink the terminal and pin a compositing layer. Restore
+      // the exact initial values; clearing with '' would remove the inline
+      // height and collapse the terminal to zero height.
+      if (host) {
+        host.style.width = '100%';
+        host.style.height = '100%';
+        host.style.transform = '';
+      }
       // The tab may have been disposed or remounted with a new Terminal, or
       // an external resize (fit on container/font change) may have taken
       // over while the intermediate state was on screen — only restore the
