@@ -103,6 +103,26 @@ const zhCN = {
     emptyHint: '粘贴 JSON 或转义文本，然后执行格式化、压缩或去除转义',
   },
 
+  // Text diff
+  textDiff: {
+    compare: '比较',
+    editView: '编辑视图',
+    expandAll: '全部展开',
+    collapseAll: '全部折叠',
+    added: '+{{count}} 新增',
+    deleted: '-{{count}} 删除',
+    original: '原始内容',
+    modified: '修改内容',
+    originalPlaceholder: '输入原始文本...',
+    modifiedPlaceholder: '输入修改后的文本...',
+    formatJson: '格式化 JSON',
+    noDifferences: '没有差异',
+    unchangedHidden: '已隐藏 {{count}} 行相同内容',
+    showUnchanged: '显示 {{count}} 行相同内容',
+    collapseUnchanged: '折叠 {{count}} 行相同内容',
+    status: '原始 {{original}} 行 · 修改 {{modified}} 行',
+  },
+
   // Timestamp
   timestamp: {
     tsToDate: '时间戳 → 日期',

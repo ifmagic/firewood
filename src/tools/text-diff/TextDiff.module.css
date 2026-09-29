@@ -1,8 +1,49 @@
+.paneHead {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 34px;
+	padding: 4px 6px 4px 12px;
+	border-bottom: 1px solid var(--fw-divider);
+	background: var(--fw-panel-subtle);
+}
+
+.paneTitle {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--fw-text-tertiary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.paneActions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+/* .fw-tool-split is user-select: none so that dragging the divider cannot select text;
+   the CodeMirror panes inside it must opt back in or mouse selection (and thus drag to
+   select, column selection) would be dead in the edit view. */
+.cmHost {
+	user-select: text;
+	-webkit-user-select: text;
+}
+
 .pane {
 	flex: 1;
 	min-height: 0;
 	padding: 16px;
 	background: var(--fw-editor-bg);
+	/* Same opt-in as .cmHost: the ancestor .fw-tool-split turns selection off, which would
+	   also freeze the diff output — users need to copy changed lines out of it (the line
+	   number / marker columns keep their own user-select: none). */
+	user-select: text;
+	-webkit-user-select: text;
 }
 
 .surface {

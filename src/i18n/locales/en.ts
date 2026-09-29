@@ -103,6 +103,26 @@ const en = {
     emptyHint: 'Paste JSON or escaped text, then format, minify, or unescape it here',
   },
 
+  // Text diff
+  textDiff: {
+    compare: 'Compare',
+    editView: 'Edit View',
+    expandAll: 'Expand all',
+    collapseAll: 'Collapse all',
+    added: '+{{count}} added',
+    deleted: '-{{count}} deleted',
+    original: 'Original',
+    modified: 'Modified',
+    originalPlaceholder: 'Enter original text...',
+    modifiedPlaceholder: 'Enter modified text...',
+    formatJson: 'Format JSON',
+    noDifferences: 'No differences',
+    unchangedHidden: '{{count}} unchanged lines hidden',
+    showUnchanged: 'Show {{count}} unchanged lines',
+    collapseUnchanged: 'Collapse {{count}} unchanged lines',
+    status: 'Original {{original}} · Modified {{modified}}',
+  },
+
   // Timestamp
   timestamp: {
     tsToDate: 'Timestamp → Date',

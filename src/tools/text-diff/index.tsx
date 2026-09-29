@@ -1,16 +1,97 @@
-import { Button, Empty, Input, Space, Tag } from 'antd';
+import { Button, Empty, Space, Tag } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ViewUpdate } from '@codemirror/view';
+import EditorContextMenu from '../../components/EditorContextMenu';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import ToolLayout from '../../components/ToolLayout';
+import { useCodemirror } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useResizablePanels } from '../../hooks/useResizablePanels';
+import { detectLanguage } from '../../utils/detectLanguage';
+import { formatJsonText, unescapeJsonText } from '../../utils/jsonText';
 import { type Block, type Fold, type Hunk, type Row, buildModel, countLines, EMPTY_MODEL } from './diff';
 import styles from './TextDiff.module.css';
 
-const { TextArea } = Input;
+interface DiffPaneProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  fontSize: number;
+}
+
+/**
+ * One edit pane: a header (label + JSON transforms) over a CodeMirror instance. Text editing
+ * goes through useCodemirror everywhere (AGENTS convention) — the antd TextArea this tool
+ * started with had no highlighting, no column selection and a different IME path, and the
+ * panes are exactly where JSON gets pasted. `onChange` lifts the document into the persisted
+ * parent value the diff model is built from.
+ */
+function DiffPane({ label, value, onChange, placeholder, fontSize }: DiffPaneProps) {
+  const { t } = useTranslation();
+  const [hasSelection, setHasSelection] = useState(false);
+  // Same sniffing as notepad: JSON/HTML/JS get highlighting, prose stays plaintext.
+  const language = useMemo(() => detectLanguage(value), [value]);
+  const handleUpdate = useCallback((update: ViewUpdate) => {
+    const next = update.state.selection.ranges.some((range) => !range.empty);
+    setHasSelection((prev) => (prev === next ? prev : next));
+  }, []);
+  const { hostRef, viewRef } = useCodemirror({
+    value,
+    onChange,
+    variant: 'code',
+    language,
+    fontSize,
+    placeholder,
+    onUpdate: handleUpdate,
+  });
+
+  // Failures stay silent, matching json-formatter's toolbar actions: unescapeJsonText
+  // throws for text that is not an escaped JSON string, and the pane is simply left as is.
+  const applyTransform = (transform: (text: string) => string) => {
+    const view = viewRef.current;
+    if (!view) return;
+
+    const text = view.state.doc.toString();
+    let next: string;
+    try {
+      next = transform(text);
+    } catch {
+      return;
+    }
+
+    if (next !== text) {
+      view.dispatch({ changes: { from: 0, to: text.length, insert: next } });
+    }
+  };
+
+  const empty = !value.trim();
+
+  return (
+    <>
+      <div className={styles.paneHead}>
+        <span className={styles.paneTitle}>{label}</span>
+        <div className={styles.paneActions}>
+          <Button size="small" type="text" disabled={empty} onClick={() => applyTransform(formatJsonText)}>
+            {t('textDiff.formatJson')}
+          </Button>
+          <Button size="small" type="text" disabled={empty} onClick={() => applyTransform(unescapeJsonText)}>
+            {t('action.unescape')}
+          </Button>
+        </div>
+      </div>
+      <div className="fw-tool-paneBody">
+        <EditorContextMenu viewRef={viewRef} hasSelection={hasSelection}>
+          <div ref={hostRef} className={`fw-cm-host ${styles.cmHost}`} />
+        </EditorContextMenu>
+      </div>
+    </>
+  );
+}
 
 function renderTokens(row: Row) {
   if (!row.tokens || row.tokens.length === 0) {
@@ -64,6 +145,7 @@ function renderHunkBody(item: Hunk | Fold, collapseLabel?: string, onCollapse?: 
 }
 
 export default function TextDiff() {
+  const { t } = useTranslation();
   const [original, setOriginal] = usePersistentState('tool:text-diff:left', '');
   const [modified, setModified] = usePersistentState('tool:text-diff:right', '');
   const [compared, setCompared] = usePersistentState('tool:text-diff:compared', false);
@@ -101,7 +183,10 @@ export default function TextDiff() {
     setExpanded((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   };
 
-  const status = `Original ${countLines(original)} · Modified ${countLines(modified)}`;
+  const status = t('textDiff.status', {
+    original: countLines(original),
+    modified: countLines(modified),
+  });
 
   return (
     <ToolLayout>
@@ -109,18 +194,18 @@ export default function TextDiff() {
         <div className="fw-tool-toolbar">
           <div className="fw-tool-toolbarMain">
             <Button type="primary" onClick={compare}>
-              Compare
+              {t('textDiff.compare')}
             </Button>
             <Button onClick={restore} disabled={!compared}>
-              Edit View
+              {t('textDiff.editView')}
             </Button>
             {compared && hasFolds && (
               <>
                 <Button onClick={() => setExpanded(foldIds)} disabled={allExpanded}>
-                  Expand all
+                  {t('textDiff.expandAll')}
                 </Button>
                 <Button onClick={() => setExpanded([])} disabled={expanded.length === 0}>
-                  Collapse all
+                  {t('textDiff.collapseAll')}
                 </Button>
               </>
             )}
@@ -128,8 +213,8 @@ export default function TextDiff() {
           <Space size={8}>
             {compared && model.hasChanges && (
               <>
-                <Tag color="green">+{model.added} added</Tag>
-                <Tag color="red">-{model.removed} deleted</Tag>
+                <Tag color="green">{t('textDiff.added', { count: model.added })}</Tag>
+                <Tag color="red">{t('textDiff.deleted', { count: model.removed })}</Tag>
               </>
             )}
             <Button
@@ -137,8 +222,8 @@ export default function TextDiff() {
               danger
               icon={<DeleteOutlined />}
               className="fw-tool-iconDangerButton"
-              title="Clear"
-              aria-label="Clear"
+              title={t('action.clear')}
+              aria-label={t('action.clear')}
               onClick={clear}
             />
           </Space>
@@ -149,31 +234,25 @@ export default function TextDiff() {
             {!compared ? (
               <>
                 <div className="fw-tool-pane" style={{ width: `${leftPercent}%` }}>
-                  <div className="fw-tool-paneBody">
-                    <TextArea
-                      value={original}
-                      onChange={(e) => setOriginal(e.target.value)}
-                      placeholder="Enter original text..."
-                      className="fw-tool-mono fw-tool-textarea"
-                      name="text-diff-original"
-                      style={{ position: 'absolute', inset: 0, resize: 'none', fontSize }}
-                    />
-                  </div>
+                  <DiffPane
+                    label={t('textDiff.original')}
+                    value={original}
+                    onChange={setOriginal}
+                    placeholder={t('textDiff.originalPlaceholder')}
+                    fontSize={fontSize}
+                  />
                 </div>
                 <div className="fw-tool-divider" onMouseDown={onDividerMouseDown}>
                   <div className="fw-tool-dividerGrip" />
                 </div>
                 <div className="fw-tool-pane" style={{ flex: 1 }}>
-                  <div className="fw-tool-paneBody">
-                    <TextArea
-                      value={modified}
-                      onChange={(e) => setModified(e.target.value)}
-                      placeholder="Enter modified text..."
-                      className="fw-tool-mono fw-tool-textarea"
-                      name="text-diff-modified"
-                      style={{ position: 'absolute', inset: 0, resize: 'none', fontSize }}
-                    />
-                  </div>
+                  <DiffPane
+                    label={t('textDiff.modified')}
+                    value={modified}
+                    onChange={setModified}
+                    placeholder={t('textDiff.modifiedPlaceholder')}
+                    fontSize={fontSize}
+                  />
                 </div>
               </>
             ) : (
@@ -186,7 +265,7 @@ export default function TextDiff() {
                       }
 
                       if (expanded.includes(item.id)) {
-                        return renderHunkBody(item, `Collapse ${item.count} unchanged lines`, () =>
+                        return renderHunkBody(item, t('textDiff.collapseUnchanged', { count: item.count }), () =>
                           toggleFold(item.id),
                         );
                       }
@@ -195,17 +274,17 @@ export default function TextDiff() {
                         <div key={item.id} className={styles.fold}>
                           <div className={styles.foldMeta}>
                             <span className={styles.foldLabel}>{item.header}</span>
-                            <span>{item.count} unchanged lines hidden</span>
+                            <span>{t('textDiff.unchangedHidden', { count: item.count })}</span>
                           </div>
                           <button type="button" className={styles.foldBtn} onClick={() => toggleFold(item.id)}>
-                            {`Show ${item.count} unchanged lines`}
+                            {t('textDiff.showUnchanged', { count: item.count })}
                           </button>
                         </div>
                       );
                     })
                   ) : (
                     <div className={styles.empty}>
-                      <Empty description="No differences" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      <Empty description={t('textDiff.noDifferences')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
                     </div>
                   )}
                 </div>

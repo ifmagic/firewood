@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Empty, Tooltip } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
-import { applyEdits, format as formatJsonc } from 'jsonc-parser';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
 import EditorContextMenu from '../../components/EditorContextMenu';
@@ -11,16 +10,10 @@ import ToolLayout from '../../components/ToolLayout';
 import { useCodemirror } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import { formatJsonText, unescapeJsonText } from '../../utils/jsonText';
 import JumpDebugger from './JumpDebugger';
 import { jumpDebuggerExtension } from './jumpDebuggerExtension';
 import { jsoncLinter } from './jsoncLinter';
-
-const jsoncFormatOptions = {
-  tabSize: 2,
-  insertSpaces: true,
-  eol: '\n',
-  keepLines: false,
-} as const;
 
 export default function JsonFormatter() {
   const { t } = useTranslation();
@@ -101,13 +94,7 @@ export default function JsonFormatter() {
   };
 
   const format = () => {
-    applyTransform((text) => {
-      try {
-        return JSON.stringify(JSON.parse(text), null, 2);
-      } catch {
-        return applyEdits(text, formatJsonc(text, undefined, jsoncFormatOptions));
-      }
-    });
+    applyTransform(formatJsonText);
   };
 
   const minify = () => {
@@ -118,17 +105,7 @@ export default function JsonFormatter() {
   };
 
   const unescape = () => {
-    applyTransform((text) => {
-      // Strip outer quotes then parse escape sequences
-      let nextText = text.trim();
-      if (nextText.startsWith('"') && nextText.endsWith('"')) {
-        nextText = JSON.parse(nextText);
-      } else {
-        // Single-pass unescape; sequential .replace() chains mis-handle `\\`
-        nextText = JSON.parse(`"${nextText}"`);
-      }
-      return nextText;
-    });
+    applyTransform(unescapeJsonText);
   };
 
   const clear = () => {

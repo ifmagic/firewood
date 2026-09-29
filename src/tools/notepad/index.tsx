@@ -14,7 +14,9 @@ import ToolLayout from '../../components/ToolLayout';
 import { useCodemirror, type CodemirrorLanguage } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import { bestEffortFormatJson, countCodePoints, detectLanguage, getUrlAtColumn, normalizeUrl } from './helpers';
+import { detectLanguage } from '../../utils/detectLanguage';
+import { formatJsonText } from '../../utils/jsonText';
+import { countCodePoints, getUrlAtColumn, normalizeUrl } from './helpers';
 import './notepad.css';
 
 interface NoteTab {
@@ -71,6 +73,13 @@ function getPreferredSaveName(tab: NoteTab | null, fallbackName: string) {
 
   return tab?.name.trim() || fallbackName.trim();
 }
+
+// Cmd/Ctrl+click opens links in Notepad — the very modifier CM6 uses for "click adds a
+// cursor" (`EditorView.clickAddsSelectionRange`), so the two would otherwise fight over the
+// same gesture. Opt out of the cursor one here: multi-cursor stays available through
+// Mod-Alt-↑/↓ and Alt+drag (see useCodemirror), and Cmd/Ctrl+click keeps its pre-multi-cursor
+// meaning outside links (plain caret placement).
+const noClickAddsSelectionRange = EditorView.clickAddsSelectionRange.of(() => false);
 
 export default function Notepad() {
   const { t } = useTranslation();
@@ -192,7 +201,7 @@ export default function Notepad() {
     variant: 'code',
     language: activeLanguage,
     fontSize,
-    extensions: [urlClickExtension],
+    extensions: [urlClickExtension, noClickAddsSelectionRange],
     onUpdate: handleEditorUpdate,
     onReady: handleEditorReady,
   });
@@ -437,7 +446,7 @@ export default function Notepad() {
     const view = viewRef.current;
     if (!view) return;
     const text = view.state.doc.toString();
-    const formatted = bestEffortFormatJson(text);
+    const formatted = formatJsonText(text);
     if (formatted !== text) {
       view.dispatch({ changes: { from: 0, to: text.length, insert: formatted } });
     }

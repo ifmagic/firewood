@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Compartment, EditorState, Transaction, type Extension } from '@codemirror/state';
+import { Compartment, EditorState, Transaction, type Extension, type Range } from '@codemirror/state';
 import {
+  Decoration,
+  type DecorationSet,
   EditorView,
+  ViewPlugin,
   ViewUpdate,
+  WidgetType,
+  crosshairCursor,
   highlightActiveLine,
   highlightActiveLineGutter,
   keymap,
   lineNumbers,
   placeholder as cmPlaceholder,
+  rectangularSelection,
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, isolateHistory } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
@@ -78,6 +84,13 @@ const TAURI_MAC_CODE_FONT_FAMILY =
 
 const CODE_FONT = IS_TAURI_MAC ? TAURI_MAC_CODE_FONT_FAMILY : CODE_FONT_FAMILY;
 
+// The code variant runs without drawSelection() (see the mount effect), so its caret and its
+// primary selection come from the browser: caretColor below and the native ::selection. The
+// multi-selection decorations must render in exactly the same tones, so both colors live here
+// as the single source of truth for the native and the decorated artifacts alike.
+const CODE_SELECTION_BG = '#CBD5E199';
+const CODE_CARET_COLOR = '#EF4444';
+
 // Code theme ports the former Monaco `firewood-contrast-light` theme one-to-one. lineHeight 1.6
 // matches the WKWebView-safe multiplier the Monaco layer required.
 const CODE_THEME = EditorView.theme({
@@ -90,11 +103,7 @@ const CODE_THEME = EditorView.theme({
   '.cm-content': {
     fontFamily: CODE_FONT,
     lineHeight: '1.6',
-    caretColor: '#EF4444',
-  },
-  '.cm-cursor': {
-    borderLeftColor: '#EF4444',
-    borderLeftWidth: '2px',
+    caretColor: CODE_CARET_COLOR,
   },
   '&.cm-focused': { outline: 'none' },
   '.cm-gutters': {
@@ -103,8 +112,25 @@ const CODE_THEME = EditorView.theme({
   },
   '.cm-activeLineGutter': { color: '#334155' },
   '.cm-activeLine': { backgroundColor: '#F5F6F8' },
-  '.cm-selectionBackground': {
-    backgroundColor: '#CBD5E199 !important',
+  // drawSelection() is not used here, so there is no .cm-selectionBackground layer: the primary
+  // range is painted by the browser's own ::selection. Style it to match .cm-multiselection —
+  // otherwise the primary range of a column selection keeps the system highlight color while the
+  // secondary ranges use ours.
+  '& ::selection, &::selection': {
+    backgroundColor: `${CODE_SELECTION_BG} !important`,
+  },
+  // Secondary (non-main) ranges of a column selection — see multiSelectionHighlight below.
+  '.cm-multiselection': {
+    backgroundColor: CODE_SELECTION_BG,
+  },
+  '.cm-secondaryCursor': {
+    display: 'inline-block',
+    width: '0px',
+    height: '1.2em',
+    borderLeft: `2px solid ${CODE_CARET_COLOR}`,
+    marginLeft: '-2px',
+    verticalAlign: 'text-bottom',
+    pointerEvents: 'none',
   },
   '.cm-matchingBracket': { backgroundColor: '#E2E8F0' },
   '.cm-placeholder': {
@@ -162,6 +188,89 @@ function fontSizeTheme(fontSize: number): Extension {
   });
 }
 
+// ---- column selection (code variant) ----
+
+// Inline caret rendered at each secondary cursor position (see multiSelectionHighlight).
+class SecondaryCursorWidget extends WidgetType {
+  pos: number;
+
+  constructor(pos: number) {
+    super();
+    this.pos = pos;
+  }
+
+  eq(other: SecondaryCursorWidget) {
+    return other.pos === this.pos;
+  }
+
+  toDOM() {
+    const caret = document.createElement('span');
+    caret.className = 'cm-secondaryCursor';
+    return caret;
+  }
+}
+
+/**
+ * Renders the non-main ranges of a multi-range (column) selection. CM6 only syncs the primary
+ * range to the native DOM selection, and drawSelection() (cursor + selection layers) is banned
+ * in the code variant under WKWebView, so secondary ranges would be invisible. Both artifacts
+ * use WKWebView-safe primitives instead of getClientRects-measured layers: mark decorations
+ * (the same mechanism as syntax highlighting / selection matches) for non-empty ranges, and an
+ * inline widget caret for empty ones.
+ */
+function multiSelectionDecorations(view: EditorView): DecorationSet {
+  const { selection } = view.state;
+  if (selection.ranges.length < 2) {
+    return Decoration.none;
+  }
+
+  const decorations: Range<Decoration>[] = [];
+  selection.ranges.forEach((range, index) => {
+    if (index === selection.mainIndex) {
+      return;
+    }
+
+    if (range.empty) {
+      decorations.push(
+        Decoration.widget({ widget: new SecondaryCursorWidget(range.head), side: -1 }).range(range.head),
+      );
+      return;
+    }
+
+    // One mark per line segment: mark decorations must not cross line boundaries.
+    for (let pos = range.from; pos < range.to;) {
+      const line = view.state.doc.lineAt(pos);
+      const start = Math.max(pos, line.from);
+      const end = Math.min(range.to, line.to);
+      if (end > start) {
+        decorations.push(Decoration.mark({ class: 'cm-multiselection' }).range(start, end));
+      }
+      pos = line.to + 1;
+    }
+  });
+
+  return decorations.length > 0 ? Decoration.set(decorations, true) : Decoration.none;
+}
+
+const multiSelectionHighlight = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+
+    constructor(view: EditorView) {
+      this.decorations = multiSelectionDecorations(view);
+    }
+
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.selectionSet) {
+        this.decorations = multiSelectionDecorations(update.view);
+      }
+    }
+  },
+  {
+    decorations: (plugin) => plugin.decorations,
+  },
+);
+
 interface UseCodemirrorOptions {
   /** Controlled value. Parent changes are pushed down via a `changes` transaction; cursor is preserved when possible. */
   value: string;
@@ -209,6 +318,9 @@ interface UseCodemirrorOptions {
  * - StrictMode double-mount: requestAnimationFrame + cancelled flag.
  * - Cross-content undo isolation: external pushes are excluded from history and marked
  *   isolateHistory 'before', so Ctrl+Z cannot revert into the previous chapter/tab content.
+ * - Column / multi-selection (code variant): Cmd/Ctrl+click, Mod-Alt-↑/↓ and Alt+drag. Since
+ *   drawSelection() is banned under WKWebView, the non-main ranges are drawn by
+ *   multiSelectionHighlight decorations instead of CM's selection layer.
  */
 export function useCodemirror({
   value,
@@ -377,6 +489,18 @@ export function useCodemirror({
         closeBrackets(),
         autocompletion(),
         indentUnit.of('  '),
+        // Column selection. Bindings stay stock: defaultKeymap's Mod-Alt-↑/↓ (Cmd-Alt on
+        // macOS) adds cursors above/below, Cmd/Ctrl+click adds one at the pointer, and
+        // Alt+drag selects a rectangle (crosshairCursor hints at it). Note that
+        // defaultKeymap's Shift-Alt-↑/↓ stays copyLineUp/copyLineDown — do not rebind it
+        // here, both editors' users expect the standard copy-line shortcut.
+        // allowMultipleSelections is required — without it the state collapses every
+        // selection to its main range and those commands no-op. Secondary ranges are
+        // rendered by multiSelectionHighlight (see its comment).
+        EditorState.allowMultipleSelections.of(true),
+        rectangularSelection(),
+        crosshairCursor(),
+        multiSelectionHighlight,
       );
     }
 
