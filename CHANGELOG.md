@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.5
+
+### ✨ Features
+
+- Add column selection and multi-cursor editing to the JSON Formatter, Notepad, and Text Diff code editors.
+- Upgrade Text Diff input panes to CodeMirror with syntax-aware editing, JSON formatting, and JSON unescaping.
+
+### 🔧 Chore / Updates
+
+- Centralize JSON text transforms and language detection across code editing tools.
+
 ## v0.8.4
 
 ### 🐛 Bug Fixes
