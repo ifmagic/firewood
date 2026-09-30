@@ -88,8 +88,10 @@ const CODE_FONT = IS_TAURI_MAC ? TAURI_MAC_CODE_FONT_FAMILY : CODE_FONT_FAMILY;
 // primary selection come from the browser: caretColor below and the native ::selection. The
 // multi-selection decorations must render in exactly the same tones, so both colors live here
 // as the single source of truth for the native and the decorated artifacts alike.
+// The caret follows the app accent (same as the writing variant) — a hardcoded color here
+// would drift from the brand the moment the accent token changes.
 const CODE_SELECTION_BG = '#CBD5E199';
-const CODE_CARET_COLOR = '#EF4444';
+const CODE_CARET_COLOR = 'var(--fw-accent, #ff7a45)';
 
 // Code theme ports the former Monaco `firewood-contrast-light` theme one-to-one. lineHeight 1.6
 // matches the WKWebView-safe multiplier the Monaco layer required.

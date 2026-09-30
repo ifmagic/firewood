@@ -414,9 +414,13 @@ export default function ImgToPdf() {
                     onPointerDown={(e) => handlePointerDown(e, idx)}
                     className={styles.thumbCard}
                     style={{
-                      borderColor:
-                        overIdx === idx && draggingIdx !== null && draggingIdx !== idx ? '#1677ff' : undefined,
-                      borderWidth: overIdx === idx && draggingIdx !== null && draggingIdx !== idx ? 2 : undefined,
+                      // Inset ring instead of a thicker border: the drop target must
+                      // not reflow the grid (and the accent — not a foreign blue —
+                      // is the app's one interaction color).
+                      boxShadow:
+                        overIdx === idx && draggingIdx !== null && draggingIdx !== idx
+                          ? 'inset 0 0 0 2px var(--fw-accent)'
+                          : undefined,
                       transform: draggingIdx === idx ? 'scale(0.90)' : undefined,
                       opacity: draggingIdx === idx ? 0.45 : undefined,
                     }}

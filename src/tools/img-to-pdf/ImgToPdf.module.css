@@ -36,7 +36,7 @@
 
 .uploadArea :global(.ant-upload.ant-upload-drag:hover) {
 	border-color: var(--fw-accent);
-	background: #fff7f2;
+	background: var(--fw-accent-soft);
 }
 
 .uploadArea :global(.ant-upload-btn) {

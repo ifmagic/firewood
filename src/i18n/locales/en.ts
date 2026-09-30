@@ -329,6 +329,7 @@ const en = {
     characterNamePlaceholder: 'Character name',
     characterName: 'Character name',
     roleType: 'Role type',
+    autoRoleType: 'Auto (infer from context)',
     characters: 'Characters',
     chapterGroup: 'Chapters',
     description: 'Description',
@@ -404,7 +405,10 @@ const en = {
   // About dialog
   about: {
     subtitle: 'A compact toolbox for efficient dev workflows.',
+    version: 'Version {{version}}',
     viewChanges: 'Changelog',
+    github: 'GitHub repository',
+    githubAria: 'Open the Firewood GitHub repository',
     releaseNotesTitle: 'Release Notes · v{{version}}',
   },
 

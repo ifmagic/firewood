@@ -655,9 +655,11 @@ export default function Notepad() {
               {t('notepad.saveAs')}
             </Button>
           </Space>
+          {/* Shared danger icon button (same look as json-formatter / text-diff). */}
           <Button
             type="text"
-            className="firewood-notepad-clearButton"
+            danger
+            className="fw-tool-iconDangerButton"
             icon={<DeleteOutlined />}
             title={t('action.clear')}
             aria-label={t('action.clear')}

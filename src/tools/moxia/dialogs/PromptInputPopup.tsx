@@ -16,7 +16,9 @@ interface Props {
   onCancel: () => void;
 }
 
-const AUTO = '根据上下文自动判断';
+// Sentinel for "let the model infer the role type". Kept ASCII so it can never
+// leak untranslated copy into the generated prompt; the visible label is i18n'd.
+const AUTO = 'auto';
 
 /**
  * Inner form: mounted only when open=true. useState initial values double as the reset values,
@@ -141,7 +143,7 @@ function PromptInputForm({ onGenerated, onCancel }: { onGenerated: (prompt: stri
   return (
     <Modal
       open
-      title={<span>✨ {t('moxia.generateCharacterCard')}</span>}
+      title={t('moxia.generateCharacterCard')}
       onCancel={onCancel}
       onOk={handleGenerate}
       okButtonProps={{ disabled: !canGenerate }}
@@ -204,7 +206,10 @@ function PromptInputForm({ onGenerated, onCancel }: { onGenerated: (prompt: stri
           style={{ width: '100%' }}
           value={roleType}
           onChange={setRoleType}
-          options={[AUTO, ...ROLE_TYPES].map((r) => ({ value: r, label: r }))}
+          options={[
+            { value: AUTO, label: t('moxia.autoRoleType') },
+            ...ROLE_TYPES.map((r) => ({ value: r, label: r })),
+          ]}
         />
       </div>
 

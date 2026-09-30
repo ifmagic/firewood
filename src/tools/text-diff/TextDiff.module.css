@@ -9,6 +9,16 @@
 	background: var(--fw-panel-subtle);
 }
 
+/* The editor shell can't clip (CM tooltips), so the pane header paints the
+   shell's top-left/top-right corners and must carry the matching radius. */
+:global(.fw-tool-split) > :first-child .paneHead {
+	border-top-left-radius: 11px;
+}
+
+:global(.fw-tool-split) > :last-child .paneHead {
+	border-top-right-radius: 11px;
+}
+
 .paneTitle {
 	font-size: 12px;
 	font-weight: 600;

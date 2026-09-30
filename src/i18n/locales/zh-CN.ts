@@ -329,6 +329,7 @@ const zhCN = {
     characterNamePlaceholder: '角色名称',
     characterName: '角色名称',
     roleType: '角色类型',
+    autoRoleType: '根据上下文自动判断',
     characters: '角色',
     chapterGroup: '正文管理',
     description: '基本描述',
@@ -404,7 +405,10 @@ const zhCN = {
   // About dialog
   about: {
     subtitle: '一个紧凑的工具箱，让日常开发工作流更高效。',
+    version: '版本 {{version}}',
     viewChanges: '更新日志',
+    github: 'GitHub 仓库',
+    githubAria: '打开 Firewood 的 GitHub 仓库',
     releaseNotesTitle: '版本更新说明 · v{{version}}',
   },
 
@@ -423,21 +427,23 @@ const zhCN = {
   },
 
   // Notepad default name pool
+  // Mirrors the English pool (Draft / Notes / Memo / …): default tab names must
+  // read like note titles in both locales.
   notepadNames: [
     '草稿',
     '笔记',
     '备忘',
     '随记',
     '摘录',
-    '五行天',
-    '修真世界',
-    '永生',
-    '斗破苍穹',
-    '武动乾坤',
-    '剑来',
-    '雪中悍刀行',
-    '庆余年',
-    '诡秘之主',
+    '灵感',
+    '待办',
+    '日志',
+    '记录',
+    '速记',
+    '想法',
+    '复盘',
+    '摘要',
+    '资料',
   ],
 
   // Settings

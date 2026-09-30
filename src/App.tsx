@@ -30,7 +30,10 @@ function App() {
         token: {
           colorPrimary: '#ff7a45',
           colorInfo: '#ff7a45',
-          colorLink: '#ff7a45',
+          // Links are small text on white: the vivid accent only reaches ~3:1,
+          // so link text uses the darker accent ink (see --fw-accent-ink).
+          colorLink: '#b54a1b',
+          colorLinkHover: '#ff7a45',
           borderRadius: 8,
           fontSize: 14,
           lineWidth: 1,
@@ -43,7 +46,7 @@ function App() {
           colorFillAlter: '#f7f7f8',
           colorFillSecondary: '#f2f3f5',
           controlItemBgActive: '#fff4ef',
-          controlItemBgActiveHover: '#fff1ea',
+          controlItemBgActiveHover: '#ffe7d9',
           controlOutline: 'rgba(255, 122, 69, 0.18)',
           boxShadowSecondary: '0 12px 32px rgba(15, 23, 42, 0.08)',
         },

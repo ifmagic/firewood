@@ -13,9 +13,17 @@
 	--fw-selected-bg-hover: rgba(255, 107, 53, 0.22);
 	--fw-popover-bg: #262626;
 	--fw-accent: #ff7a45;
+	/* Accent for light surfaces. #ff7a45 only reaches ~3:1 on white — fine for
+	   icons/borders, too low for small text — so text on light backgrounds
+	   (links, tinted chips) uses this darker ink (~5.3:1). */
+	--fw-accent-ink: #b54a1b;
+	/* Light accent tints. One token per purpose: soft = resting tint on light
+	   surfaces (hovered/selected chips), soft-hover = its hover step. */
+	--fw-accent-soft: #fff4ef;
+	--fw-accent-soft-hover: #ffe7d9;
 	--fw-text-primary: #f5f5f5;
 	--fw-text-secondary: rgba(245, 245, 245, 0.72);
-	--fw-text-muted: rgba(245, 245, 245, 0.32);
+	--fw-text-muted: rgba(245, 245, 245, 0.45);
 	--fw-text-tertiary: #8c8c8c;
 	--fw-text-strong: #1f1f1f;
 	--fw-text-body: #595959;
@@ -26,6 +34,11 @@
 	--fw-status-text: #666666;
 	--fw-panel-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 	--fw-danger: #e5484d;
+	/* Danger text/background steps (shared by global .ant-btn-dangerous overrides
+	   and the tools' custom danger icon buttons). */
+	--fw-danger-ink: #c65f5f;
+	--fw-danger-ink-hover: #d4380d;
+	--fw-danger-soft: #fff1f0;
 	--fw-radius-sm: 4px;
 	--fw-radius-md: 6px;
 	--fw-radius-lg: 8px;

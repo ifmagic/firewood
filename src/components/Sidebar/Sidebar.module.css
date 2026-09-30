@@ -208,7 +208,9 @@
 
 .toolListEmpty {
 	padding: 20px 12px;
-	color: var(--fw-text-muted);
+	/* Real guidance copy (not a decorative glyph), so it needs readable
+	   contrast on the dark sidebar — muted is reserved for the drag handle. */
+	color: var(--fw-text-secondary);
 	font-size: 12px;
 	text-align: center;
 	line-height: 1.6;

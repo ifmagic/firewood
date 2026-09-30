@@ -47,14 +47,14 @@ body {
 .ant-btn-dangerous.ant-btn-default {
 	border-color: transparent;
 	background: transparent;
-	color: #c65f5f;
+	color: var(--fw-danger-ink);
 }
 
 .ant-btn-dangerous.ant-btn-default:hover,
 .ant-btn-dangerous.ant-btn-default:focus-visible {
 	border-color: transparent !important;
-	background: #fff1f0 !important;
-	color: #d4380d !important;
+	background: var(--fw-danger-soft) !important;
+	color: var(--fw-danger-ink-hover) !important;
 }
 
 .ant-input,
@@ -94,7 +94,7 @@ body {
 .ant-select-focused .ant-select-selector,
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
 	border-color: var(--fw-accent) !important;
-	box-shadow: 0 0 0 3px rgba(255, 122, 69, 0.12) !important;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-accent) 12%, transparent) !important;
 }
 
 .ant-radio-button-wrapper {
@@ -103,8 +103,8 @@ body {
 }
 
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-	background: #fff4ef;
-	color: #b54a1b;
+	background: var(--fw-accent-soft);
+	color: var(--fw-accent-ink);
 }
 
 .ant-tabs-top > .ant-tabs-nav {
@@ -204,6 +204,25 @@ body {
 	background: var(--fw-surface);
 }
 
+/* Because the shell cannot clip, its 12px corner curve is overdrawn by the
+   square backgrounds of its children (editor panes, status bar), leaving the
+   1px border cut off at the corners. Re-apply the (inner) radius on whichever
+   children paint the very top and bottom edges instead. */
+.fw-tool-editorShell > :first-child {
+	border-top-left-radius: 11px;
+	border-top-right-radius: 11px;
+}
+
+.fw-tool-editorShell > :last-child {
+	border-bottom-left-radius: 11px;
+	border-bottom-right-radius: 11px;
+}
+
+.fw-tool-editorShell .cm-editor {
+	border-top-left-radius: 11px;
+	border-top-right-radius: 11px;
+}
+
 .fw-tool-split {
 	display: flex;
 	flex: 1;
@@ -243,16 +262,6 @@ body {
 	height: 32px;
 	border-radius: 999px;
 	background: #d0d5dd;
-}
-
-.fw-tool-mono {
-	font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace !important;
-	letter-spacing: 0.3px;
-}
-
-.fw-tool-textarea.ant-input,
-.fw-tool-textarea {
-	background: var(--fw-panel-subtle);
 }
 
 .fw-tool-statusHint {

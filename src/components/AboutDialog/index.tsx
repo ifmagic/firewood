@@ -90,17 +90,17 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
           <div className={styles.infoRow}>
             <button type="button" className={`${styles.infoItem} ${styles.infoItemButton}`} onClick={openVersionNotes}>
               <CodeOutlined />
-              <span>Version {version || '0.0.0'}</span>
+              <span>{t('about.version', { version: version || '0.0.0' })}</span>
               <span className={styles.infoHint}>{t('about.viewChanges')}</span>
             </button>
             <button
               type="button"
               className={`${styles.infoItem} ${styles.infoItemButton}`}
               onClick={openGithubHomepage}
-              aria-label="Open Firewood GitHub homepage"
+              aria-label={t('about.githubAria')}
             >
               <AppstoreOutlined />
-              <span>Desktop Utility Suite</span>
+              <span>{t('about.github')}</span>
             </button>
           </div>
 

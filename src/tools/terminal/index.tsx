@@ -2,7 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
-import { CloseOutlined, LockOutlined, PlusOutlined, ReloadOutlined, UnlockOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  FolderOpenOutlined,
+  LockOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  UnlockOutlined,
+} from '@ant-design/icons';
 import { Terminal, type IDisposable } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -1138,7 +1146,7 @@ export default function TerminalPage() {
               title={t('label.settings')}
               aria-label={t('label.settings')}
             >
-              ⋮
+              <MoreOutlined />
             </button>
           </div>
         </div>
@@ -1230,9 +1238,10 @@ export default function TerminalPage() {
                     void handleBrowseShell();
                   }}
                   title={t('terminal.browseShell')}
+                  aria-label={t('terminal.browseShell')}
                   disabled={!activeTabState}
                 >
-                  📁
+                  <FolderOpenOutlined />
                 </button>
               </div>
             </div>

@@ -125,12 +125,12 @@ export default function JsonFormatter() {
             <Button onClick={unescape}>{t('action.unescape')}</Button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {/* No native title here: it would double up with the Tooltip. */}
             <Tooltip title={t('action.copy')}>
               <Button
                 type="text"
                 icon={<CopyOutlined />}
                 className="fw-tool-iconDangerButton"
-                title={t('action.copy')}
                 aria-label={t('action.copy')}
                 disabled={!content}
                 onClick={() => {

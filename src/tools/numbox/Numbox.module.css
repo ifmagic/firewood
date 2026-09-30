@@ -270,12 +270,12 @@
 }
 
 .keyOp {
-	background: #fff3e0;
-	color: var(--fw-accent);
+	background: var(--fw-accent-soft);
+	color: var(--fw-accent-ink);
 }
 
 .keyOp:hover {
-	background: #ffe0b2;
+	background: var(--fw-accent-soft-hover);
 }
 
 .keyFn {
@@ -287,13 +287,16 @@
 	background: #e9ecef;
 }
 
+/* Scientific keys: a calm slate tint that stays inside the app's neutral+accent
+   system (same slate family as the code-editor surfaces) instead of the
+   Material blue that used to sit here as a foreign second brand hue. */
 .keySci {
-	background: #e3f2fd;
-	color: #1976d2;
+	background: #e8eef6;
+	color: #31506e;
 }
 
 .keySci:hover {
-	background: #bbdefb;
+	background: #d8e3f0;
 }
 
 .keyEq {
@@ -390,7 +393,7 @@
 .histToggle:hover {
 	color: var(--fw-text-strong);
 	border-color: var(--fw-accent);
-	background: #fff4ef;
+	background: var(--fw-accent-soft);
 }
 
 .histToggle:focus-visible {
@@ -692,7 +695,7 @@ button.histMain:focus-visible {
 .quickPill:hover {
 	color: var(--fw-text-strong);
 	border-color: var(--fw-accent);
-	background: #fff4ef;
+	background: var(--fw-accent-soft);
 }
 
 .quickPill:active {

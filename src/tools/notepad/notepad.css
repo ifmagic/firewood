@@ -55,23 +55,6 @@
 	color: var(--fw-accent);
 }
 
-.firewood-notepad-clearButton.ant-btn {
-	border: none;
-	box-shadow: none;
-	width: 32px;
-	min-width: 32px;
-	height: 32px;
-	padding: 0;
-	border-radius: 8px;
-	color: #c65f5f;
-}
-
-.firewood-notepad-clearButton.ant-btn:hover,
-.firewood-notepad-clearButton.ant-btn:focus-visible {
-	background: #fff1f0 !important;
-	color: #d4380d !important;
-}
-
 .firewood-notepad-tabs.ant-tabs {
 	padding: 0 12px;
 	background: var(--fw-surface);
@@ -157,14 +140,6 @@
 	display: none;
 }
 
-.firewood-notepad-workspace {
-	flex: 1;
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-	background: var(--fw-editor-bg);
-}
-
 .firewood-notepad-stage {
 	flex: 1;
 	min-height: 0;
@@ -187,7 +162,9 @@
 }
 
 .firewood-notepad-statusLanguage {
-	color: var(--fw-accent);
+	/* Accent ink, not the raw accent: this is 12px text on a light status bar
+	   (the vivid accent only reaches ~3:1 there). */
+	color: var(--fw-accent-ink);
 	font-weight: 600;
 	letter-spacing: 0.04em;
 }
