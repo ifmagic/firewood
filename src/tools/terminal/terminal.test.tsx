@@ -11,6 +11,9 @@ const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness } = 
     focus: ReturnType<typeof vi.fn>;
     resize: ReturnType<typeof vi.fn> & ((cols: number, rows: number) => void);
     refresh: ReturnType<typeof vi.fn>;
+    hasSelection: ReturnType<typeof vi.fn>;
+    attachCustomKeyEventHandler: ReturnType<typeof vi.fn>;
+    customKeyEventHandler: ((event: KeyboardEvent) => boolean) | null;
   }[] = [];
   const callLog: string[] = [];
   let sessionCounter = 0;
@@ -85,6 +88,15 @@ vi.mock('@xterm/xterm', () => ({
     refresh = vi.fn();
     dispose = vi.fn();
     focus = vi.fn();
+    hasSelection = vi.fn(() => false);
+    // The mock only records the handler. What xterm really does with a false
+    // return (skip the key encoder *and* the preventDefault, so the browser's
+    // native copy/paste runs) is pinned against the real @xterm/xterm in
+    // real-xterm.test.ts — that behaviour is not simulated here.
+    customKeyEventHandler: ((event: KeyboardEvent) => boolean) | null = null;
+    attachCustomKeyEventHandler = vi.fn((handler: (event: KeyboardEvent) => boolean) => {
+      this.customKeyEventHandler = handler;
+    });
 
     constructor() {
       terminals.push(this);
@@ -144,6 +156,15 @@ async function awaitRedrawRoundTrip() {
   await new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
+}
+
+const WINDOWS_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+const MAC_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/620.1.15 (KHTML, like Gecko)';
+const originalUserAgent = window.navigator.userAgent;
+
+function stubUserAgent(ua: string) {
+  Object.defineProperty(window.navigator, 'userAgent', { value: ua, configurable: true });
 }
 
 beforeAll(() => {
@@ -448,5 +469,43 @@ describe('terminal lifecycle', () => {
 
     expect(tabCount()).toBe(1);
     expect(invokeMock).not.toHaveBeenCalledWith('close_pty_session', { id: 'pty-1' });
+  });
+});
+
+// Windows/Linux parity with the VS Code integrated terminal. xterm.js encodes
+// a bare Ctrl+C / Ctrl+V as ^C / ^V and cancels the event, so without this
+// handler the browser's native copy/paste never runs on those platforms.
+describe('clipboard chords and hints off macOS', () => {
+  afterEach(() => {
+    stubUserAgent(originalUserAgent);
+  });
+
+  const mountWithPlatform = async (ua: string) => {
+    stubUserAgent(ua);
+    mountPage();
+    await flush();
+  };
+
+  // The chord *policy* is covered in helpers.test.ts and its end-to-end effect
+  // against the real xterm in real-xterm.test.ts; what can regress here is only
+  // the per-platform wiring of that handler.
+  it('installs the clipboard key handler off macOS', async () => {
+    await mountWithPlatform(WINDOWS_UA);
+
+    expect(terminals[0].attachCustomKeyEventHandler).toHaveBeenCalledTimes(1);
+    expect(terminals[0].customKeyEventHandler, 'clipboard key handler').toBeTruthy();
+  });
+
+  it('hints at the Ctrl-based zoom chords', async () => {
+    await mountWithPlatform(WINDOWS_UA);
+
+    expect(container?.querySelector('.firewood-terminal-hint')?.textContent).toContain('Ctrl+0');
+  });
+
+  it('leaves macOS to the native Cmd+C/Cmd+V pipeline', async () => {
+    await mountWithPlatform(MAC_UA);
+
+    expect(terminals[0].attachCustomKeyEventHandler).not.toHaveBeenCalled();
+    expect(container?.querySelector('.firewood-terminal-hint')?.textContent).toContain('⌘0');
   });
 });

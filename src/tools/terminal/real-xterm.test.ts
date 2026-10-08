@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Terminal } from '@xterm/xterm';
+import { attachClipboardKeyHandler } from './helpers';
 
 // jsdom lacks matchMedia, which xterm's CoreBrowserService requires on open.
 if (typeof window.matchMedia !== 'function') {
@@ -92,6 +93,115 @@ describe('real xterm 6.0.0 resize round-trip', () => {
     term.resize(80, 24); // same size → early return in CoreBrowserTerminal
     expect(fired).toBe(0);
     expect((rowsEl.children[0] as HTMLElement).firstElementChild === spanBefore).toBe(true);
+
+    term.dispose();
+    host.remove();
+  });
+});
+
+// The clipboard chords on Windows/Linux, asserted against the REAL
+// @xterm/xterm 6.0.0: the whole point of attachClipboardKeyHandler is xterm's
+// consult-then-stand-down semantics, which a mock cannot reproduce.
+//   - a handler that returns true leaves xterm's encoder in charge: Ctrl+C
+//     becomes \x03 and the keydown is preventDefault-ed (SIGINT);
+//   - a handler that returns false stops *before* the encoder and, crucially,
+//     before the cancel(), so the event survives to the browser — which is
+//     what fires the DOM copy/paste events xterm's own listeners handle.
+// jsdom quirks: KeyboardEvent must be built with the legacy `keyCode`, because
+// xterm's encoder reads `ev.keyCode`; and jsdom has no ClipboardEvent, so the
+// copy half is asserted with a plain bubbling 'copy' event (xterm's listener
+// only preventDefaults it when there is a selection).
+function keydownOn(term: Terminal, init: KeyboardEventInit & { keyCode: number }) {
+  const textarea = term.element!.querySelector('.xterm-helper-textarea') as HTMLTextAreaElement;
+  expect(textarea, 'xterm helper textarea').toBeTruthy();
+  const event = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    ...init,
+  });
+  textarea.dispatchEvent(event);
+  return event;
+}
+
+function openTerminal(withClipboardHandler: boolean) {
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  const term = new Terminal({ cols: 80, rows: 24 });
+  if (withClipboardHandler) attachClipboardKeyHandler(term);
+  term.open(host);
+
+  const data: string[] = [];
+  term.onData((chunk) => data.push(chunk));
+
+  term.write('hello world');
+  return { host, term, data };
+}
+
+describe('real xterm 6.0.0 clipboard chords', () => {
+  it('without the handler, Ctrl+C is encoded as ^C and the event is swallowed', () => {
+    const { host, term, data } = openTerminal(false);
+
+    const event = keydownOn(term, { key: 'c', code: 'KeyC', ctrlKey: true, keyCode: 67 });
+
+    expect(data).toEqual(['\x03']);
+    expect(event.defaultPrevented).toBe(true);
+
+    term.dispose();
+    host.remove();
+  });
+
+  it('with the handler and no selection, Ctrl+C still reaches the shell as ^C', () => {
+    const { host, term, data } = openTerminal(true);
+    expect(term.hasSelection()).toBe(false);
+
+    const event = keydownOn(term, { key: 'c', code: 'KeyC', ctrlKey: true, keyCode: 67 });
+
+    expect(data).toEqual(['\x03']);
+    expect(event.defaultPrevented).toBe(true);
+
+    term.dispose();
+    host.remove();
+  });
+
+  it('with the handler and a selection, Ctrl+C is handed to the browser copy path', () => {
+    const { host, term, data } = openTerminal(true);
+    term.select(0, 0, 5);
+    expect(term.hasSelection()).toBe(true);
+
+    const event = keydownOn(term, { key: 'c', code: 'KeyC', ctrlKey: true, keyCode: 67 });
+
+    // Nothing goes to the pty and the keydown survives for the browser...
+    expect(data).toEqual([]);
+    expect(event.defaultPrevented).toBe(false);
+
+    // ...whose copy event is what xterm itself turns into a clipboard write.
+    const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
+    expect(term.element!.dispatchEvent(copyEvent)).toBe(false);
+    expect(copyEvent.defaultPrevented).toBe(true);
+
+    term.dispose();
+    host.remove();
+  });
+
+  it('with the handler, Ctrl+V never reaches the pty as ^V', () => {
+    const { host, term, data } = openTerminal(true);
+
+    const event = keydownOn(term, { key: 'v', code: 'KeyV', ctrlKey: true, keyCode: 86 });
+
+    expect(data).toEqual([]);
+    expect(event.defaultPrevented).toBe(false);
+
+    term.dispose();
+    host.remove();
+  });
+
+  it('the copy event is only claimed by xterm when a selection exists', () => {
+    const { host, term } = openTerminal(true);
+    expect(term.hasSelection()).toBe(false);
+
+    const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
+    expect(term.element!.dispatchEvent(copyEvent)).toBe(true);
+    expect(copyEvent.defaultPrevented).toBe(false);
 
     term.dispose();
     host.remove();

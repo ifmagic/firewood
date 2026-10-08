@@ -1,3 +1,4 @@
+import type { Terminal } from '@xterm/xterm';
 import i18n from '../../i18n';
 
 export interface BufferedOutputState {
@@ -34,6 +35,70 @@ export function getShellDisplayName(shellPath: string | null, defaultShell: stri
   const target = shellPath || defaultShell;
   if (!target) return i18n.t('terminal.defaultShellName');
   return target.split(/[\\/]/).pop() || target;
+}
+
+/**
+ * Directory the shell picker should open at, given a shell path. Handles both
+ * separators: shells are POSIX paths on macOS/Linux and drive-qualified paths
+ * on Windows, and the picker needs that platform's own separator back for
+ * `defaultPath` to resolve.
+ * Returns '' when there is nothing usable to open (a bare command name, or a
+ * path at the filesystem root), in which case the dialog falls back to its own
+ * default location.
+ */
+export function getShellDirectory(shellPath: string): string {
+  const trimmed = shellPath.trim();
+  const index = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
+  const parent = index > 0 ? trimmed.slice(0, index) : '';
+  // `C:` is a drive-relative path, not a directory the dialog can open; the
+  // root itself is the closest usable location. `/` and the bare command name
+  // both yield '' so the dialog picks its own default.
+  return /^[A-Za-z]:$/.test(parent) ? `${parent}\\` : parent;
+}
+
+/**
+ * VS Code-style clipboard chords for Windows/Linux.
+ *
+ * xterm.js only wires the DOM copy/paste pipeline up for chords it does not
+ * consume itself — Cmd+C/V on macOS. A bare Ctrl+C or Ctrl+V on Windows/Linux
+ * is turned into `\x03` / `\x16` by the key encoder and the keydown is
+ * preventDefault-ed, so the browser never runs its native copy/paste action
+ * and the selection is silently never copied. VS Code instead copies when text
+ * is selected (and only forwards ^C as SIGINT when there is none), and always
+ * pastes on Ctrl+V.
+ *
+ * Returning false from the custom handler makes xterm stand down *without*
+ * cancelling the event: the browser then performs its default action, which
+ * fires the DOM `copy` / `paste` events xterm's own listeners already handle.
+ *
+ * Ctrl+Shift+C/V are deliberately not claimed here: xterm has no binding for
+ * them either, so whatever the host browser does with those chords (WebView2
+ * may route Ctrl+Shift+C to DevTools) is what the user gets. The supported
+ * chords are Ctrl+C / Ctrl+V. macOS keeps the untouched native pipeline.
+ */
+export function attachClipboardKeyHandler(term: Terminal) {
+  term.attachCustomKeyEventHandler((event) => {
+    if (event.type !== 'keydown') return true;
+    // Other-modifier chords are never ours; AltGr arrives as Ctrl+Alt on
+    // Windows and must reach the shell as a composed character.
+    if (!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+      return true;
+    }
+
+    // `code` covers layouts where the letter key does not produce a latin
+    // 'c'/'v' character (e.g. Cyrillic layouts).
+    const isCopyChord = event.key.toLowerCase() === 'c' || event.code === 'KeyC';
+    const isPasteChord = event.key.toLowerCase() === 'v' || event.code === 'KeyV';
+
+    if (isCopyChord) {
+      // Copy when there is a selection; otherwise let ^C through as SIGINT.
+      return !term.hasSelection();
+    }
+    if (isPasteChord) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function buildShellOptions(defaultShell: string, availableShells: string[], currentShell: string) {

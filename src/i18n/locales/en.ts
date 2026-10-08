@@ -94,7 +94,8 @@ const en = {
     retry: 'Retry',
     shellExited: 'Shell exited',
     restart: 'Restart',
-    hint: '⌘± resize · ⌘0 reset',
+    hintMac: '⌘± resize · ⌘0 reset',
+    hintNonMac: 'Ctrl+± resize · Ctrl+0 reset',
   },
 
   // JSON

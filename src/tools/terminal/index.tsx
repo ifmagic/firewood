@@ -19,10 +19,13 @@ import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import i18n from '../../i18n';
 import ToolLayout from '../../components/ToolLayout';
+import { isMacPlatform } from '../../utils/platform';
 import {
   appendBufferedOutput,
+  attachClipboardKeyHandler,
   buildShellOptions,
   clearBufferedOutput,
+  getShellDirectory,
   getShellDisplayName,
   selectActiveTab,
   toShellOverride,
@@ -240,6 +243,10 @@ function getOrCreateTerminal(tab: TerminalTabState, fontSize: number, fontFamily
   term.loadAddon(new WebLinksAddon());
   term.loadAddon(unicode11);
   term.unicode.activeVersion = '11';
+
+  if (!isMacPlatform()) {
+    attachClipboardKeyHandler(term);
+  }
 
   term.open(tab.div);
   fit.fit();
@@ -783,13 +790,16 @@ export default function TerminalPage() {
     const tab = getTabState(_activeTerminalTabId);
     if (!tab) return;
 
-    const baseShell = selectedShellValue || defaultShell || '/bin/zsh';
-    const dir = baseShell.split('/').slice(0, -1).join('/') || '/bin';
+    // Start the picker next to the current shell: on macOS/Linux that is the
+    // POSIX parent directory, on Windows the drive-qualified one. Without a
+    // usable parent (bare command name) the dialog picks its own location.
+    const baseShell = selectedShellValue || defaultShell;
+    const dir = getShellDirectory(baseShell);
     const file = await open({
       title: t('terminal.selectShellTitle'),
       directory: false,
       multiple: false,
-      defaultPath: dir,
+      ...(dir ? { defaultPath: dir } : {}),
     });
 
     if (typeof file === 'string' && file) {
@@ -1296,7 +1306,9 @@ export default function TerminalPage() {
         </div>
 
         <div className="firewood-terminal-footer">
-          <span className="firewood-terminal-hint">{t('terminal.hint')}</span>
+          <span className="firewood-terminal-hint">
+            {t(isMacPlatform() ? 'terminal.hintMac' : 'terminal.hintNonMac')}
+          </span>
         </div>
       </div>
     </ToolLayout>

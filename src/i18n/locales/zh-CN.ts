@@ -94,7 +94,8 @@ const zhCN = {
     retry: '重试',
     shellExited: 'Shell 已退出',
     restart: '重启',
-    hint: '⌘± 调整字号 · ⌘0 重置',
+    hintMac: '⌘± 调整字号 · ⌘0 重置',
+    hintNonMac: 'Ctrl+± 调整字号 · Ctrl+0 重置',
   },
 
   // JSON

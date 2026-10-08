@@ -37,6 +37,11 @@ libc = "0.2"
 font-kit = "0.14.3"
 rusqlite = { version = "0.40.1", features = ["bundled"] }
 
+[target.'cfg(windows)'.dependencies]
+# ConPTY (Windows 10 1809+) pseudo terminals for the terminal tool. The unix
+# side keeps its own fork/execpty implementation; this is only used on Windows.
+portable-pty = "0.8"
+
 [profile.release]
 strip = true
 lto = true

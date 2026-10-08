@@ -74,18 +74,7 @@ fn start_pty_reader(
 
 #[tauri::command]
 fn list_shells() -> Result<Vec<String>, String> {
-    let candidates = vec![
-        "/bin/zsh",
-        "/bin/bash",
-        "/bin/sh",
-        "/usr/local/bin/fish",
-        "/opt/homebrew/bin/fish",
-    ];
-    Ok(candidates
-        .into_iter()
-        .filter(|p| std::path::Path::new(p).exists())
-        .map(|p| p.to_string())
-        .collect())
+    Ok(pty::PtyManager::list_shells())
 }
 
 static MONOSPACE_FONT_FAMILIES: OnceLock<Vec<String>> = OnceLock::new();
