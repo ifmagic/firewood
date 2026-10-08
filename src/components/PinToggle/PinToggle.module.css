@@ -1,6 +1,7 @@
 /* Shared always-on-top pin button (see PinToggle/index.tsx). The variants
-   differ only in footprint and surface tokens: "titleBar" sits on the light
-   titlebar strip, "sidebar" on the dark sidebar surfaces (header row / rail). */
+   differ only in footprint and surface tokens: "titleBar" sits on the macOS
+   light titlebar strip, "caption" in the Windows caption row (flush with the
+   min/max/close buttons), "sidebar" on the dark sidebar surfaces. */
 .pinButton {
 	border: none;
 	background: transparent;
@@ -34,6 +35,30 @@
 .titleBar:focus-visible {
 	outline: 1px solid var(--fw-accent);
 	outline-offset: -1px;
+}
+
+/* Windows caption row: the same 46x32 footprint and hover fill as the
+   adjacent min/max/close buttons, so the pin reads as part of the window
+   controls while keeping its square, non-caption identity. */
+.caption {
+	width: 46px;
+	height: 32px;
+	font-size: 15px;
+	border-radius: 0;
+	color: var(--fw-text-strong);
+}
+
+.caption:hover {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.caption:active {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+.caption:focus-visible {
+	outline: 1px solid var(--fw-accent);
+	outline-offset: -2px;
 }
 
 .sidebar {

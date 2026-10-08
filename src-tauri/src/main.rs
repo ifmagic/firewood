@@ -188,6 +188,15 @@ fn main() {
 
     builder
         .setup(|app| {
+            // The dev window title is set here instead of in tauri.dev.conf.json:
+            // a windows array in the dev config would replace the platform
+            // configs whole (RFC 7386 merge patch), dropping Windows'
+            // undecorated chrome and macOS' overlay titlebar in dev.
+            #[cfg(debug_assertions)]
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_title("Firewood Dev");
+            }
+
             let show_item =
                 MenuItemBuilder::with_id("show", "Show Window").build(app)?;
             let check_updates_tray =

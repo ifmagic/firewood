@@ -9,10 +9,14 @@ const zhCN = {
     allToolsHidden: '所有工具已隐藏，可从顶部菜单恢复',
   },
 
-  // Window titlebar (macOS overlay strip + non-macOS sidebar fallback)
+  // Window titlebar (macOS overlay strip, Windows caption row, Linux sidebar)
   titleBar: {
     pin: '置顶',
     unpin: '取消置顶',
+    minimize: '最小化',
+    maximize: '最大化',
+    restore: '还原',
+    close: '关闭',
   },
 
   // Tool names

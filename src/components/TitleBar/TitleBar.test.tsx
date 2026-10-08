@@ -1,18 +1,37 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import '../../i18n';
+import i18n from '../../i18n';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const { setAlwaysOnTop, startDragging, toggleMaximize } = vi.hoisted(() => ({
+const { setAlwaysOnTop, startDragging, toggleMaximize, minimize, close, isMaximized } = vi.hoisted(() => ({
   setAlwaysOnTop: vi.fn(async () => {}),
   startDragging: vi.fn(async () => {}),
   toggleMaximize: vi.fn(async () => {}),
+  minimize: vi.fn(async () => {}),
+  close: vi.fn(async () => {}),
+  isMaximized: vi.fn(async () => false),
 }));
 
+// Captured by the onResized mock so tests can drive a resize event.
+let resizeHandler: (() => void) | null = null;
+
 vi.mock('@tauri-apps/api/window', () => ({
-  getCurrentWindow: () => ({ setAlwaysOnTop, startDragging, toggleMaximize }),
+  getCurrentWindow: () => ({
+    setAlwaysOnTop,
+    startDragging,
+    toggleMaximize,
+    minimize,
+    close,
+    isMaximized,
+    onResized: async (handler: () => void) => {
+      resizeHandler = handler;
+      return () => {
+        resizeHandler = null;
+      };
+    },
+  }),
 }));
 
 let TitleBar: (typeof import('./index'))['default'];
@@ -21,6 +40,7 @@ let root: Root | null = null;
 
 const MAC_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/620.1.15 (KHTML, like Gecko)';
 const WINDOWS_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+const LINUX_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)';
 
 function stubUserAgent(ua: string) {
   Object.defineProperty(window.navigator, 'userAgent', { value: ua, configurable: true });
@@ -47,11 +67,22 @@ const fireDoubleClick = (el: Element, x = 400, y = 12) => {
   fireMouse(el, 'dblclick', { detail: 2, clientX: x, clientY: y });
 };
 
+const click = (el: Element) => {
+  act(() => {
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+  });
+};
+
 beforeEach(async () => {
   localStorage.clear();
   setAlwaysOnTop.mockClear();
   startDragging.mockClear();
   toggleMaximize.mockClear();
+  minimize.mockClear();
+  close.mockClear();
+  isMaximized.mockClear();
+  isMaximized.mockResolvedValue(false);
+  resizeHandler = null;
   stubUserAgent(MAC_UA);
   vi.resetModules();
   ({ default: TitleBar } = await import('./index'));
@@ -62,13 +93,14 @@ beforeEach(async () => {
 
 afterEach(() => {
   act(() => root?.unmount());
+  document.querySelectorAll('.ant-tooltip').forEach((el) => el.remove());
   container?.remove();
   container = null;
   root = null;
 });
 
-describe('TitleBar', () => {
-  it('renders a drag-region strip with the pin button on the right (macOS)', () => {
+describe('TitleBar (macOS)', () => {
+  it('renders a drag-region strip with the pin button on the right', () => {
     renderBar();
 
     const strip = stripEl();
@@ -81,6 +113,8 @@ describe('TitleBar', () => {
     expect(pin, 'pin button').toBeTruthy();
     expect(pin!.getAttribute('aria-pressed')).toBe('false');
     expect(setAlwaysOnTop).toHaveBeenCalledWith(false);
+    // macOS keeps the native traffic lights and renders only the pin.
+    expect(container!.querySelectorAll('button')).toHaveLength(1);
   });
 
   it('applies a persisted pinned state on mount', () => {
@@ -92,8 +126,8 @@ describe('TitleBar', () => {
     expect(setAlwaysOnTop).toHaveBeenCalledWith(true);
   });
 
-  it('renders nothing outside macOS', () => {
-    stubUserAgent(WINDOWS_UA);
+  it('renders nothing on Linux (native title bar stays)', () => {
+    stubUserAgent(LINUX_UA);
     renderBar();
 
     expect(container?.querySelector('[data-tauri-drag-region]')).toBeNull();
@@ -167,5 +201,84 @@ describe('TitleBar', () => {
 
     expect(startDragging).not.toHaveBeenCalled();
     expect(toggleMaximize).not.toHaveBeenCalled();
+  });
+});
+
+describe('TitleBar (Windows custom chrome)', () => {
+  const byLabel = (label: string) => container!.querySelector(`[aria-label="${label}"]`) as HTMLButtonElement | null;
+
+  beforeEach(() => {
+    stubUserAgent(WINDOWS_UA);
+  });
+
+  it('puts the pin immediately before the caption buttons: pin, minimize, maximize, close', () => {
+    renderBar();
+
+    const strip = stripEl();
+    expect(strip, 'drag-region strip').toBeTruthy();
+    const labels = Array.from(container!.querySelectorAll('button')).map((b) => b.getAttribute('aria-label'));
+    expect(labels).toEqual([
+      i18n.t('titleBar.pin'),
+      i18n.t('titleBar.minimize'),
+      i18n.t('titleBar.maximize'),
+      i18n.t('titleBar.close'),
+    ]);
+    // The pin toggles always-on-top; the strip itself carries no stray text.
+    expect(strip.textContent).toBe('');
+  });
+
+  it('minimizes, restores and closes through the window controls', async () => {
+    renderBar();
+    await act(async () => {});
+
+    click(byLabel(i18n.t('titleBar.minimize'))!);
+    expect(minimize).toHaveBeenCalledTimes(1);
+
+    click(byLabel(i18n.t('titleBar.maximize'))!);
+    expect(toggleMaximize).toHaveBeenCalledTimes(1);
+
+    click(byLabel(i18n.t('titleBar.close'))!);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('swaps the middle button to Restore when the window is maximized', async () => {
+    renderBar();
+    await act(async () => {});
+
+    // Initial state comes from isMaximized() on mount.
+    expect(byLabel(i18n.t('titleBar.maximize'))).toBeTruthy();
+
+    isMaximized.mockResolvedValue(true);
+    await act(async () => {
+      resizeHandler?.();
+    });
+
+    expect(byLabel(i18n.t('titleBar.restore'))).toBeTruthy();
+    expect(byLabel(i18n.t('titleBar.maximize'))).toBeNull();
+  });
+
+  it('keeps drag, zoom and minimize off the caption buttons', () => {
+    renderBar();
+    const minimizeButton = byLabel(i18n.t('titleBar.minimize'))!;
+
+    fireMouse(minimizeButton, 'mousedown', { detail: 1, clientX: 700, clientY: 16 });
+    fireMouse(minimizeButton, 'mouseup', { detail: 1, clientX: 700, clientY: 16 });
+    fireDoubleClick(minimizeButton, 700, 16);
+
+    expect(startDragging).not.toHaveBeenCalled();
+    expect(toggleMaximize).not.toHaveBeenCalled();
+  });
+
+  it('still drags and zooms from the empty strip area', () => {
+    renderBar();
+    const strip = stripEl();
+
+    fireMouse(strip, 'mousedown', { detail: 1, clientX: 200, clientY: 16 });
+    fireMouse(window, 'mousemove', { buttons: 1, clientX: 210, clientY: 16 });
+    expect(startDragging).toHaveBeenCalledTimes(1);
+
+    fireMouse(window, 'mouseup', { clientX: 210, clientY: 16 });
+    fireDoubleClick(strip, 200, 16);
+    expect(toggleMaximize).toHaveBeenCalledTimes(1);
   });
 });

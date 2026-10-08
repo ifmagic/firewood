@@ -3,7 +3,7 @@ body {
 	color: var(--fw-text-body);
 }
 
-/* Column shell hosting the macOS overlay titlebar strip above the main
+/* Column shell hosting the per-platform titlebar strip above the main
    sidebar/content layout (see App.tsx / components/TitleBar).
    width:100% is required: this div is a flex item of #root (a ROW flex
    container), and without it the .ant-layout-content { width:0; flex:auto }

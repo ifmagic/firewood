@@ -14,3 +14,57 @@
 	user-select: none;
 	-webkit-user-select: none;
 }
+
+/* Windows custom titlebar (tauri.windows.conf.json: decorations false +
+   shadow true). 32px matches the Windows caption height; the caption controls
+   sit flush against the right edge, Windows-style. */
+.windowsStrip {
+	height: 32px;
+	flex-shrink: 0;
+	position: relative;
+	display: flex;
+	align-items: stretch;
+	justify-content: flex-end;
+	background: var(--fw-surface);
+	border-bottom: 1px solid var(--fw-divider);
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+/* 46x32 is the Windows caption-button footprint. No cursor:pointer — Windows
+   caption buttons keep the default arrow cursor. */
+.captionButton {
+	width: 46px;
+	height: 32px;
+	flex-shrink: 0;
+	border: none;
+	padding: 0;
+	background: transparent;
+	color: var(--fw-text-strong);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition:
+		background-color 0.12s ease,
+		color 0.12s ease;
+}
+
+.captionButton:hover {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.captionButton:active {
+	background: rgba(0, 0, 0, 0.12);
+}
+
+.captionButton:focus-visible {
+	outline: 1px solid var(--fw-accent);
+	outline-offset: -2px;
+}
+
+/* The Windows close-button hover red (white glyph), per platform convention. */
+.captionClose:hover,
+.captionClose:active {
+	background: #c42b1c;
+	color: #ffffff;
+}

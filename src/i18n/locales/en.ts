@@ -9,10 +9,14 @@ const en = {
     allToolsHidden: 'All tools are hidden. Restore them from the top menu',
   },
 
-  // Window titlebar (macOS overlay strip + non-macOS sidebar fallback)
+  // Window titlebar (macOS overlay strip, Windows caption row, Linux sidebar)
   titleBar: {
     pin: 'Pin',
     unpin: 'Unpin',
+    minimize: 'Minimize',
+    maximize: 'Maximize',
+    restore: 'Restore',
+    close: 'Close',
   },
 
   // Tool names

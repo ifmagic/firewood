@@ -55,8 +55,8 @@ function App() {
       <BrowserRouter>
         <Updater />
         <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />
-        {/* Column shell: the macOS overlay titlebar strip (drag region +
-            always-on-top pin) sits above the sidebar/content layout. */}
+        {/* Column shell: the per-platform titlebar strip (macOS overlay /
+            Windows custom chrome) sits above the sidebar/content layout. */}
         <div className="app-shell">
           <TitleBar />
           <Layout style={{ flex: 1, minHeight: 0 }}>

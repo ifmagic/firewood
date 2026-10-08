@@ -1,18 +1,5 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Firewood Dev",
-  "identifier": "com.ifmagic.firewood.dev",
-  "app": {
-    "windows": [
-      {
-        "fullscreen": false,
-        "height": 600,
-        "resizable": true,
-        "title": "Firewood Dev",
-        "width": 800,
-        "dragDropEnabled": false,
-        "titleBarStyle": "Overlay"
-      }
-    ]
-  }
+  "identifier": "com.ifmagic.firewood.dev"
 }

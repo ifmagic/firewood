@@ -5,10 +5,11 @@
 ### ✨ Features
 
 - Add native Windows terminal support with ConPTY-backed sessions, shell discovery, and Ctrl+C/Ctrl+V clipboard behavior.
+- Draw a Windows titlebar with native-style window controls (minimize / maximize / close) and rounded corners on Windows 11.
 
 ### 🐛 Bug Fixes
 
-- Move the always-on-top control from the settings footer to the sidebar header.
+- Move the always-on-top control out of the settings footer: into the sidebar header on Linux and immediately left of the caption controls on the new Windows titlebar.
 - Improve UI contrast and visual consistency with shared design tokens.
 
 ### 🔧 Chore / Updates

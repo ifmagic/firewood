@@ -1,0 +1,17 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "app": {
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 600,
+        "resizable": true,
+        "title": "Firewood",
+        "width": 800,
+        "dragDropEnabled": false,
+        "decorations": false,
+        "shadow": true
+      }
+    ]
+  }
+}
