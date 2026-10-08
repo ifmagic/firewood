@@ -62,8 +62,8 @@ function toggleWindowZoom() {
  *
  * On other platforms the native title bar remains (titleBarStyle is
  * macOS-only) and this renders nothing; the pin surfaces in the sidebar
- * footer instead (see Sidebar). The platform guard lives in this wrapper so
- * no hooks/window-API calls run off macOS.
+ * header instead — the app's top chrome row (see Sidebar). The platform guard
+ * lives in this wrapper so no hooks/window-API calls run off macOS.
  */
 export default function TitleBar() {
   if (!isMacPlatform()) return null;

@@ -177,9 +177,16 @@ export default function Sidebar({
     };
   }, [draggingToolId]);
 
+  // macOS keeps the 200px expanded sider (its header carries brand + view menu
+  // only); elsewhere it widens to 220px because the header also hosts the
+  // window pin, and 200px would clip "Firewood" (see .logo in
+  // Sidebar.module.css and AGENTS.md).
   return (
-    <Sider width={collapsed ? 56 : 200} className={`${styles.sider} ${collapsed ? styles.siderCollapsed : ''}`}>
-      <div className={styles.logo}>
+    <Sider
+      width={collapsed ? 56 : isMacPlatform() ? 200 : 220}
+      className={`${styles.sider} ${collapsed ? styles.siderCollapsed : ''}`}
+    >
+      <div className={`${styles.logo} ${!isMacPlatform() ? styles.logoWithPin : ''}`}>
         <button
           type="button"
           className={styles.logoButton}
@@ -203,6 +210,16 @@ export default function Sidebar({
             />
           </Dropdown>
         )}
+        {/* Window-level pin on non-macOS (the native title bar stays there).
+            The sidebar header is the app's first webview row, so the pin
+            belongs in this top chrome row — trailing the view menu, mirroring
+            the macOS strip where the pin is the trailing control — and
+            deliberately not in the settings footer (a window toggle reads as
+            a second settings button next to Settings; see AGENTS.md).
+            Collapsed, the 56px rail cannot hold brand and pin side by side, so
+            the pin stacks under the brand (see .siderCollapsed .logoWithPin)
+            instead of relocating to the footer. */}
+        {!isMacPlatform() && <PinToggle variant="sidebar" placement={collapsed ? 'right' : 'bottom'} />}
       </div>
       <div className={styles.toolList}>
         {visibleTools.map((tool) => {
@@ -256,10 +273,9 @@ export default function Sidebar({
         )}
       </div>
       <div className={styles.siderFooter}>
-        {/* Non-macOS fallback pin (native title bar remains there); macOS
-            hosts the pin in the overlay TitleBar strip — exactly one PinToggle
-            may mount per platform. */}
-        {!isMacPlatform() && <PinToggle variant="sidebar" placement="right" />}
+        {/* App-settings zone only: the window pin lives in the header's top
+            chrome row (see above), and macOS hosts it in the overlay TitleBar
+            strip — exactly one PinToggle may mount per platform. */}
         <SettingsMenuButton onOpenAbout={onOpenAbout} />
       </div>
     </Sider>

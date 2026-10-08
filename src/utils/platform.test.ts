@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { isMacPlatform } from './platform';
 
 // UA table for the single gate deciding which pin surface mounts
-// (TitleBar on macOS, sidebar footer elsewhere). The iPadOS desktop-class
+// (TitleBar on macOS, sidebar header elsewhere). The iPadOS desktop-class
 // UA is a documented caveat, not an accident: see platform.ts.
 const MAC_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/620.1.15 (KHTML, like Gecko)';
 const WINDOWS_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';

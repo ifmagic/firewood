@@ -15,12 +15,15 @@
 	height: 100%;
 }
 
+/* Header row: brand + view menu + (non-macOS) window pin. The 8px side padding
+   matches .toolList's inset; the non-macOS expanded sider widens to 220px so
+   the brand text stays un-truncated with all three affordances (see AGENTS.md). */
 .logo {
 	height: 60px;
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	padding: 0 10px;
+	padding: 0 8px;
 	border-bottom: 1px solid var(--fw-border);
 	flex-shrink: 0;
 }
@@ -78,11 +81,19 @@
 	height: 32px !important;
 	border-radius: 8px !important;
 	flex-shrink: 0;
+	/* Match the adjacent window pin (15px icon, box-shadow ring) so the two
+	   trailing header controls read as one family; antd's defaults differ. */
+	font-size: 15px !important;
 }
 
 .viewButton:hover {
 	color: var(--fw-text-primary) !important;
 	background-color: var(--fw-hover) !important;
+}
+
+.viewButton:focus-visible {
+	outline: none !important;
+	box-shadow: var(--fw-focus-ring);
 }
 
 .toolList {
@@ -233,6 +244,16 @@
 	padding: 0;
 }
 
+/* Collapsed rail with the window pin (non-macOS only): the 56px column cannot
+   hold brand and pin side by side, so the header becomes a centered stack —
+   brand on top, pin below — with the height growing past the fixed 60px. */
+.siderCollapsed .logoWithPin {
+	height: auto;
+	flex-direction: column;
+	justify-content: center;
+	padding: 8px 0;
+}
+
 .siderCollapsed .logoButton {
 	flex: none;
 	justify-content: center;
@@ -240,10 +261,10 @@
 	padding: 6px;
 }
 
+/* Single child (the settings button) since the pin moved to the header. */
 .siderCollapsed .siderFooter {
 	padding: 10px 0;
 	display: flex;
-	flex-direction: column;
 	justify-content: center;
 }
 

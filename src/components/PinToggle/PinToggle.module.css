@@ -1,6 +1,6 @@
 /* Shared always-on-top pin button (see PinToggle/index.tsx). The variants
    differ only in footprint and surface tokens: "titleBar" sits on the light
-   titlebar strip, "sidebar" on the dark sidebar footer. */
+   titlebar strip, "sidebar" on the dark sidebar surfaces (header row / rail). */
 .pinButton {
 	border: none;
 	background: transparent;

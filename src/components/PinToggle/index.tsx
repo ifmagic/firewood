@@ -6,19 +6,26 @@ import { useAlwaysOnTop } from '../../hooks/useAlwaysOnTop';
 import styles from './PinToggle.module.css';
 
 interface PinToggleProps {
-  placement?: TooltipProps['placement'];
-  /** "titleBar": 24px on the light titlebar strip; "sidebar": 32px on the dark sidebar footer. */
+  /**
+   * Required on purpose: antd's default "top" centers the popup, and on a
+   * button near a viewport edge that is exactly the WKWebView scrollbar-flash
+   * footgun AGENTS.md documents. Every consumer knows its own safe side.
+   */
+  placement: TooltipProps['placement'];
+  /** "titleBar": 24px on the light titlebar strip; "sidebar": 32px on the dark sidebar surfaces (header row / rail). */
   variant: 'titleBar' | 'sidebar';
 }
 
 /**
  * Global always-on-top pin toggle (persisted via useAlwaysOnTop). Must mount
  * exactly once per platform: in the macOS overlay TitleBar strip (far right,
- * clear of the traffic lights) or in the sidebar footer on Windows/Linux —
- * two mounted instances would fight over one window state. The platform gate
- * lives in the consumers, so this component stays platform-agnostic.
+ * clear of the traffic lights) or in the sidebar header on Windows/Linux —
+ * the app's top chrome row, not the settings footer, because this is a
+ * window-level control like the strip's. Two mounted instances would fight
+ * over one window state. The platform gate lives in the consumers, so this
+ * component stays platform-agnostic.
  */
-export default function PinToggle({ placement = 'top', variant }: PinToggleProps) {
+export default function PinToggle({ placement, variant }: PinToggleProps) {
   const { t } = useTranslation();
   const { pinned, toggle } = useAlwaysOnTop();
   const label = pinned ? t('titleBar.unpin') : t('titleBar.pin');
