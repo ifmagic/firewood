@@ -33,7 +33,6 @@ const zhCN = {
     minify: '压缩',
     unescape: '去除转义',
     clear: '清空',
-    convert: '转 换',
     copy: '复制',
     copied: '已复制',
     cut: '剪切',
@@ -55,8 +54,6 @@ const zhCN = {
 
   // Common labels
   label: {
-    result: '结果',
-    timestamp: '时间戳',
     settings: '设置',
   },
 
@@ -100,7 +97,6 @@ const zhCN = {
 
   // JSON
   jsonFormatter: {
-    title: 'JSON',
     emptyHint: '粘贴 JSON 或转义文本，然后执行格式化、压缩或去除转义',
   },
 
@@ -131,8 +127,6 @@ const zhCN = {
     enterTs: '输入 Unix 时间戳',
     enterTsHint: '支持秒 / 毫秒，自动识别',
     selectDate: '选择日期',
-    currentTime: '当前时间',
-    currentDate: '当前日期',
     currentTs: '当前时间戳',
     localTime: '本地时间',
     utcTime: 'UTC 时间',
@@ -207,7 +201,6 @@ const zhCN = {
 
   // Notepad
   notepad: {
-    title: '记事本',
     untitled: '未命名',
     newTab: '新建标签',
     deleteTab: '删除标签页',
@@ -229,11 +222,11 @@ const zhCN = {
     fileSaved: '已保存「{{name}}」',
     openFailed: '打开文件失败：{{error}}',
     saveFailed: '保存文件失败：{{error}}',
+    openLinkFailed: '打开链接失败：{{error}}',
   },
 
   // Image to PDF
   imgToPdf: {
-    title: '图片排版',
     addImages: '添加图片',
     clickOrDrag: '点击或拖拽，支持批量',
     imageCount: '{{count}} 张图片 · 拖拽排序',
@@ -266,7 +259,6 @@ const zhCN = {
 
   // Translate
   translate: {
-    title: '文本翻译',
     engine: '翻译引擎',
     tencent: '腾讯翻译',
     baidu: '百度翻译',
@@ -286,6 +278,10 @@ const zhCN = {
     baiduGuide: '前往 {link} 页面获取 APPID 和密钥（标准版每月免费 5 万字符）',
     baiduLink: '百度翻译开放平台 → 开发者信息',
     secretLabel: '密钥',
+    secretIdLabel: 'SecretId',
+    secretKeyLabel: 'SecretKey',
+    regionLabel: '地域',
+    appIdLabel: 'App ID',
   },
 
   // Moxia (novel writing workspace)

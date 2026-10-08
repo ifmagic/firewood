@@ -7,7 +7,7 @@ import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 import { Transaction, type Extension } from '@codemirror/state';
 import { isTauriWKWebView, isShimActive } from '../../utils/wkWebViewFocusShim';
 
-export interface LogEntry {
+interface LogEntry {
   t: string;
   tag: string;
   msg: string;

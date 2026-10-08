@@ -60,10 +60,6 @@ export function deleteChapter(bookPath: string, id: number): Promise<void> {
   return invoke<void>('moxia_delete_chapter', { bookPath, id });
 }
 
-export function reorderChapters(bookPath: string, chapterIds: number[]): Promise<void> {
-  return invoke<void>('moxia_reorder_chapters', { bookPath, chapterIds });
-}
-
 export function getNextChapterSortOrder(bookPath: string): Promise<number> {
   return invoke<number>('moxia_get_next_chapter_sort_order', { bookPath });
 }
@@ -128,18 +124,4 @@ export function updateRelation(
 
 export function deleteRelation(bookPath: string, relationId: number): Promise<void> {
   return invoke<void>('moxia_delete_relation', { bookPath, relationId });
-}
-
-// ============ Settings (per-book) ============
-
-export function getSetting(bookPath: string, key: string): Promise<string | null> {
-  return invoke<string | null>('moxia_get_setting', { bookPath, key });
-}
-
-export function setSetting(bookPath: string, key: string, value: string): Promise<void> {
-  return invoke<void>('moxia_set_setting', { bookPath, key, value });
-}
-
-export function getAllSettings(bookPath: string): Promise<Record<string, string>> {
-  return invoke<Record<string, string>>('moxia_get_all_settings', { bookPath });
 }

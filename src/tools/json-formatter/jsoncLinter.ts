@@ -14,7 +14,7 @@ import { parse, printParseErrorCode, type ParseError } from 'jsonc-parser';
 
 const PARSE_OPTIONS = { allowTrailingComma: true, allowEmptyContent: true } as const;
 
-export interface JsoncDiagnostic {
+interface JsoncDiagnostic {
   from: number;
   to: number;
   message: string;

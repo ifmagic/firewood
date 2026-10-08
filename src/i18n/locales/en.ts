@@ -33,7 +33,6 @@ const en = {
     minify: 'Minify',
     unescape: 'Unescape',
     clear: 'Clear',
-    convert: 'Convert',
     copy: 'Copy',
     copied: 'Copied',
     cut: 'Cut',
@@ -55,8 +54,6 @@ const en = {
 
   // Common labels
   label: {
-    result: 'Result',
-    timestamp: 'Timestamp',
     settings: 'Settings',
   },
 
@@ -100,7 +97,6 @@ const en = {
 
   // JSON
   jsonFormatter: {
-    title: 'JSON',
     emptyHint: 'Paste JSON or escaped text, then format, minify, or unescape it here',
   },
 
@@ -131,8 +127,6 @@ const en = {
     enterTs: 'Enter Unix timestamp',
     enterTsHint: 'seconds or ms, auto-detected',
     selectDate: 'Select Date',
-    currentTime: 'Now',
-    currentDate: 'Today',
     currentTs: 'Current timestamp',
     localTime: 'Local',
     utcTime: 'UTC',
@@ -207,7 +201,6 @@ const en = {
 
   // Notepad
   notepad: {
-    title: 'Notepad',
     untitled: 'Untitled',
     newTab: 'New Tab',
     deleteTab: 'Delete Tab',
@@ -229,11 +222,11 @@ const en = {
     fileSaved: 'Saved "{{name}}"',
     openFailed: 'Failed to open file: {{error}}',
     saveFailed: 'Failed to save file: {{error}}',
+    openLinkFailed: 'Failed to open link: {{error}}',
   },
 
   // Image to PDF
   imgToPdf: {
-    title: 'Image to PDF',
     addImages: 'Add Images',
     clickOrDrag: 'Click or drag, batch supported',
     imageCount: '{{count}} images · drag to reorder',
@@ -266,7 +259,6 @@ const en = {
 
   // Translate
   translate: {
-    title: 'Translate',
     engine: 'Engine',
     tencent: 'Tencent',
     baidu: 'Baidu',
@@ -286,6 +278,10 @@ const en = {
     baiduGuide: 'Visit {link} to get APPID and Secret (50K free chars/month for standard plan)',
     baiduLink: 'Baidu Translate Developer Portal',
     secretLabel: 'Secret',
+    secretIdLabel: 'SecretId',
+    secretKeyLabel: 'SecretKey',
+    regionLabel: 'Region',
+    appIdLabel: 'App ID',
   },
 
   // Moxia (novel writing workspace)

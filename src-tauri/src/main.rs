@@ -145,7 +145,6 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(pty_manager)
         .manage(moxia_manager)
@@ -170,7 +169,6 @@ fn main() {
             moxia::commands::moxia_create_chapter,
             moxia::commands::moxia_update_chapter,
             moxia::commands::moxia_delete_chapter,
-            moxia::commands::moxia_reorder_chapters,
             moxia::commands::moxia_get_next_chapter_sort_order,
             moxia::commands::moxia_list_characters,
             moxia::commands::moxia_get_character,
@@ -181,9 +179,6 @@ fn main() {
             moxia::commands::moxia_add_relation,
             moxia::commands::moxia_update_relation,
             moxia::commands::moxia_delete_relation,
-            moxia::commands::moxia_get_setting,
-            moxia::commands::moxia_set_setting,
-            moxia::commands::moxia_get_all_settings,
         ]);
 
     #[cfg(not(debug_assertions))]

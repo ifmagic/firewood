@@ -3,6 +3,22 @@ use md5::{Digest as Md5Digest, Md5};
 use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
+use std::sync::OnceLock;
+use std::time::Duration;
+
+/// Shared HTTP client: one connection pool for every translation call instead
+/// of a fresh client (and TLS handshake) per request. The timeouts bound a
+/// stalled provider so an awaiting command cannot dangle forever.
+fn http_client() -> &'static reqwest::Client {
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(15))
+            .build()
+            .expect("failed to build the shared HTTP client")
+    })
+}
 
 // ============ Common types ============
 
@@ -58,7 +74,7 @@ pub async fn baidu_translate(
         ],
     )
     .map_err(|e| format!("URL construction failed: {}", e))?;
-    let resp = reqwest::Client::new()
+    let resp = http_client()
         .get(url)
         .send()
         .await
@@ -192,8 +208,7 @@ pub async fn tencent_translate(
         algorithm, secret_id, credential_scope, signed_headers, signature
     );
 
-    let client = reqwest::Client::new();
-    let resp = client
+    let resp = http_client()
         .post(format!("https://{}", host))
         .header("Authorization", &authorization)
         .header("Content-Type", content_type)

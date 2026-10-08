@@ -20,13 +20,13 @@ export interface TsRecord {
   unit: TsUnit;
 }
 
-export type NumboxHistoryRecord = CalcRecord | TsRecord;
+type NumboxHistoryRecord = CalcRecord | TsRecord;
 
-export type NewCalcRecord = Omit<CalcRecord, 'id' | 'at'>;
+type NewCalcRecord = Omit<CalcRecord, 'id' | 'at'>;
 export type NewTsRecord = Omit<TsRecord, 'id' | 'at'>;
 
-export const MAX_CALC_HISTORY = 100;
-export const MAX_TS_HISTORY = 20;
+const MAX_CALC_HISTORY = 100;
+const MAX_TS_HISTORY = 20;
 
 /** Dedupes consecutive identical ts conversions; call reset() when the history is cleared. */
 export function makeTsDeduper() {
@@ -191,7 +191,7 @@ export function useTsHistory() {
   return useMemo(() => ({ records: tsRecords, add: addTs, clear: clearTs }), [tsRecords, addTs, clearTs]);
 }
 
-export interface RecordTag {
+interface RecordTag {
   color: string;
   label: string;
 }

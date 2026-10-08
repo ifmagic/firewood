@@ -6,7 +6,7 @@ export interface BufferedOutputState {
   bufferedChars: number;
 }
 
-export const MAX_BUFFER_CHARS = 100_000;
+const MAX_BUFFER_CHARS = 100_000;
 
 export function appendBufferedOutput(tab: BufferedOutputState, data: string) {
   if (!data) return;

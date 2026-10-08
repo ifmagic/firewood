@@ -16,6 +16,7 @@ import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { detectLanguage } from '../../utils/detectLanguage';
 import { formatJsonText } from '../../utils/jsonText';
+import { isMacPlatform } from '../../utils/platform';
 import { countCodePoints, getUrlAtColumn, normalizeUrl } from './helpers';
 import './notepad.css';
 
@@ -93,7 +94,7 @@ export default function Notepad() {
   const [form] = Form.useForm<{ name: string }>();
   const nameInputRef = useRef<InputRef>(null);
   const { fontSize, increase, decrease } = useEditorFontSize();
-  const isMac = navigator.platform.toLowerCase().includes('mac');
+  const isMac = isMacPlatform();
   const [stats, setStats] = useState<EditorStats>({
     chars: 0,
     lines: 1,
@@ -188,11 +189,11 @@ export default function Notepad() {
           if (!matched) return;
           event.preventDefault();
           void openExternal(normalizeUrl(matched)).catch((error) => {
-            message.error(`Failed to open link: ${String(error)}`);
+            message.error(t('notepad.openLinkFailed', { error: String(error) }));
           });
         },
       }),
-    [isMac],
+    [isMac, t],
   );
 
   const { hostRef, viewRef } = useCodemirror({

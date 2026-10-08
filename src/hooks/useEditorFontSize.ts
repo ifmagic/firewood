@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'firewood_editor_font_size';
 const DEFAULT_SIZE = 17;
@@ -11,19 +11,19 @@ export function useEditorFontSize() {
     return saved ? Number(saved) : DEFAULT_SIZE;
   });
 
-  const increase = () =>
-    setFontSize((s) => {
-      const next = Math.min(s + 1, MAX_SIZE);
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+  // Persist in an effect, not inside the state updaters: React may invoke an
+  // updater more than once (StrictMode), and side effects must not ride along.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(fontSize));
+    } catch {
+      // Private mode / quota — keep the in-memory state usable.
+    }
+  }, [fontSize]);
 
-  const decrease = () =>
-    setFontSize((s) => {
-      const next = Math.max(s - 1, MIN_SIZE);
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+  const increase = () => setFontSize((s) => Math.min(s + 1, MAX_SIZE));
+
+  const decrease = () => setFontSize((s) => Math.max(s - 1, MIN_SIZE));
 
   return { fontSize, increase, decrease };
 }

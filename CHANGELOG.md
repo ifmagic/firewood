@@ -11,6 +11,10 @@
 - Move the always-on-top control from the settings footer to the sidebar header.
 - Improve UI contrast and visual consistency with shared design tokens.
 
+### 🔧 Chore / Updates
+
+- Remove dead code and the unused shell plugin, share the HTTP client with timeouts for translation, and finish localizing remaining hardcoded strings.
+
 ## v0.8.5
 
 ### ✨ Features

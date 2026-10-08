@@ -7,38 +7,30 @@ export const ROLE_TYPES = ['主角', '配角', '反派', '路人', '其他'] as 
 export const RELATION_TYPES = ['家人', '朋友', '恋人', '师徒', '敌对', '上下级', '同窗', '其他'] as const;
 
 export const BOOK_STATUS_LABELS = ['草稿', '写作中', '已完成'] as const;
-export const BOOK_STATUS_KEYS = ['draft', 'writing', 'completed'] as const;
+const STATUS_KEYS = ['draft', 'writing', 'completed'] as const;
 
-export const CHAPTER_STATUS_LABELS = ['草稿', '写作中', '已完成'] as const;
-export const CHAPTER_STATUS_KEYS = ['draft', 'writing', 'completed'] as const;
+/** Chapters share the book status vocabulary (same keys and labels). */
+export const CHAPTER_STATUS_LABELS = BOOK_STATUS_LABELS;
 
-const BOOK_STATUS_TO_LABEL: Record<string, string> = Object.fromEntries(
-  BOOK_STATUS_KEYS.map((k, i) => [k, BOOK_STATUS_LABELS[i]]),
+const STATUS_TO_LABEL: Record<string, string> = Object.fromEntries(
+  STATUS_KEYS.map((k, i) => [k, BOOK_STATUS_LABELS[i]]),
 );
-const BOOK_STATUS_TO_KEY: Record<string, string> = Object.fromEntries(
-  BOOK_STATUS_LABELS.map((l, i) => [l, BOOK_STATUS_KEYS[i]]),
-);
-const CHAPTER_STATUS_TO_LABEL: Record<string, string> = Object.fromEntries(
-  CHAPTER_STATUS_KEYS.map((k, i) => [k, CHAPTER_STATUS_LABELS[i]]),
-);
-const CHAPTER_STATUS_TO_KEY: Record<string, string> = Object.fromEntries(
-  CHAPTER_STATUS_LABELS.map((l, i) => [l, CHAPTER_STATUS_KEYS[i]]),
-);
+const STATUS_TO_KEY: Record<string, string> = Object.fromEntries(BOOK_STATUS_LABELS.map((l, i) => [l, STATUS_KEYS[i]]));
 
 export function bookStatusToLabel(key: string): string {
-  return BOOK_STATUS_TO_LABEL[key] ?? '';
+  return STATUS_TO_LABEL[key] ?? '';
 }
 
 export function bookStatusToKey(label: string): string {
-  return BOOK_STATUS_TO_KEY[label] ?? 'draft';
+  return STATUS_TO_KEY[label] ?? 'draft';
 }
 
 export function chapterStatusToLabel(key: string): string {
-  return CHAPTER_STATUS_TO_LABEL[key] ?? '';
+  return STATUS_TO_LABEL[key] ?? '';
 }
 
 export function chapterStatusToKey(label: string): string {
-  return CHAPTER_STATUS_TO_KEY[label] ?? 'draft';
+  return STATUS_TO_KEY[label] ?? 'draft';
 }
 
 /** Parses the chapter title prefix: matches the pattern "第N章" (Chapter N). */

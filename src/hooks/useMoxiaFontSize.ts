@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'moxia_editor_font_size';
 const DEFAULT_SIZE = 17;
@@ -37,27 +37,19 @@ function writeStored(n: number) {
 export function useMoxiaFontSize() {
   const [fontSize, setFontSize] = useState<number>(readStored);
 
-  const increase = useCallback(() => {
-    setFontSize((s) => {
-      const next = Math.min(s + 1, MAX_SIZE);
-      writeStored(next);
-      return next;
-    });
-  }, []);
+  // 持久化放在 effect 里，而不是 state updater 内：React 可能重复调用
+  // updater（StrictMode），副作用不应随之执行多次。
+  useEffect(() => {
+    writeStored(fontSize);
+  }, [fontSize]);
 
-  const decrease = useCallback(() => {
-    setFontSize((s) => {
-      const next = Math.max(s - 1, MIN_SIZE);
-      writeStored(next);
-      return next;
-    });
-  }, []);
+  const increase = useCallback(() => setFontSize((s) => Math.min(s + 1, MAX_SIZE)), []);
+
+  const decrease = useCallback(() => setFontSize((s) => Math.max(s - 1, MIN_SIZE)), []);
 
   // 直接设定（用于 settings 面板的 Slider/NumberInput）
   const setClamped = useCallback((n: number) => {
-    const next = Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(n)));
-    writeStored(next);
-    setFontSize(next);
+    setFontSize(Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(n))));
   }, []);
 
   return {

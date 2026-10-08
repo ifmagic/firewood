@@ -82,7 +82,7 @@ async function loadTemplate(): Promise<string> {
   return templateCache;
 }
 
-export interface RenderCharacterCardParams {
+interface RenderCharacterCardParams {
   userExpectation: string;
   roleType?: string;
   mode?: 'create' | 'refine';

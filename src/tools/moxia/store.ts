@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as api from './api';
-import { upsertLibraryEntry, setLastBookPath, clearLastBookPath } from './library';
+import { upsertLibraryEntry, setLastBookPath, clearLastBookPath, loadLibrary } from './library';
 import type {
   BookMeta,
   Chapter,
@@ -128,17 +128,7 @@ export const useMoxiaStore = create<MoxiaState>((set, get) => ({
     set({ library: get().refreshLibrarySilent() });
   },
 
-  refreshLibrarySilent: () => {
-    try {
-      const raw = localStorage.getItem('moxia:library');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw) as LibraryEntry[];
-      if (!Array.isArray(parsed)) return [];
-      return [...parsed].sort((a, b) => b.lastOpenedAt.localeCompare(a.lastOpenedAt));
-    } catch {
-      return [];
-    }
-  },
+  refreshLibrarySilent: () => loadLibrary(),
 
   openBook: async (path) => {
     set({ loading: true, error: null });

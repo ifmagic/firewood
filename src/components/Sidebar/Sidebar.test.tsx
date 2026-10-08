@@ -42,7 +42,6 @@ const tools: ToolMeta[] = [
     id: 'demo',
     name: 'Demo',
     icon: <FireOutlined />,
-    description: '',
     component: (async () => ({ default: () => null })) as never,
   },
 ];

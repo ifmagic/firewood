@@ -262,10 +262,7 @@ export default function Translate() {
           <div className={styles.configSection}>
             {provider === 'tencent' ? (
               <>
-                <div
-                  className={styles.configGuide}
-                  style={{ borderLeftColor: '#1677ff', background: 'rgba(22, 119, 255, 0.04)' }}
-                >
+                <div className={`${styles.configGuide} ${styles.configGuideTencent}`}>
                   {t('translate.tencentGuide', { link: '' }).split('{link}')[0]}
                   <a href="https://console.cloud.tencent.com/cam/capi" target="_blank" rel="noreferrer">
                     {t('translate.tencentLink')}
@@ -273,25 +270,25 @@ export default function Translate() {
                   {t('translate.tencentGuide', { link: '' }).split('{link}')[1]}
                 </div>
                 <div className={styles.configRow}>
-                  <label>SecretId</label>
+                  <label>{t('translate.secretIdLabel')}</label>
                   <Input
                     size="small"
                     value={tencentSecretId}
                     onChange={(e) => setTencentSecretId(e.target.value)}
-                    placeholder="SecretId"
+                    placeholder={t('translate.secretIdLabel')}
                   />
                 </div>
                 <div className={styles.configRow}>
-                  <label>SecretKey</label>
+                  <label>{t('translate.secretKeyLabel')}</label>
                   <Input.Password
                     size="small"
                     value={tencentSecretKey}
                     onChange={(e) => setTencentSecretKey(e.target.value)}
-                    placeholder="SecretKey"
+                    placeholder={t('translate.secretKeyLabel')}
                   />
                 </div>
                 <div className={styles.configRow}>
-                  <label>Region</label>
+                  <label>{t('translate.regionLabel')}</label>
                   <Select
                     size="small"
                     value={tencentRegion}
@@ -309,10 +306,7 @@ export default function Translate() {
               </>
             ) : (
               <>
-                <div
-                  className={styles.configGuide}
-                  style={{ borderLeftColor: '#f5a623', background: 'rgba(245, 166, 35, 0.04)' }}
-                >
+                <div className={`${styles.configGuide} ${styles.configGuideBaidu}`}>
                   {t('translate.baiduGuide', { link: '' }).split('{link}')[0]}
                   <a href="https://fanyi-api.baidu.com/manage/developer" target="_blank" rel="noreferrer">
                     {t('translate.baiduLink')}
@@ -320,12 +314,12 @@ export default function Translate() {
                   {t('translate.baiduGuide', { link: '' }).split('{link}')[1]}
                 </div>
                 <div className={styles.configRow}>
-                  <label>App ID</label>
+                  <label>{t('translate.appIdLabel')}</label>
                   <Input
                     size="small"
                     value={baiduAppId}
                     onChange={(e) => setBaiduAppId(e.target.value)}
-                    placeholder="App ID"
+                    placeholder={t('translate.appIdLabel')}
                   />
                 </div>
                 <div className={styles.configRow}>

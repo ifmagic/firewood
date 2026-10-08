@@ -19,7 +19,7 @@
  * (getScrollStack/restoreScrollStack in @codemirror/view).
  */
 
-export interface WKWebViewFocusShim {
+interface WKWebViewFocusShim {
   installed: boolean;
   /** Dev diagnostics: number of focus calls whose engine scroll was reverted. */
   rescuedCount: () => number;
@@ -77,7 +77,7 @@ export function installFocusScrollPreservation(): WKWebViewFocusShim {
     }
     const stack: Array<{ el: Element; left: number; top: number }> = [];
     stack.push({ el: this, left: this.scrollLeft, top: this.scrollTop });
-    for (let cur: Node | null = this.parentNode; cur; ) {
+    for (let cur: Node | null = this.parentNode; cur;) {
       if (cur.nodeType === 11) {
         cur = (cur as ShadowRoot).host;
         continue;

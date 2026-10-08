@@ -29,7 +29,7 @@ import { autocompletion, closeBrackets } from '@codemirror/autocomplete';
 import { json } from '@codemirror/lang-json';
 import { tags as t } from '@lezer/highlight';
 
-export type CodemirrorVariant = 'writing' | 'code';
+type CodemirrorVariant = 'writing' | 'code';
 export type CodemirrorLanguage = 'json' | 'html' | 'javascript' | 'plaintext';
 
 // Writing font stack: PingFang SC first for macOS CJK rendering; Source Han Sans SC as a

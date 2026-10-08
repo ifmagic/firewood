@@ -83,12 +83,3 @@ export interface LibraryEntry {
 
 /** Node type for the left-panel navigation tree. */
 export type ItemType = 'book' | 'chapter' | 'character' | 'character_group';
-
-/** The currently selected item. */
-export interface Selection {
-  type: ItemType;
-  id: number;
-}
-
-/** Editor field name (used by the Editor component to bind to the store). */
-export type EditorField = 'description' | 'worldbuilding' | 'content' | 'notes' | 'personality' | 'background';

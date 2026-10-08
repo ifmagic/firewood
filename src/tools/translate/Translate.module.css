@@ -147,6 +147,18 @@
 	font-weight: 500;
 }
 
+/* Provider brand accents. Not --fw-* tokens: they identify the API provider
+   (Tencent blue / Baidu orange), not the app theme. */
+.configGuideTencent {
+	border-left-color: #1677ff;
+	background: rgba(22, 119, 255, 0.04);
+}
+
+.configGuideBaidu {
+	border-left-color: #f5a623;
+	background: rgba(245, 166, 35, 0.04);
+}
+
 /* History section */
 .historySection {
 	background: var(--fw-surface);

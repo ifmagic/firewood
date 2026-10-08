@@ -97,15 +97,6 @@ pub fn moxia_delete_chapter(
 }
 
 #[tauri::command]
-pub fn moxia_reorder_chapters(
-    manager: State<'_, Arc<MoxiaManager>>,
-    book_path: String,
-    chapter_ids: Vec<i64>,
-) -> Result<(), String> {
-    manager.reorder_chapters(&book_path, chapter_ids)
-}
-
-#[tauri::command]
 pub fn moxia_get_next_chapter_sort_order(
     manager: State<'_, Arc<MoxiaManager>>,
     book_path: String,
@@ -208,33 +199,4 @@ pub fn moxia_delete_relation(
     relation_id: i64,
 ) -> Result<(), String> {
     manager.delete_relation(&book_path, relation_id)
-}
-
-// ============ Settings ============
-
-#[tauri::command]
-pub fn moxia_get_setting(
-    manager: State<'_, Arc<MoxiaManager>>,
-    book_path: String,
-    key: String,
-) -> Result<Option<String>, String> {
-    manager.get_setting(&book_path, &key)
-}
-
-#[tauri::command]
-pub fn moxia_set_setting(
-    manager: State<'_, Arc<MoxiaManager>>,
-    book_path: String,
-    key: String,
-    value: String,
-) -> Result<(), String> {
-    manager.set_setting(&book_path, &key, &value)
-}
-
-#[tauri::command]
-pub fn moxia_get_all_settings(
-    manager: State<'_, Arc<MoxiaManager>>,
-    book_path: String,
-) -> Result<HashMap<String, String>, String> {
-    manager.get_all_settings(&book_path)
 }

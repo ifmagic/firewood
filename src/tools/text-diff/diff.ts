@@ -2,7 +2,7 @@ import * as Diff from 'diff';
 
 const CONTEXT = 3;
 
-export type RowKind = 'context' | 'add' | 'remove';
+type RowKind = 'context' | 'add' | 'remove';
 
 export interface Token {
   value: string;
@@ -36,7 +36,7 @@ export interface Fold {
 
 export type Block = Hunk | Fold;
 
-export interface Model {
+interface Model {
   items: Block[];
   added: number;
   removed: number;
@@ -52,7 +52,7 @@ export const EMPTY_MODEL: Model = {
   foldIds: [],
 };
 
-export function splitLines(value: string): string[] {
+function splitLines(value: string): string[] {
   if (!value) {
     return [];
   }

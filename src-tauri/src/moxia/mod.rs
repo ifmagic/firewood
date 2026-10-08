@@ -387,26 +387,6 @@ impl MoxiaManager {
         Ok(())
     }
 
-    pub fn reorder_chapters(&self, path: &str, chapter_ids: Vec<i64>) -> Result<(), String> {
-        let p = Self::validate_path(path)?;
-        let conns = self.connections.lock();
-        let conn = conns.get(&p).ok_or_else(|| "book not opened".to_string())?;
-        let now = migration::now();
-        let tx = conn
-            .unchecked_transaction()
-            .map_err(|e| format!("begin tx failed: {}", e))?;
-        for (order, cid) in chapter_ids.iter().enumerate() {
-            tx.execute(
-                "UPDATE chapters SET sort_order=?, updated_at=? WHERE id=?",
-                params![order as i64, &now, cid],
-            )
-            .map_err(|e| format!("reorder chapter {} failed: {}", cid, e))?;
-        }
-        tx.commit()
-            .map_err(|e| format!("commit reorder_chapters failed: {}", e))?;
-        Ok(())
-    }
-
     pub fn get_next_chapter_sort_order(&self, path: &str) -> Result<i64, String> {
         self.with_conn(path, |conn| {
             // MAX returns NULL on an empty table; `r.get(0)` reading i64 would fail
@@ -676,50 +656,6 @@ impl MoxiaManager {
             )
             .map_err(|e| format!("delete relation {} failed: {}", relation_id, e))?;
             Ok(())
-        })
-    }
-
-    // ============ Settings (per-book) ============
-
-    pub fn get_setting(&self, path: &str, key: &str) -> Result<Option<String>, String> {
-        self.with_conn(path, |conn| {
-            let v: Option<String> = conn
-                .query_row(
-                    "SELECT value FROM settings WHERE key=?",
-                    params![key],
-                    |r| r.get(0),
-                )
-                .optional()
-                .map_err(|e| format!("get setting {} failed: {}", key, e))?;
-            Ok(v)
-        })
-    }
-
-    pub fn set_setting(&self, path: &str, key: &str, value: &str) -> Result<(), String> {
-        self.with_conn(path, |conn| {
-            conn.execute(
-                "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-                params![key, value],
-            )
-            .map_err(|e| format!("set setting {} failed: {}", key, e))?;
-            Ok(())
-        })
-    }
-
-    pub fn get_all_settings(&self, path: &str) -> Result<HashMap<String, String>, String> {
-        self.with_conn(path, |conn| {
-            let mut stmt = conn
-                .prepare("SELECT key, value FROM settings")
-                .map_err(|e| format!("prepare settings failed: {}", e))?;
-            let rows = stmt
-                .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
-                .map_err(|e| format!("query settings failed: {}", e))?;
-            let mut out = HashMap::new();
-            for row in rows {
-                let (k, v) = row.map_err(|e| format!("row settings failed: {}", e))?;
-                out.insert(k, v);
-            }
-            Ok(out)
         })
     }
 }
