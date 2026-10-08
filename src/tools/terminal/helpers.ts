@@ -101,8 +101,22 @@ export function attachClipboardKeyHandler(term: Terminal) {
   });
 }
 
-export function buildShellOptions(defaultShell: string, availableShells: string[], currentShell: string) {
-  return [...new Set([defaultShell, ...availableShells, currentShell].filter(Boolean))];
+/**
+ * The shell picker's option list: the detected (system) default, then the
+ * remembered pick, the probed shells and the current tab's shell.
+ * `detectedShell` must stay in the list even when a preference is remembered:
+ * on macOS it comes from `$SHELL` (e.g. /opt/homebrew/bin/zsh), which the
+ * hardcoded unix probe list in `list_shells` does not contain — dropping it
+ * would make the user's login shell unselectable after picking another one.
+ * Picking it back clears the preference (see `toShellOverride`).
+ */
+export function buildShellOptions(
+  detectedShell: string,
+  rememberedShell: string,
+  availableShells: string[],
+  currentShell: string,
+) {
+  return [...new Set([detectedShell, rememberedShell, ...availableShells, currentShell].filter(Boolean))];
 }
 
 export function toShellOverride(selectedShell: string, defaultShell: string) {

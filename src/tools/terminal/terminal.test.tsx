@@ -1,9 +1,9 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../../i18n';
+import i18n from '../../i18n';
 
-const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness } = vi.hoisted(() => {
+const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness, harness } = vi.hoisted(() => {
   const listeners = new Map<string, (event: unknown) => void>();
   const terminals: {
     write: ReturnType<typeof vi.fn>;
@@ -18,11 +18,15 @@ const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness } = 
   const callLog: string[] = [];
   let sessionCounter = 0;
 
+  // Tests can repoint the detected shell (e.g. to a $SHELL path that
+  // list_shells does not probe) before mounting.
+  const harness = { detectedShell: '/bin/zsh' };
+
   const invokeMock = vi.fn(async (cmd: string, args?: Record<string, unknown>) => {
     callLog.push(`invoke:${cmd}:${(args?.id as string) ?? ''}`);
     switch (cmd) {
       case 'get_default_shell':
-        return '/bin/zsh';
+        return harness.detectedShell;
       case 'list_shells':
         return ['/bin/zsh', '/bin/bash'];
       case 'list_system_fonts':
@@ -46,11 +50,12 @@ const { invokeMock, listenMock, callLog, listeners, terminals, resetHarness } = 
     callLog.length = 0;
     sessionCounter = 0;
     terminals.length = 0;
+    harness.detectedShell = '/bin/zsh';
     invokeMock.mockClear();
     listenMock.mockClear();
   }
 
-  return { invokeMock, listenMock, callLog, listeners, terminals, resetHarness };
+  return { invokeMock, listenMock, callLog, listeners, terminals, resetHarness, harness };
 });
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: invokeMock }));
@@ -184,6 +189,9 @@ beforeAll(() => {
 
 beforeEach(async () => {
   resetHarness();
+  // Persisted prefs (font, and the remembered shell) must not leak between
+  // tests through localStorage.
+  localStorage.clear();
   vi.resetModules();
   ({ default: TerminalPage } = await import('./index'));
   container = document.createElement('div');
@@ -469,6 +477,135 @@ describe('terminal lifecycle', () => {
 
     expect(tabCount()).toBe(1);
     expect(invokeMock).not.toHaveBeenCalledWith('close_pty_session', { id: 'pty-1' });
+  });
+});
+
+// The shell picked in the settings menu is remembered as the default for new
+// tabs. Without it, every tab created while none is open (mount effect, empty
+// state button) fell back to the backend's detected shell, so closing all tabs
+// silently reverted a deliberate pick.
+describe('default shell preference', () => {
+  const spawnedShells = () =>
+    invokeMock.mock.calls
+      .filter(([cmd]) => cmd === 'create_pty_session')
+      .map(([, args]) => (args as { shell: string | null }).shell);
+
+  const openMenu = () => {
+    const trigger = container?.querySelector('.firewood-terminal-menu-trigger');
+    expect(trigger, 'menu trigger').toBeTruthy();
+    click(trigger!);
+  };
+
+  // The font-family select shares the .firewood-terminal-menu-select class, so
+  // identify the shell select by its shell-path option values.
+  const shellSelectEl = () => {
+    const selects = [...(container?.querySelectorAll('.firewood-terminal-menu-select') ?? [])] as HTMLSelectElement[];
+    const select = selects.find((el) => [...el.options].some((option) => option.value.startsWith('/')));
+    expect(select, 'shell select').toBeTruthy();
+    return select!;
+  };
+
+  const selectShell = (value: string) => {
+    const select = shellSelectEl();
+    expect(
+      [...select.options].map((option) => option.value),
+      `shell select offering ${value}`,
+    ).toContain(value);
+    act(() => {
+      select.value = value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  };
+
+  it('opens the first tab with the remembered shell', async () => {
+    localStorage.setItem('firewood-terminal-shell', JSON.stringify('/bin/bash'));
+    mountPage();
+    await flush();
+
+    expect(spawnedShells()).toEqual(['/bin/bash']);
+  });
+
+  it('falls back to the backend default when nothing is remembered', async () => {
+    mountPage();
+    await flush();
+
+    // null = "backend default": the backend picks its own shell.
+    expect(spawnedShells()).toEqual([null]);
+  });
+
+  it('remembers a menu pick and clears it when the backend default is re-picked', async () => {
+    mountPage();
+    await flush();
+
+    openMenu();
+    selectShell('/bin/bash');
+    await flush();
+
+    expect(localStorage.getItem('firewood-terminal-shell')).toBe('"/bin/bash"');
+    // The pick also switches the current tab (its session restarts with bash).
+    expect(spawnedShells()).toEqual([null, '/bin/bash']);
+
+    selectShell('/bin/zsh');
+    await flush();
+
+    expect(localStorage.getItem('firewood-terminal-shell')).toBe('""');
+  });
+
+  it('keeps the detected shell selectable after another one is remembered', async () => {
+    // Real-world case: $SHELL is /opt/homebrew/bin/zsh (which list_shells does
+    // not probe), the user picks /bin/zsh. The detected shell must stay in the
+    // list — otherwise there is no way back short of the file browser.
+    harness.detectedShell = '/opt/homebrew/bin/zsh';
+    localStorage.setItem('firewood-terminal-shell', JSON.stringify('/bin/zsh'));
+    mountPage();
+    await flush();
+
+    openMenu();
+    const values = [...shellSelectEl().options].map((option) => option.value);
+    expect(values).toContain('/opt/homebrew/bin/zsh');
+    expect(values).toContain('/bin/zsh');
+    // The detected entry is marked as the system default, the remembered pick
+    // is not.
+    const labels = [...shellSelectEl().options].map((option) => option.textContent);
+    expect(labels).toContain(`/opt/homebrew/bin/zsh (${i18n.t('terminal.systemDefaultShell')})`);
+    expect(labels).toContain('/bin/zsh');
+  });
+
+  it('switches back to the detected shell and clears the preference', async () => {
+    harness.detectedShell = '/opt/homebrew/bin/zsh';
+    localStorage.setItem('firewood-terminal-shell', JSON.stringify('/bin/zsh'));
+    mountPage();
+    await flush();
+
+    openMenu();
+    selectShell('/opt/homebrew/bin/zsh');
+    await flush();
+
+    expect(localStorage.getItem('firewood-terminal-shell')).toBe('""');
+    expect(spawnedShells().at(-1)).toBeNull();
+  });
+
+  it('reopens with the remembered shell after every tab is closed', async () => {
+    mountPage();
+    await flush();
+
+    openMenu();
+    selectShell('/bin/bash');
+    await flush();
+
+    click(container!.querySelector('.firewood-terminal-tabClose')!);
+    await flush();
+    expect(tabCount()).toBe(0);
+
+    // Leave and re-enter the tool (tabs live in a module-level store, so the
+    // remount is what recreates the initial tab).
+    act(() => root!.unmount());
+    root = createRoot(container!);
+    mountPage();
+    await flush();
+
+    expect(tabCount()).toBe(1);
+    expect(spawnedShells().at(-1)).toBe('/bin/bash');
   });
 });
 

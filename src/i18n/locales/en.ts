@@ -84,6 +84,8 @@ const en = {
     systemDefaultFont: 'System Default',
     fontSize: 'Font size',
     shellPath: 'Shell path',
+    shellDefaultHint: 'New tabs open with this shell',
+    systemDefaultShell: 'System default',
     browseShell: 'Browse for shell executable',
     selectShellTitle: 'Select Shell Executable',
     noTerminals: 'No terminals open',

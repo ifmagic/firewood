@@ -227,16 +227,30 @@ describe('attachClipboardKeyHandler', () => {
 });
 
 describe('buildShellOptions', () => {
-  it('merges default, available, and current shells without duplicates', () => {
-    expect(buildShellOptions('/bin/zsh', ['/bin/bash', '/bin/zsh'], '/bin/fish')).toEqual([
+  it('merges detected, remembered, available and current shells without duplicates', () => {
+    expect(buildShellOptions('/bin/zsh', '/bin/bash', ['/bin/bash', '/bin/zsh'], '/bin/fish')).toEqual([
       '/bin/zsh',
       '/bin/bash',
       '/bin/fish',
     ]);
   });
 
+  it('keeps the detected shell offered when a different preference is remembered', () => {
+    // The regression: on macOS the detected shell comes from $SHELL
+    // (/opt/homebrew/bin/zsh) and is NOT in list_shells' probe list, so
+    // replacing it with the preference made the login shell unselectable.
+    expect(buildShellOptions('/opt/homebrew/bin/zsh', '/opt/homebrew/bin/zsh', ['/bin/zsh'], '/bin/zsh')).toEqual([
+      '/opt/homebrew/bin/zsh',
+      '/bin/zsh',
+    ]);
+    expect(buildShellOptions('/opt/homebrew/bin/zsh', '/bin/zsh', ['/bin/zsh'], '/bin/zsh')).toEqual([
+      '/opt/homebrew/bin/zsh',
+      '/bin/zsh',
+    ]);
+  });
+
   it('filters out empty values', () => {
-    expect(buildShellOptions('', [''], '/bin/bash')).toEqual(['/bin/bash']);
+    expect(buildShellOptions('', '', [''], '/bin/bash')).toEqual(['/bin/bash']);
   });
 });
 

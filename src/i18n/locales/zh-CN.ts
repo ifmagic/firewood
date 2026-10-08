@@ -84,6 +84,8 @@ const zhCN = {
     systemDefaultFont: '系统默认',
     fontSize: '字号',
     shellPath: 'Shell 路径',
+    shellDefaultHint: '新标签页将使用此 Shell',
+    systemDefaultShell: '系统默认',
     browseShell: '浏览 Shell 可执行文件',
     selectShellTitle: '选择 Shell 可执行文件',
     noTerminals: '没有打开的终端',

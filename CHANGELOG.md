@@ -10,6 +10,7 @@
 ### 🐛 Bug Fixes
 
 - Move the always-on-top control out of the settings footer: into the sidebar header on Linux and immediately left of the caption controls on the new Windows titlebar.
+- Remember the shell picked in the terminal settings menu: new tabs — including after closing every tab or restarting — open with it instead of the first detected shell.
 - Improve UI contrast and visual consistency with shared design tokens.
 
 ### 🔧 Chore / Updates

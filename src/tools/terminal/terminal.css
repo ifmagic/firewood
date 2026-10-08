@@ -597,6 +597,13 @@
 	margin-left: 2px;
 }
 
+.firewood-terminal-menu-hint {
+	font-size: 11px;
+	line-height: 1.5;
+	color: #6e6e6e;
+	padding: 6px 14px 8px;
+}
+
 @media (max-width: 600px) {
 	.firewood-terminal-hint {
 		display: none;

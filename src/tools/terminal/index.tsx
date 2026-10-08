@@ -584,6 +584,11 @@ export default function TerminalPage() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
+  // The shell the user picked, remembered across sessions: it is what new tabs
+  // open with and it survives closing every tab (the module-level tab store is
+  // empty then, so the next tab must not fall back to the first shell the
+  // backend happens to detect). '' means "follow the backend default".
+  const [preferredShell, setPreferredShell] = usePersistentState('firewood-terminal-shell', '');
   const [fontSize, setFontSize] = usePersistentState('firewood-terminal-fontsize', DEFAULT_FONT_SIZE);
   const fontSizeRef = useRef(fontSize);
   useEffect(() => {
@@ -768,8 +773,19 @@ export default function TerminalPage() {
 
   const activeTabMeta = tabs.find((tab) => tab.id === activeTabId) ?? null;
   const activeTabState = getTabState(activeTabId);
+  // What a new tab without a per-tab override opens with: the remembered pick,
+  // falling back to the shell the backend detects.
+  const effectiveDefaultShell = preferredShell || defaultShell;
+  // Materialized as a tab shellPath for those new tabs; null keeps meaning
+  // "let the backend use its own default".
+  const defaultShellOverride = toShellOverride(effectiveDefaultShell, defaultShell);
+  // The active tab's real shell: a null shellPath means the backend default,
+  // so keep showing/handling `defaultShell` rather than the preference — a
+  // pref picked later does not retroactively move tabs that are already open.
   const currentShell = activeTabState?.shellPath ?? defaultShell;
-  const shellOptions = buildShellOptions(defaultShell, availableShells, currentShell);
+  // ...but the picker always offers the detected default AND the preference,
+  // so both remain reachable.
+  const shellOptions = buildShellOptions(defaultShell, effectiveDefaultShell, availableShells, currentShell);
   const selectedShellValue = currentShell || shellOptions[0] || '';
 
   const handleShellChange = useCallback(
@@ -777,13 +793,18 @@ export default function TerminalPage() {
       const tab = getTabState(_activeTerminalTabId);
       if (!tab) return;
 
+      // Remember the pick: it becomes the shell new tabs open with, and
+      // survives closing every tab and restarting the app. Choosing the
+      // backend's own default clears the preference again.
+      setPreferredShell(value === defaultShell ? '' : value);
+
       const shellOverride = toShellOverride(value, defaultShell);
       const canRestart = tab.status === 'exited' || tab.status === 'error';
       if (tab.shellPath === shellOverride && !canRestart) return;
 
       runTabSession(tab, shellOverride, t('terminal.switchFailed'));
     },
-    [defaultShell, runTabSession, t],
+    [defaultShell, runTabSession, setPreferredShell, t],
   );
 
   const handleBrowseShell = async () => {
@@ -803,6 +824,9 @@ export default function TerminalPage() {
     });
 
     if (typeof file === 'string' && file) {
+      // A browsed executable is a deliberate pick, so it becomes the
+      // remembered default too (unless it is the backend default itself).
+      setPreferredShell(file === defaultShell ? '' : file);
       runTabSession(tab, toShellOverride(file, defaultShell), t('terminal.switchFailed'));
     }
   };
@@ -831,9 +855,12 @@ export default function TerminalPage() {
 
   useEffect(() => {
     if (_terminalTabs.length > 0) return;
-    const timerId = setTimeout(() => handleCreateTab(null), 0);
+    // Open with the remembered shell, not the raw backend default: this runs
+    // again when the terminal tool is remounted with no tabs left (the tab
+    // store is module-level, so tabs survive tool switches but not closing).
+    const timerId = setTimeout(() => handleCreateTab(defaultShellOverride), 0);
     return () => clearTimeout(timerId);
-  }, [handleCreateTab]);
+  }, [handleCreateTab, defaultShellOverride]);
 
   useEffect(() => {
     if (!editingTabId) return;
@@ -1135,7 +1162,7 @@ export default function TerminalPage() {
             <button
               type="button"
               className="firewood-terminal-btn firewood-terminal-addTab"
-              onClick={() => handleCreateTab(activeTabState?.shellPath ?? null)}
+              onClick={() => handleCreateTab(activeTabState?.shellPath ?? defaultShellOverride)}
               title={t('terminal.newTerminal')}
               aria-label={t('terminal.newTerminal')}
             >
@@ -1237,7 +1264,9 @@ export default function TerminalPage() {
                 >
                   {shellOptions.map((shell) => (
                     <option key={shell} value={shell}>
-                      {shell}
+                      {/* The detected shell ($SHELL) is marked so it is
+                          distinguishable from the remembered pick. */}
+                      {shell === defaultShell ? `${shell} (${t('terminal.systemDefaultShell')})` : shell}
                     </option>
                   ))}
                 </select>
@@ -1254,6 +1283,8 @@ export default function TerminalPage() {
                   <FolderOpenOutlined />
                 </button>
               </div>
+              {/* The pick doubles as the remembered default for new tabs. */}
+              <div className="firewood-terminal-menu-hint">{t('terminal.shellDefaultHint')}</div>
             </div>
           </div>
         )}
@@ -1262,7 +1293,11 @@ export default function TerminalPage() {
           {tabs.length === 0 && (
             <div className="firewood-terminal-emptyState">
               <div className="firewood-terminal-emptyTitle">{t('terminal.noTerminals')}</div>
-              <button type="button" className="firewood-terminal-emptyAction" onClick={() => handleCreateTab(null)}>
+              <button
+                type="button"
+                className="firewood-terminal-emptyAction"
+                onClick={() => handleCreateTab(defaultShellOverride)}
+              >
                 {t('terminal.createTerminal')}
               </button>
             </div>
