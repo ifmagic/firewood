@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.6
+
+### ✨ Features
+
+- Add native Windows terminal support with ConPTY-backed sessions, shell discovery, and Ctrl+C/Ctrl+V clipboard behavior.
+
+### 🐛 Bug Fixes
+
+- Move the always-on-top control from the settings footer to the sidebar header.
+- Improve UI contrast and visual consistency with shared design tokens.
+
 ## v0.8.5
 
 ### ✨ Features
