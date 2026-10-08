@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.7
+
+### ✨ Features
+
+- Remember the shell chosen in Terminal settings as the default for new tabs, including after restarting the app.
+- Add a Windows titlebar with native-style window controls and an always-on-top pin beside the caption buttons.
+
+### 🔧 Chore / Updates
+
+- Remove unused code and dependencies, strengthen the translation client, and complete remaining interface localization.
+
 ## v0.8.6
 
 ### ✨ Features
