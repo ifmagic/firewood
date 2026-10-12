@@ -25,7 +25,6 @@ const zhCN = {
     'text-diff': '文本对比',
     notepad: '记事本',
     'img-to-pdf': '图片排版',
-    translate: '文本翻译',
     moxia: '墨匣',
     numbox: '算盘',
     terminal: '终端',
@@ -48,7 +47,6 @@ const zhCN = {
     ok: '确定',
     save: '保存',
     delete: '删除',
-    translate: '翻 译',
   },
 
   // Editor
@@ -263,33 +261,6 @@ const zhCN = {
     readFailed: '有 {{count}} 张图片读取失败',
   },
 
-  // Translate
-  translate: {
-    engine: '翻译引擎',
-    tencent: '腾讯翻译',
-    baidu: '百度翻译',
-    swapLang: '交换语言',
-    collapseConfig: '收起配置',
-    apiConfig: 'API 配置',
-    sourceText: '原文',
-    targetText: '译文',
-    enterText: '输入要翻译的文本…',
-    translationResult: '翻译结果',
-    configureKeys: '请先配置 API 密钥',
-    history: '翻译历史',
-    noHistory: '暂无翻译记录',
-    copyDetails: '复制翻译详情',
-    tencentGuide: '前往 {link} 页面获取 SecretId 和 SecretKey（每月免费额度 500 万字符）',
-    tencentLink: '腾讯云 API 密钥管理',
-    baiduGuide: '前往 {link} 页面获取 APPID 和密钥（标准版每月免费 5 万字符）',
-    baiduLink: '百度翻译开放平台 → 开发者信息',
-    secretLabel: '密钥',
-    secretIdLabel: 'SecretId',
-    secretKeyLabel: 'SecretKey',
-    regionLabel: '地域',
-    appIdLabel: 'App ID',
-  },
-
   // Moxia (novel writing workspace)
   moxia: {
     untitled: '未命名',
@@ -376,33 +347,6 @@ const zhCN = {
     promptResultHint: '下方即为可直接发送给大模型的完整 Prompt，复制后粘贴到 AI 工具使用',
     copyAll: '一键复制',
     searchPlaceholder: '搜索章节...',
-  },
-
-  // Languages
-  lang: {
-    zh: '中文',
-    en: '英语',
-    ja: '日语',
-    ko: '韩语',
-    fr: '法语',
-    de: '德语',
-    es: '西班牙语',
-    ru: '俄语',
-    pt: '葡萄牙语',
-    it: '意大利语',
-    vi: '越南语',
-    th: '泰语',
-    ar: '阿拉伯语',
-    auto: '自动检测',
-  },
-
-  // Tencent regions
-  region: {
-    'ap-guangzhou': '广州',
-    'ap-shanghai': '上海',
-    'ap-beijing': '北京',
-    'ap-chengdu': '成都',
-    'ap-hongkong': '香港',
   },
 
   // About dialog

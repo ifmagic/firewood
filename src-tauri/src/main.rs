@@ -3,7 +3,6 @@
 
 mod moxia;
 mod pty;
-mod translate;
 
 use moxia::create_moxia_manager;
 use pty::create_pty_manager;
@@ -149,8 +148,6 @@ fn main() {
         .manage(pty_manager)
         .manage(moxia_manager)
         .invoke_handler(tauri::generate_handler![
-            translate::baidu_translate,
-            translate::tencent_translate,
             create_pty_session,
             write_pty,
             resize_pty,

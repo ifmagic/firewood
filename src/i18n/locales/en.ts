@@ -25,7 +25,6 @@ const en = {
     'text-diff': 'Diff',
     notepad: 'Notepad',
     'img-to-pdf': 'Image to PDF',
-    translate: 'Translate',
     moxia: 'Moxia',
     numbox: 'Abacus',
     terminal: 'Terminal',
@@ -48,7 +47,6 @@ const en = {
     ok: 'OK',
     save: 'Save',
     delete: 'Delete',
-    translate: 'Translate',
   },
 
   // Editor
@@ -263,33 +261,6 @@ const en = {
     readFailed: '{{count}} image(s) failed to read',
   },
 
-  // Translate
-  translate: {
-    engine: 'Engine',
-    tencent: 'Tencent',
-    baidu: 'Baidu',
-    swapLang: 'Swap languages',
-    collapseConfig: 'Collapse Config',
-    apiConfig: 'API Config',
-    sourceText: 'Source',
-    targetText: 'Translation',
-    enterText: 'Enter text to translate..',
-    translationResult: 'Translation result',
-    configureKeys: 'Please configure API keys first',
-    history: 'Translation History',
-    noHistory: 'No translation records',
-    copyDetails: 'Copy translation details',
-    tencentGuide: 'Visit {link} to get SecretId and SecretKey (5M free chars/month)',
-    tencentLink: 'Tencent Cloud API Key Management',
-    baiduGuide: 'Visit {link} to get APPID and Secret (50K free chars/month for standard plan)',
-    baiduLink: 'Baidu Translate Developer Portal',
-    secretLabel: 'Secret',
-    secretIdLabel: 'SecretId',
-    secretKeyLabel: 'SecretKey',
-    regionLabel: 'Region',
-    appIdLabel: 'App ID',
-  },
-
   // Moxia (novel writing workspace)
   moxia: {
     untitled: 'Untitled',
@@ -376,33 +347,6 @@ const en = {
     promptResultHint: 'Copy this prompt to your AI tool',
     copyAll: 'Copy all',
     searchPlaceholder: 'Search chapters...',
-  },
-
-  // Languages
-  lang: {
-    zh: 'Chinese',
-    en: 'English',
-    ja: 'Japanese',
-    ko: 'Korean',
-    fr: 'French',
-    de: 'German',
-    es: 'Spanish',
-    ru: 'Russian',
-    pt: 'Portuguese',
-    it: 'Italian',
-    vi: 'Vietnamese',
-    th: 'Thai',
-    ar: 'Arabic',
-    auto: 'Auto Detect',
-  },
-
-  // Tencent regions
-  region: {
-    'ap-guangzhou': 'Guangzhou',
-    'ap-shanghai': 'Shanghai',
-    'ap-beijing': 'Beijing',
-    'ap-chengdu': 'Chengdu',
-    'ap-hongkong': 'Hong Kong',
   },
 
   // About dialog

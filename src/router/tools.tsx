@@ -4,7 +4,6 @@ import {
   DiffOutlined,
   FileTextOutlined,
   FilePdfOutlined,
-  TranslationOutlined,
   NodeIndexOutlined,
   BookOutlined,
 } from '@ant-design/icons';
@@ -47,12 +46,6 @@ const tools: ToolMeta[] = [
     name: 'Image to PDF',
     icon: <FilePdfOutlined />,
     component: lazy(() => import('../tools/img-to-pdf/index.tsx')),
-  },
-  {
-    id: 'translate',
-    name: 'Translate',
-    icon: <TranslationOutlined />,
-    component: lazy(() => import('../tools/translate/index.tsx')),
   },
   {
     id: 'moxia',

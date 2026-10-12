@@ -2,7 +2,7 @@
 
 Firewood is a local-first desktop utility suite for developers, built with Tauri, React, and TypeScript.
 
-It brings terminal, text/code utilities, notes, image export, and translation workflows into one lightweight app.
+It brings terminal, text/code utilities, notes, novel writing, calculation, and image export workflows into one lightweight app.
 
 ## Highlights
 

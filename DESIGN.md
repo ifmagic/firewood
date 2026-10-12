@@ -7,19 +7,19 @@
 - **Desktop-native**: built with Tauri and system WebView, with Rust for native capabilities
 - **Modular**: each tool is registered through a shared `ToolMeta` contract
 - **Stateful**: tool state, ordering, visibility, and preferences are persisted locally
-- **Practical**: combines terminal, text/code utilities, note taking, image export, and translation
+- **Practical**: combines terminal, text/code utilities, note taking, novel writing, calculation, and image export
 
 ## 2. Implemented Tools
 
 | Tool           | Current implementation                                                                                                                                            |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Terminal       | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
-| JSON Formatter | Monaco-based editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content                                              |
-| Timestamp      | Unix timestamp/date conversion, seconds/milliseconds toggle, quick current time/date actions, copy support, and persisted history                                 |
+| JSON Formatter | CodeMirror 6 editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content                                              |
+| Abacus         | Calculator and timestamp workspace with mathjs expression evaluation, unix timestamp/date conversion, seconds/milliseconds toggle, and persisted history          |
 | Diffchecker    | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs               |
-| Notepad        | Multi-tab local notes and file editing with Monaco, local open/save, JSON formatting, and persisted tab state                                                     |
+| Notepad        | Multi-tab local notes and file editing with CodeMirror 6, local open/save, JSON formatting, and persisted tab state                                               |
 | Image to PDF   | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration                    |
-| Translate      | Tencent Cloud / Baidu translation with Rust-side signing, 13 language pairs, provider settings, history, and adjustable reading size                              |
+| Moxia          | SQLite-backed novel writing workspace with books, chapters, characters, worldbuilding, word counts, and persisted per-book settings                               |
 
 ## 3. Tech Stack
 
@@ -38,9 +38,10 @@
 | --------------------------- | ------------------------------------------ |
 | Ant Design 6                | Main UI components                         |
 | CSS Modules                 | Component-scoped styling                   |
-| `@monaco-editor/react`      | Code and note editing                      |
+| `@codemirror/*`             | Code and note editing (CodeMirror 6)       |
 | `@xterm/xterm` + addons     | Terminal rendering, fit, links, Unicode 11 |
 | `diff`                      | Text diffing                               |
+| `mathjs`                    | Calculator expression evaluation           |
 | `dayjs`                     | Time handling                              |
 | `jspdf`                     | PDF generation                             |
 | `react-markdown`            | Release note rendering                     |
@@ -50,12 +51,11 @@
 
 | Crate / plugin                                            | Purpose                                    |
 | --------------------------------------------------------- | ------------------------------------------ |
-| `reqwest`                                                 | Translation API requests                   |
-| `hmac` + `sha2`                                           | Tencent Cloud request signing              |
-| `md-5`                                                    | Baidu request signing                      |
 | `font-kit`                                                | System font discovery                      |
 | `libc`                                                    | PTY and process integration                |
-| `parking_lot`                                             | PTY manager synchronization                |
+| `parking_lot`                                             | PTY and Moxia manager synchronization      |
+| `rusqlite` (bundled)                                      | SQLite storage for Moxia books             |
+| `rand`                                                    | PTY session ID generation                  |
 | `tauri-plugin-updater`                                    | App updates                                |
 | `tauri-plugin-single-instance`                            | Single-instance behavior in release builds |
 | `tauri-plugin-dialog`, `fs`, `opener`, `process`, `shell` | Native file/system integrations            |
@@ -84,7 +84,7 @@
 
 - `src-tauri/src/main.rs` registers commands, tray behavior, updater integration, and macOS menu wiring
 - `src-tauri/src/pty.rs` manages terminal session lifecycle, IO, and resizing
-- `src-tauri/src/translate.rs` signs and sends Tencent Cloud / Baidu translation requests
+- `src-tauri/src/moxia/` manages SQLite-backed book storage, migrations, and Moxia commands
 
 ### 4.4 Release-note flow
 
@@ -104,23 +104,33 @@ firewood/
 │   ├── tauri.conf.json
 │   └── src/
 │       ├── main.rs
-│       ├── pty.rs
-│       └── translate.rs
+│       ├── moxia/
+│       │   ├── commands.rs
+│       │   ├── dto.rs
+│       │   ├── migration.rs
+│       │   └── mod.rs
+│       └── pty.rs
 ├── src/
 │   ├── App.tsx
 │   ├── main.tsx
-│   ├── assets/
 │   ├── components/
 │   │   ├── AboutDialog/
+│   │   ├── EditorContextMenu.tsx
 │   │   ├── FontSizeControl/
 │   │   ├── MarkdownBody/
+│   │   ├── PinToggle/
 │   │   ├── SettingsMenuButton/
 │   │   ├── Sidebar/
 │   │   ├── StatusBar/
+│   │   ├── TitleBar/
 │   │   ├── ToolLayout/
 │   │   └── Updater/
 │   ├── hooks/
+│   │   ├── useAlwaysOnTop.ts
+│   │   ├── useCodemirror.ts
 │   │   ├── useEditorFontSize.ts
+│   │   ├── useMoxiaFontSize.ts
+│   │   ├── useMoxiaSettings.ts
 │   │   ├── usePersistentState.ts
 │   │   ├── useResizablePanels.ts
 │   │   ├── useSidebarCollapsed.ts
@@ -134,16 +144,19 @@ firewood/
 │   ├── tools/
 │   │   ├── img-to-pdf/
 │   │   ├── json-formatter/
+│   │   ├── moxia/
 │   │   ├── notepad/
+│   │   ├── numbox/
 │   │   ├── terminal/
-│   │   ├── text-diff/
-│   │   ├── timestamp/
-│   │   └── translate/
+│   │   └── text-diff/
 │   ├── types/
 │   │   └── tool.ts
-│   ├── utils/
-│   │   └── updateNotes.ts
-│   └── jsonc-parser.d.ts
+│   └── utils/
+│       ├── detectLanguage.ts
+│       ├── jsonText.ts
+│       ├── platform.ts
+│       ├── updateNotes.ts
+│       └── wkWebViewFocusShim.ts
 ├── DESIGN.md
 └── README.md
 ```
@@ -177,7 +190,7 @@ Users can reorder tools and toggle visibility from the sidebar menu. Both order 
 
 ### Persistence
 
-Most tools store working state locally, including note tabs, translation settings, editor font sizes, diff inputs, timestamp history, and cached update notes.
+Most tools store working state locally, including note tabs, editor font sizes, diff inputs, calculator and timestamp history, and cached update notes.
 
 ### Updates
 
