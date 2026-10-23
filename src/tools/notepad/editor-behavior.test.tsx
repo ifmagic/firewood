@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { EditorSelection } from '@codemirror/state';
 import { ensureSyntaxTree, foldCode, foldState, foldable, foldedRanges } from '@codemirror/language';
+import { isMacPlatform } from '../../utils/platform';
 import Notepad from './index';
 import '../../i18n';
 
@@ -241,16 +242,22 @@ describe('Notepad editor (JSON highlighting / folding regression tests)', () => 
       expect(view.dom.querySelectorAll('.cm-secondaryCursor').length).toBe(0);
     });
 
-    it('notepad: Cmd/Ctrl+click is reserved for links instead of adding a cursor', async () => {
+    it('notepad: Cmd/Ctrl+click adds a cursor at the pointer; on a URL it opens instead', async () => {
       await mount();
       const view = getToolView()!;
-      // Notepad opens links on Cmd/Ctrl+click — the same modifier CM6 uses for
-      // click-adds-selection-range — so it opts out of that gesture; multi-cursor stays on
-      // Mod-Alt+arrows / Alt+drag. Losing this extension would silently make the two fight.
+      // Notepad keeps the stock click-adds-cursor gesture on the URL opener's own
+      // platform modifier instead of opting out wholesale: the opener runs first
+      // and its preventDefault() stops CM's internal mousedown handler, so clicks
+      // on links open them and clicks anywhere else add a cursor (VS Code parity).
+      // jsdom has no layout, so the pointer pipeline itself can't run here (same
+      // reason the other tests use synthetic keys / direct commands) — the facet
+      // predicate is the pin.
       const [addsSelectionRange] = view.state.facet(EditorView.clickAddsSelectionRange);
       expect(addsSelectionRange).toBeTruthy();
-      expect(addsSelectionRange(new MouseEvent('mousedown', { ctrlKey: true }))).toBe(false);
-      expect(addsSelectionRange(new MouseEvent('mousedown', { metaKey: true }))).toBe(false);
+      const withPlatformMod = (init: MouseEventInit = {}) =>
+        isMacPlatform() ? { ...init, metaKey: true } : { ...init, ctrlKey: true };
+      expect(addsSelectionRange(new MouseEvent('mousedown', withPlatformMod()))).toBe(true);
+      expect(addsSelectionRange(new MouseEvent('mousedown'))).toBe(false);
     });
   });
 });

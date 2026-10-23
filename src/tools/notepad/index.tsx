@@ -75,12 +75,15 @@ function getPreferredSaveName(tab: NoteTab | null, fallbackName: string) {
   return tab?.name.trim() || fallbackName.trim();
 }
 
-// Cmd/Ctrl+click opens links in Notepad — the very modifier CM6 uses for "click adds a
-// cursor" (`EditorView.clickAddsSelectionRange`), so the two would otherwise fight over the
-// same gesture. Opt out of the cursor one here: multi-cursor stays available through
-// Mod-Alt-↑/↓ and Alt+drag (see useCodemirror), and Cmd/Ctrl+click keeps its pre-multi-cursor
-// meaning outside links (plain caret placement).
-const noClickAddsSelectionRange = EditorView.clickAddsSelectionRange.of(() => false);
+// Cmd/Ctrl+click adds a cursor at the pointer (VS Code / json-formatter parity), on
+// the same platform modifier the URL opener below uses. The two gestures do not
+// conflict: the opener's domEventHandlers run before CM's internal mousedown handler
+// and its preventDefault() stops it entirely (runHandlers breaks on defaultPrevented),
+// so a Cmd/Ctrl+click on a URL opens it while a click anywhere else adds a cursor.
+// Multi-cursor otherwise stays on Mod-Alt+↑/↓ and Alt+drag (see useCodemirror).
+const clickAddsCursor = EditorView.clickAddsSelectionRange.of((event) =>
+  isMacPlatform() ? event.metaKey : event.ctrlKey,
+);
 
 export default function Notepad() {
   const { t } = useTranslation();
@@ -202,7 +205,7 @@ export default function Notepad() {
     variant: 'code',
     language: activeLanguage,
     fontSize,
-    extensions: [urlClickExtension, noClickAddsSelectionRange],
+    extensions: [urlClickExtension, clickAddsCursor],
     onUpdate: handleEditorUpdate,
     onReady: handleEditorReady,
   });
