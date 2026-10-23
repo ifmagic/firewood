@@ -54,6 +54,25 @@ const en = {
     pasteFailed: 'Paste failed. Please check clipboard permission',
   },
 
+  // Editor find/replace panel (VS Code-style search widget)
+  search: {
+    find: 'Find',
+    replace: 'Replace',
+    replaceAll: 'Replace All',
+    matchCase: 'Match case',
+    wholeWord: 'Match whole word',
+    regexp: 'Use regular expression',
+    previousMatch: 'Previous match',
+    nextMatch: 'Next match',
+    close: 'Close',
+    toggleReplace: 'Toggle replace',
+    noResults: 'No results',
+    resultsCount_one: '{{count}} result',
+    resultsCount_other: '{{count}} results',
+    matchIndex: '{{index}} of {{count}}',
+    invalidRegex: 'Invalid regex',
+  },
+
   // Common labels
   label: {
     settings: 'Settings',

@@ -28,6 +28,7 @@ import {
 import { autocompletion, closeBrackets } from '@codemirror/autocomplete';
 import { json } from '@codemirror/lang-json';
 import { tags as t } from '@lezer/highlight';
+import { firewoodSearchPanel } from './cmSearchPanel';
 
 type CodemirrorVariant = 'writing' | 'code';
 export type CodemirrorLanguage = 'json' | 'html' | 'javascript' | 'plaintext';
@@ -466,6 +467,10 @@ export function useCodemirror({
       variant === 'code' ? CODE_THEME : WRITING_THEME,
       wrap ? EditorView.lineWrapping : [],
       history(),
+      // VS Code-style find/replace panel (bottom placement, match count,
+      // collapsed replace row); searchKeymap below keeps the stock bindings
+      // (Mod-f open, F3/Mod-g navigate, Escape close).
+      firewoodSearchPanel(),
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
       highlightSelectionMatches(),
       fontSizeCompartment.of(fontSizeTheme(fontSize)),

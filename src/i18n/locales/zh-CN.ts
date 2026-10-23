@@ -54,6 +54,25 @@ const zhCN = {
     pasteFailed: '粘贴失败，请检查剪贴板权限',
   },
 
+  // Editor find/replace panel (VS Code-style search widget)
+  search: {
+    find: '查找',
+    replace: '替换',
+    replaceAll: '全部替换',
+    matchCase: '区分大小写',
+    wholeWord: '全字匹配',
+    regexp: '使用正则表达式',
+    previousMatch: '上一个匹配',
+    nextMatch: '下一个匹配',
+    close: '关闭',
+    toggleReplace: '展开/收起替换',
+    noResults: '无结果',
+    resultsCount_one: '{{count}} 个结果',
+    resultsCount_other: '{{count}} 个结果',
+    matchIndex: '{{index}} / {{count}}',
+    invalidRegex: '正则表达式无效',
+  },
+
   // Common labels
   label: {
     settings: '设置',
