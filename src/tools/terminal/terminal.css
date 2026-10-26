@@ -1,9 +1,13 @@
+/* Charred-timber terminal chrome. All neutrals sit on the warm dark scale
+   shared with the sidebar (see --fw-sidebar-bg); interactive/focus tones use
+   the ember action color instead of VS Code blue. Structure/class names are
+   pinned by terminal.test.tsx — visuals only. */
 .firewood-terminal {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	min-height: 0;
-	background: #1e1e1e;
+	background: #221d18;
 	border-radius: 8px;
 	overflow: hidden;
 }
@@ -13,8 +17,8 @@
 	align-items: stretch;
 	justify-content: space-between;
 	gap: 8px;
-	background: #252526;
-	border-bottom: 1px solid #3c3c3c;
+	background: #2a241d;
+	border-bottom: 1px solid #3b342b;
 	flex-shrink: 0;
 	min-height: 38px;
 }
@@ -43,21 +47,21 @@
 	max-width: 220px;
 	height: 37px;
 	background: transparent;
-	border-right: 1px solid #2d2d2d;
-	color: #9b9b9b;
+	border-right: 1px solid #2f2921;
+	color: #a89d8d;
 	transition:
-		background 0.12s ease,
-		color 0.12s ease;
+		background var(--fw-dur-fast, 0.12s) ease,
+		color var(--fw-dur-fast, 0.12s) ease;
 }
 
 .firewood-terminal-tab:hover {
-	background: #2d2d2d;
-	color: #d4d4d4;
+	background: #2f2921;
+	color: #cec4b4;
 }
 
 .firewood-terminal-tab.is-active {
-	background: #1e1e1e;
-	color: #ffffff;
+	background: #221d18;
+	color: #fdfbf7;
 }
 
 .firewood-terminal-tabButton {
@@ -82,7 +86,7 @@
 .firewood-terminal-menu-stepper:focus-visible,
 .firewood-terminal-menu-input:focus-visible,
 .firewood-terminal-menu-select:focus-visible {
-	outline: 1px solid #0e639c;
+	outline: 1px solid #c2410c;
 	outline-offset: -1px;
 }
 
@@ -90,8 +94,11 @@
 	width: 8px;
 	height: 8px;
 	border-radius: 999px;
-	background: rgba(212, 212, 212, 0.28);
+	background: rgba(222, 213, 198, 0.28);
 	flex-shrink: 0;
+	transition:
+		background var(--fw-dur-fast, 0.12s) ease,
+		box-shadow var(--fw-dur-fast, 0.12s) ease;
 }
 
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus {
@@ -101,8 +108,8 @@
 
 .firewood-terminal-tabStatus-loading,
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus-loading {
-	background: #0e639c;
-	box-shadow: 0 0 0 3px rgba(14, 99, 156, 0.18);
+	background: #c2410c;
+	box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.2);
 }
 
 .firewood-terminal-tabStatus-error,
@@ -113,8 +120,8 @@
 
 .firewood-terminal-tabStatus-exited,
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus-exited {
-	background: #808080;
-	box-shadow: 0 0 0 3px rgba(128, 128, 128, 0.14);
+	background: #857a6a;
+	box-shadow: 0 0 0 3px rgba(133, 122, 106, 0.14);
 }
 
 .firewood-terminal-tabTitle {
@@ -139,10 +146,10 @@
 	width: 100%;
 	min-width: 0;
 	height: 24px;
-	border: 1px solid #0e639c;
-	background: #1e1e1e;
+	border: 1px solid #c2410c;
+	background: #221d18;
 	border-radius: 4px;
-	color: #ffffff;
+	color: #fdfbf7;
 	font-size: 12px;
 	padding: 0 6px;
 	outline: none;
@@ -163,9 +170,9 @@
 	opacity: 0;
 	pointer-events: none;
 	transition:
-		opacity 0.12s ease,
-		background 0.12s ease,
-		color 0.12s ease;
+		opacity var(--fw-dur-fast, 0.12s) ease,
+		background var(--fw-dur-fast, 0.12s) ease,
+		color var(--fw-dur-fast, 0.12s) ease;
 	flex-shrink: 0;
 }
 
@@ -175,7 +182,7 @@
 }
 
 .firewood-terminal-tabLock:hover {
-	background: rgba(255, 255, 255, 0.08);
+	background: rgba(250, 245, 236, 0.08);
 }
 
 .firewood-terminal-tabLock.is-locked {
@@ -197,8 +204,8 @@
 	opacity: 0;
 	pointer-events: none;
 	transition:
-		opacity 0.12s ease,
-		background 0.12s ease;
+		opacity var(--fw-dur-fast, 0.12s) ease,
+		background var(--fw-dur-fast, 0.12s) ease;
 	flex-shrink: 0;
 }
 
@@ -235,7 +242,7 @@
 }
 
 .firewood-terminal-tabClose:hover {
-	background: rgba(255, 255, 255, 0.08);
+	background: rgba(250, 245, 236, 0.08);
 }
 
 .firewood-terminal-actions {
@@ -252,23 +259,27 @@
 	border: none;
 	background: transparent;
 	border-radius: 4px;
-	color: #808080;
+	color: #857a6a;
 	cursor: pointer;
 	font-size: 13px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: all 0.12s ease;
+	transition:
+		background var(--fw-dur-fast, 0.12s) ease,
+		color var(--fw-dur-fast, 0.12s) ease,
+		transform var(--fw-dur-fast, 0.12s) ease;
 	flex-shrink: 0;
 }
 
 .firewood-terminal-btn:hover {
-	background: #3c3c3c;
-	color: #cccccc;
+	background: #3b342b;
+	color: #cec4b4;
 }
 
 .firewood-terminal-btn:active {
-	background: #505050;
+	background: #4d453a;
+	transform: scale(0.94);
 }
 
 .firewood-terminal-btn:disabled {
@@ -327,43 +338,49 @@
 }
 
 .firewood-terminal-emptyState {
-	background: linear-gradient(180deg, rgba(30, 30, 30, 0.92), rgba(30, 30, 30, 0.98));
-	color: #a8a8a8;
+	background: linear-gradient(180deg, rgba(34, 29, 24, 0.92), rgba(34, 29, 24, 0.98));
+	color: #b0a595;
+	animation: firewood-terminal-fade-in var(--fw-dur-slow, 0.28s) ease-out;
 }
 
 .firewood-terminal-emptyTitle {
 	font-size: 14px;
-	color: #d4d4d4;
+	color: #ded5c6;
 }
 
 .firewood-terminal-emptyAction {
 	padding: 8px 18px;
-	border: 1px solid #3c3c3c;
-	background: #252526;
+	border: 1px solid #3b342b;
+	background: #2a241d;
 	border-radius: 6px;
-	color: #ffffff;
+	color: #fdfbf7;
 	cursor: pointer;
 	transition:
-		background 0.12s ease,
-		border-color 0.12s ease;
+		background var(--fw-dur-fast, 0.12s) ease,
+		border-color var(--fw-dur-fast, 0.12s) ease,
+		transform var(--fw-dur-fast, 0.12s) ease;
 }
 
 .firewood-terminal-emptyAction:hover {
-	background: #313131;
-	border-color: #4b4b4b;
+	background: #342d24;
+	border-color: #4d453a;
+}
+
+.firewood-terminal-emptyAction:active {
+	transform: scale(0.97);
 }
 
 .firewood-terminal-overlay {
-	background: rgba(30, 30, 30, 0.9);
-	color: #cccccc;
+	background: rgba(34, 29, 24, 0.9);
+	color: #cec4b4;
 	font-size: 14px;
 }
 
 .firewood-terminal-spinner {
 	width: 32px;
 	height: 32px;
-	border: 3px solid #3c3c3c;
-	border-top-color: #0e639c;
+	border: 3px solid #3b342b;
+	border-top-color: #c2410c;
 	border-radius: 50%;
 	animation: firewood-terminal-spin 0.8s linear infinite;
 }
@@ -374,8 +391,18 @@
 	}
 }
 
+@keyframes firewood-terminal-fade-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
 .firewood-terminal-error-overlay {
-	background: rgba(30, 30, 30, 0.95);
+	background: rgba(34, 29, 24, 0.95);
 	color: #f48771;
 	font-size: 14px;
 }
@@ -395,21 +422,24 @@
 .firewood-terminal-retry-btn {
 	margin-top: 8px;
 	padding: 8px 24px;
-	background: #0e639c;
+	background: #c2410c;
 	border: none;
 	border-radius: 4px;
 	color: #ffffff;
 	font-size: 13px;
 	cursor: pointer;
-	transition: background 0.15s ease;
+	transition:
+		background var(--fw-dur-fast, 0.12s) ease,
+		transform var(--fw-dur-fast, 0.12s) ease;
 }
 
 .firewood-terminal-retry-btn:hover {
-	background: #1177bb;
+	background: #d4551a;
 }
 
 .firewood-terminal-retry-btn:active {
-	background: #0d5a8c;
+	background: #a63a10;
+	transform: scale(0.97);
 }
 
 .firewood-terminal-exited-overlay {
@@ -427,10 +457,10 @@
 	align-items: center;
 	gap: 12px;
 	padding: 10px 16px;
-	background: rgba(30, 30, 30, 0.92);
-	border: 1px solid #3c3c3c;
+	background: rgba(34, 29, 24, 0.92);
+	border: 1px solid #3b342b;
 	border-radius: 8px;
-	color: #cccccc;
+	color: #cec4b4;
 	font-size: 13px;
 	pointer-events: auto;
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -445,26 +475,26 @@
 	align-items: center;
 	justify-content: flex-end;
 	padding: 4px 12px;
-	background: #252526;
-	border-top: 1px solid #3c3c3c;
+	background: #2a241d;
+	border-top: 1px solid #3b342b;
 	flex-shrink: 0;
 }
 
 .firewood-terminal-hint {
 	font-size: 11px;
-	color: #6e6e6e;
+	color: #6e6455;
 }
 
 .firewood-terminal-menu-panel {
 	position: fixed;
 	min-width: 280px;
-	background: #2d2d2d;
-	border: 1px solid #444;
+	background: #2f2921;
+	border: 1px solid #453d32;
 	border-radius: 8px;
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 	z-index: 9999;
 	padding: 8px 0;
-	animation: firewood-menu-in 0.1s ease-out;
+	animation: firewood-menu-in var(--fw-dur, 0.18s) ease-out;
 }
 
 @keyframes firewood-menu-in {
@@ -486,7 +516,7 @@
 .firewood-terminal-menu-label {
 	font-size: 11px;
 	font-weight: 600;
-	color: #808080;
+	color: #857a6a;
 	text-transform: uppercase;
 	letter-spacing: 0.6px;
 	padding: 6px 14px 4px;
@@ -494,7 +524,7 @@
 
 .firewood-terminal-menu-divider {
 	height: 1px;
-	background: #3c3c3c;
+	background: #3b342b;
 	margin: 4px 10px;
 }
 
@@ -514,21 +544,23 @@
 .firewood-terminal-menu-stepper {
 	width: 26px;
 	height: 26px;
-	border: 1px solid #3c3c3c;
-	background: #252526;
+	border: 1px solid #3b342b;
+	background: #2a241d;
 	border-radius: 4px;
-	color: #cccccc;
+	color: #cec4b4;
 	cursor: pointer;
 	font-size: 14px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: all 0.1s ease;
+	transition:
+		background var(--fw-dur-fast, 0.1s) ease,
+		border-color var(--fw-dur-fast, 0.1s) ease;
 }
 
 .firewood-terminal-menu-stepper:hover:not(:disabled) {
-	background: #3c3c3c;
-	border-color: #555;
+	background: #3b342b;
+	border-color: #574e41;
 }
 
 .firewood-terminal-menu-stepper:disabled {
@@ -539,10 +571,10 @@
 .firewood-terminal-menu-input {
 	width: 40px;
 	height: 26px;
-	border: 1px solid #3c3c3c;
-	background: #1e1e1e;
+	border: 1px solid #3b342b;
+	background: #221d18;
 	border-radius: 4px;
-	color: #cccccc;
+	color: #cec4b4;
 	font-size: 12px;
 	text-align: center;
 	outline: none;
@@ -550,30 +582,30 @@
 }
 
 .firewood-terminal-menu-input:focus {
-	border-color: #0e639c;
+	border-color: #c2410c;
 }
 
 .firewood-terminal-menu-select {
 	flex: 1;
 	height: 28px;
-	border: 1px solid #3c3c3c;
-	background: #1e1e1e;
+	border: 1px solid #3b342b;
+	background: #221d18;
 	border-radius: 4px;
-	color: #cccccc;
+	color: #cec4b4;
 	font-size: 12px;
 	padding: 0 6px;
 	outline: none;
 	cursor: pointer;
 	-webkit-appearance: none;
 	appearance: none;
-	background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23808080'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23857a6a'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 8px center;
 	padding-right: 24px;
 }
 
 .firewood-terminal-menu-select:focus {
-	border-color: #0e639c;
+	border-color: #c2410c;
 }
 
 .firewood-terminal-menu-select:disabled {
@@ -582,8 +614,8 @@
 }
 
 .firewood-terminal-menu-select option {
-	background: #1e1e1e;
-	color: #cccccc;
+	background: #221d18;
+	color: #cec4b4;
 }
 
 .firewood-terminal-menu-browse {
@@ -593,14 +625,14 @@
 
 .firewood-terminal-menu-unit {
 	font-size: 11px;
-	color: #6e6e6e;
+	color: #6e6455;
 	margin-left: 2px;
 }
 
 .firewood-terminal-menu-hint {
 	font-size: 11px;
 	line-height: 1.5;
-	color: #6e6e6e;
+	color: #6e6455;
 	padding: 6px 14px 8px;
 }
 

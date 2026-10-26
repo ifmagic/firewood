@@ -1,48 +1,85 @@
+/*
+ * Firewood design tokens — "Ember & Timber".
+ *
+ * One warm, workshop-grade system instead of cool neutral grays: paper-toned
+ * light surfaces, charred-timber dark chrome (sidebar / terminal), warm ink
+ * text, and a single ember accent. All text colors are picked for >= 4.5:1 on
+ * their intended surface (tertiary ~4.4:1, reserved for hints/labels);
+ * --fw-accent (~3.5:1 on light) is for icons/borders/carets only — small text
+ * uses --fw-accent-ink (~5.4:1).
+ *
+ * Motion tokens: three durations and two easings shared by every transition
+ * and animation in the app (see also the reduced-motion guard below).
+ */
 :root {
 	font-family: 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 	font-size: 14px;
 	color-scheme: light;
-	--fw-surface: #ffffff;
-	--fw-sidebar-bg: #1e1e1e;
-	--fw-border: #3a3a3a;
-	--fw-divider: #eeeeee;
-	--fw-hover: rgba(255, 255, 255, 0.1);
-	--fw-hover-strong: rgba(255, 255, 255, 0.12);
-	--fw-hover-light: #f2f3f5;
-	--fw-selected-bg: rgba(255, 107, 53, 0.16);
-	--fw-selected-bg-hover: rgba(255, 107, 53, 0.22);
-	--fw-popover-bg: #262626;
-	--fw-accent: #ff7a45;
-	/* Accent for light surfaces. #ff7a45 only reaches ~3:1 on white — fine for
-	   icons/borders, too low for small text — so text on light backgrounds
-	   (links, tinted chips) uses this darker ink (~5.3:1). */
-	--fw-accent-ink: #b54a1b;
+
+	/* --- surfaces (light: warm paper) --- */
+	--fw-surface: #faf9f6;
+	--fw-panel-muted: #f3f0e9;
+	--fw-panel-subtle: #f6f4ee;
+	--fw-editor-bg: #fdfcf9;
+	--fw-status-bg: #f4f1ea;
+	--fw-divider: #e9e4da;
+
+	/* --- dark chrome (charred timber: sidebar, popovers) --- */
+	--fw-sidebar-bg: #211c17;
+	--fw-border: #3a332b;
+	--fw-popover-bg: #2b2620;
+	--fw-hover: rgba(250, 245, 236, 0.07);
+	--fw-hover-strong: rgba(250, 245, 236, 0.11);
+
+	/* --- light-surface hovers --- */
+	--fw-hover-light: #f1eee6;
+
+	/* --- ember accent --- */
+	--fw-accent: #e8590c;
+	/* Accent ink for light surfaces. #e8590c only reaches ~3.5:1 on white —
+	   fine for icons/borders, too low for small text — so text on light
+	   backgrounds (links, tinted chips) uses this darker ink (~5.4:1). */
+	--fw-accent-ink: #b54708;
 	/* Light accent tints. One token per purpose: soft = resting tint on light
 	   surfaces (hovered/selected chips), soft-hover = its hover step. */
-	--fw-accent-soft: #fff4ef;
-	--fw-accent-soft-hover: #ffe7d9;
-	--fw-text-primary: #f5f5f5;
-	--fw-text-secondary: rgba(245, 245, 245, 0.72);
-	--fw-text-muted: rgba(245, 245, 245, 0.45);
-	--fw-text-tertiary: #8c8c8c;
-	--fw-text-strong: #1f1f1f;
-	--fw-text-body: #595959;
-	--fw-panel-muted: #f7f7f8;
-	--fw-panel-subtle: #fbfbfc;
-	--fw-editor-bg: #fbfbfc;
-	--fw-status-bg: #f9f9f9;
-	--fw-status-text: #666666;
-	--fw-panel-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-	--fw-danger: #e5484d;
+	--fw-accent-soft: #fdeee2;
+	--fw-accent-soft-hover: #fadcc6;
+	--fw-selected-bg: rgba(232, 89, 12, 0.16);
+	--fw-selected-bg-hover: rgba(232, 89, 12, 0.22);
+
+	/* --- text --- */
+	/* Dark-surface text (sidebar, terminal chrome, popovers). */
+	--fw-text-primary: #f5f0e8;
+	--fw-text-secondary: rgba(245, 240, 232, 0.72);
+	--fw-text-muted: rgba(245, 240, 232, 0.45);
+	/* Light-surface text (warm ink). */
+	--fw-text-tertiary: #7d7365;
+	--fw-text-body: #5f574d;
+	--fw-text-strong: #2a241e;
+	--fw-status-text: #6e6558;
+
+	/* --- danger --- */
+	--fw-danger: #d94243;
 	/* Danger text/background steps (shared by global .ant-btn-dangerous overrides
 	   and the tools' custom danger icon buttons). */
-	--fw-danger-ink: #c65f5f;
-	--fw-danger-ink-hover: #d4380d;
-	--fw-danger-soft: #fff1f0;
+	--fw-danger-ink: #bb4a45;
+	--fw-danger-ink-hover: #b93830;
+	--fw-danger-soft: #fbeeea;
+
+	/* --- shape & depth --- */
 	--fw-radius-sm: 4px;
 	--fw-radius-md: 6px;
 	--fw-radius-lg: 8px;
+	--fw-panel-shadow: 0 12px 32px rgba(46, 36, 25, 0.1);
 	--fw-focus-ring: 0 0 0 2px color-mix(in srgb, var(--fw-accent) 45%, transparent);
+
+	/* --- motion --- */
+	--fw-dur-fast: 120ms;
+	--fw-dur: 180ms;
+	--fw-dur-slow: 280ms;
+	--fw-ease: cubic-bezier(0.2, 0, 0, 1);
+	--fw-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
@@ -60,6 +97,53 @@ body {
 #root {
 	height: 100vh;
 	display: flex;
+}
+
+/* Global warm selection tint (editors style their own via CodeMirror themes). */
+::selection {
+	background: color-mix(in srgb, var(--fw-accent) 24%, transparent);
+}
+
+/* Refined thin scrollbars, warm-tinted. xterm's viewport keeps its own
+   tighter rules (more specific selectors win where they exist). */
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #d6d0c4;
+	border: 3px solid transparent;
+	background-clip: padding-box;
+	border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #b9b1a0;
+	border: 3px solid transparent;
+	background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+/* Reduced motion: collapse every decorative transition/animation to a
+   instant step. Essential spinners freeze too — a static loading state is
+   the accepted reduced-motion presentation. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 /* CodeMirror host container (shared by notepad / json-formatter; mirrors moxia's .cmHost)

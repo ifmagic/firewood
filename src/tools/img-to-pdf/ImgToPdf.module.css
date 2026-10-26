@@ -27,7 +27,7 @@
 	max-height: 108px;
 	border-radius: 12px;
 	border-style: dashed;
-	border-color: #d0d5dd;
+	border-color: #d4ccbe;
 	background: var(--fw-panel-subtle);
 	transition:
 		border-color 0.2s,
@@ -57,7 +57,7 @@
 
 .uploadIcon {
 	font-size: 22px;
-	color: rgba(0, 0, 0, 0.25);
+	color: #b3aa99;
 	margin-bottom: 2px;
 }
 
@@ -112,7 +112,7 @@
 }
 
 .thumbCard:hover {
-	border-color: #d0d5dd;
+	border-color: #d4ccbe;
 }
 
 .thumbCard:hover .thumbRemove {

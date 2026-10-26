@@ -10,9 +10,15 @@
 	justify-content: center;
 	cursor: pointer;
 	transition:
-		color 0.15s,
-		background 0.15s;
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		transform var(--fw-dur-fast) var(--fw-ease);
 	flex-shrink: 0;
+}
+
+/* Shared tactile press: a quick squeeze, released with the button. */
+.pinButton:active {
+	transform: scale(0.9);
 }
 
 .titleBar {

@@ -9,6 +9,8 @@
 	background: var(--fw-status-bg);
 	color: var(--fw-status-text);
 	font-size: 12px;
+	/* Counts and coordinates in status hints align as they tick. */
+	font-variant-numeric: tabular-nums;
 }
 
 .section {

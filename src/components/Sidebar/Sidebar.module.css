@@ -4,7 +4,7 @@
 	display: flex;
 	flex-direction: column;
 	border-right: 1px solid var(--fw-border);
-	transition: width 0.2s ease;
+	transition: width var(--fw-dur-slow) var(--fw-ease);
 	overflow: hidden;
 }
 
@@ -42,22 +42,34 @@
 	color: inherit;
 	font: inherit;
 	border-radius: 8px;
-	transition: background 0.15s ease;
+	transition: background var(--fw-dur-fast) var(--fw-ease);
 }
 
 .logoButton:hover {
 	background: var(--fw-hover);
 }
 
+.logoButton:active {
+	background: var(--fw-hover-strong);
+}
+
+/* Ember badge: a soft radial ember glow behind the flame mark, kept
+   deliberately quiet — the brand accent, not a decoration. */
 .logoBadge {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	width: 28px;
 	height: 28px;
-	border-radius: 8px;
-	background: rgba(255, 122, 69, 0.16);
+	border-radius: 9px;
+	background: radial-gradient(120% 120% at 30% 20%, rgba(232, 89, 12, 0.32), rgba(232, 89, 12, 0.1)), var(--fw-hover);
+	box-shadow: inset 0 0 0 1px rgba(232, 89, 12, 0.22);
 	flex-shrink: 0;
+	transition: box-shadow var(--fw-dur) var(--fw-ease);
+}
+
+.logoButton:hover .logoBadge {
+	box-shadow: inset 0 0 0 1px rgba(232, 89, 12, 0.4);
 }
 
 .logoIcon {
@@ -69,7 +81,7 @@
 	font-size: 15px;
 	font-weight: 600;
 	color: var(--fw-text-primary);
-	letter-spacing: 0.02em;
+	letter-spacing: 0.01em;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -85,6 +97,9 @@
 	/* Match the adjacent window pin (15px icon, box-shadow ring) so the two
 	   trailing header controls read as one family; antd's defaults differ. */
 	font-size: 15px !important;
+	transition:
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease);
 }
 
 .viewButton:hover {
@@ -115,8 +130,8 @@
 	cursor: pointer;
 	color: var(--fw-text-secondary);
 	transition:
-		background 0.2s,
-		color 0.15s;
+		background var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease);
 	user-select: none;
 }
 
@@ -130,6 +145,11 @@
 	color: var(--fw-text-primary);
 }
 
+/* Press feedback: a touch more fill than hover, released instantly. */
+.toolItem:active {
+	background: var(--fw-hover-strong);
+}
+
 .toolItemSelected {
 	background: var(--fw-selected-bg);
 	color: var(--fw-text-primary) !important;
@@ -139,6 +159,13 @@
 	background: var(--fw-selected-bg-hover);
 }
 
+.toolItemSelected:active {
+	background: var(--fw-selected-bg-hover);
+}
+
+/* Ember indicator: drops in with a short vertical grow so the active tool
+   visibly "lands". Reduced motion collapses it to an instant state (global
+   guard in index.css). */
 .toolItemSelected::before {
 	content: '';
 	position: absolute;
@@ -146,8 +173,21 @@
 	top: 6px;
 	bottom: 6px;
 	width: 3px;
-	border-radius: 0 2px 2px 0;
+	border-radius: 0 3px 3px 0;
 	background: var(--fw-accent);
+	animation: fwSiderIndicator var(--fw-dur-slow) var(--fw-ease-out);
+}
+
+@keyframes fwSiderIndicator {
+	from {
+		transform: scaleY(0.3);
+		opacity: 0;
+	}
+
+	to {
+		transform: scaleY(1);
+		opacity: 1;
+	}
 }
 
 .toolItemSelected .toolIcon {
@@ -184,8 +224,8 @@
 	opacity: 0;
 	pointer-events: none;
 	transition:
-		opacity 0.15s ease,
-		color 0.15s;
+		opacity var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .dragHandle:active {
@@ -209,6 +249,7 @@
 	align-items: center;
 	color: inherit;
 	margin-right: 10px;
+	transition: color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .toolName {

@@ -134,7 +134,7 @@
 .backspaceBtn:hover {
 	color: var(--fw-text-strong);
 	background: var(--fw-hover-light);
-	border-color: #d9d9d9;
+	border-color: #d4ccbe;
 }
 
 .backspaceBtn:active {
@@ -262,7 +262,7 @@
 .keyNum {
 	background: var(--fw-surface);
 	color: var(--fw-text-strong);
-	border-color: #dee2e6;
+	border-color: var(--fw-divider);
 }
 
 .keyNum:hover {
@@ -279,24 +279,24 @@
 }
 
 .keyFn {
-	background: #f1f3f5;
-	color: #495057;
+	background: var(--fw-panel-muted);
+	color: var(--fw-text-body);
 }
 
 .keyFn:hover {
-	background: #e9ecef;
+	background: var(--fw-hover-light);
 }
 
-/* Scientific keys: a calm slate tint that stays inside the app's neutral+accent
-   system (same slate family as the code-editor surfaces) instead of the
+/* Scientific keys: a parchment tint that stays inside the app's warm neutral
+   + ember system (same family as the editor's paper surfaces) instead of the
    Material blue that used to sit here as a foreign second brand hue. */
 .keySci {
-	background: #e8eef6;
-	color: #31506e;
+	background: #f6f1e7;
+	color: #7a6234;
 }
 
 .keySci:hover {
-	background: #d8e3f0;
+	background: #efe8d8;
 }
 
 .keyEq {
@@ -732,7 +732,7 @@ button.histMain:focus-visible {
 
 .tsColumn > .section:hover {
 	border-color: color-mix(in srgb, var(--fw-accent) 35%, var(--fw-divider));
-	box-shadow: 0 2px 12px rgba(31, 31, 31, 0.06);
+	box-shadow: 0 2px 12px rgba(46, 36, 25, 0.06);
 }
 
 /* ---------- Button active feedback (scoped to numbox) ---------- */

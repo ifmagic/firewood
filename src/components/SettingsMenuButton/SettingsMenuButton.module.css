@@ -11,8 +11,9 @@
 	border-radius: 8px;
 	cursor: pointer;
 	transition:
-		color 0.15s,
-		background 0.15s;
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		transform var(--fw-dur-fast) var(--fw-ease);
 	position: relative;
 	z-index: 1402;
 }
@@ -29,6 +30,7 @@
 
 .settingsButton:active {
 	background: var(--fw-hover-strong);
+	transform: scale(0.94);
 }
 
 .overlay {
@@ -44,12 +46,26 @@
 	z-index: 1401;
 	min-width: 238px;
 	padding: 8px;
-	border-radius: 8px;
+	border-radius: 10px;
 	background: var(--fw-popover-bg);
 	border: 1px solid var(--fw-border);
 	box-shadow:
 		0 12px 28px rgba(0, 0, 0, 0.45),
 		0 2px 8px rgba(0, 0, 0, 0.35);
+	transform-origin: bottom left;
+	animation: fwSettingsMenuIn var(--fw-dur) var(--fw-ease-out);
+}
+
+@keyframes fwSettingsMenuIn {
+	from {
+		opacity: 0;
+		transform: translateY(5px) scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
 }
 
 .menuDivider {
@@ -113,12 +129,14 @@
 	bottom: 0;
 	min-width: 164px;
 	padding: 8px;
-	border-radius: 8px;
+	border-radius: 10px;
 	background: var(--fw-popover-bg);
 	border: 1px solid var(--fw-border);
 	box-shadow:
 		0 12px 28px rgba(0, 0, 0, 0.45),
 		0 2px 8px rgba(0, 0, 0, 0.35);
+	transform-origin: bottom left;
+	animation: fwSettingsMenuIn var(--fw-dur) var(--fw-ease-out);
 }
 
 .submenuItem {

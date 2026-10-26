@@ -38,6 +38,7 @@ const zhCN = {
     clear: '清空',
     copy: '复制',
     copied: '已复制',
+    copyFailed: '复制失败，请检查剪贴板权限',
     cut: '剪切',
     paste: '粘贴',
     selectAll: '全选',

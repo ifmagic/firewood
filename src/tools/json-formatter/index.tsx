@@ -149,7 +149,12 @@ export default function JsonFormatter() {
                 aria-label={t('action.copy')}
                 disabled={!content}
                 onClick={() => {
-                  navigator.clipboard.writeText(content);
+                  // Acknowledge the copy: without feedback a user cannot tell
+                  // an empty clipboard from a successful one.
+                  navigator.clipboard.writeText(content).then(
+                    () => message.success(t('action.copied')),
+                    () => message.error(t('action.copyFailed')),
+                  );
                 }}
               />
             </Tooltip>

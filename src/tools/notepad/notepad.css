@@ -35,7 +35,7 @@
 }
 
 .firewood-notepad-ghostButton.ant-btn:disabled {
-	color: #bfbfbf;
+	color: #c9c1b3;
 	background: transparent;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .firewood-notepad-ghostButton.ant-btn .anticon {
-	color: #8c8c8c;
+	color: var(--fw-text-tertiary);
 	font-size: 14px;
 }
 
@@ -73,7 +73,7 @@
 	border: none !important;
 	border-radius: 8px 8px 0 0 !important;
 	background: var(--fw-panel-muted) !important;
-	color: #8c8c8c;
+	color: var(--fw-text-tertiary);
 	padding: 10px 12px 8px !important;
 	margin: 0 4px 0 0 !important;
 }
@@ -108,7 +108,7 @@
 	width: 0;
 	overflow: hidden;
 	margin-inline-start: 0 !important;
-	color: #8c8c8c;
+	color: var(--fw-text-tertiary);
 	transition:
 		opacity 0.15s ease,
 		width 0.15s ease,
@@ -126,7 +126,7 @@
 	border: none !important;
 	background: transparent !important;
 	border-radius: 8px !important;
-	color: #8c8c8c !important;
+	color: var(--fw-text-tertiary) !important;
 	min-width: 32px;
 	height: 32px;
 }

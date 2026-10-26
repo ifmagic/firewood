@@ -85,29 +85,32 @@ const RESIZE_FIT_THROTTLE_MS = 100;
 const DEFAULT_FONT_FAMILY =
   "'Hack Nerd Font Mono', 'Hack Nerd Font', 'Cascadia Code NF', 'Cascadia Code', Menlo, Consolas, monospace";
 
+// Warm charred-timber theme (matches .firewood-terminal in terminal.css).
+// ANSI chromatic colors stay VS Code Dark+ — familiar and readable on the
+// warm base; only the neutrals (bg/fg/black/white) carry the timber tint.
 const THEME = {
-  background: '#1e1e1e',
-  foreground: '#d4d4d4',
-  cursor: '#aeafad',
-  cursorAccent: '#1e1e1e',
-  selectionBackground: '#264f78',
-  selectionForeground: '#ffffff',
-  black: '#1e1e1e',
+  background: '#221D18',
+  foreground: '#DED5C6',
+  cursor: '#E8925F',
+  cursorAccent: '#221D18',
+  selectionBackground: '#5C3A20',
+  selectionForeground: '#FFFFFF',
+  black: '#221D18',
   red: '#f44747',
   green: '#6a9955',
   yellow: '#dcdcaa',
   blue: '#569cd6',
   magenta: '#c586c0',
   cyan: '#4ec9b0',
-  white: '#d4d4d4',
-  brightBlack: '#808080',
+  white: '#DED5C6',
+  brightBlack: '#857A6A',
   brightRed: '#f44747',
   brightGreen: '#6a9955',
   brightYellow: '#dcdcaa',
   brightBlue: '#569cd6',
   brightMagenta: '#c586c0',
   brightCyan: '#4ec9b0',
-  brightWhite: '#ffffff',
+  brightWhite: '#FDFBF7',
 };
 
 let _fontsReady: Promise<void> | null = null;

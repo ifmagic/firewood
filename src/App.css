@@ -18,10 +18,54 @@ body {
 	overflow: hidden;
 }
 
+/* ---------- tool page transition ----------
+   Keyed by route pathname (see ToolRoutes in App.tsx): every tool switch
+   remounts the page and plays one short fade-and-rise. Transform-only
+   motion (translateY) never changes clientWidth/clientHeight, so terminal
+   fit() measurements taken during the animation stay correct. */
+.fw-page {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	animation: fw-page-enter var(--fw-dur-slow) var(--fw-ease-out);
+}
+
+@keyframes fw-page-enter {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* ---------- antd overrides ---------- */
+
 .ant-btn {
 	border-radius: 8px;
 	box-shadow: none;
 	font-weight: 500;
+	transition:
+		transform var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease),
+		box-shadow var(--fw-dur-fast) var(--fw-ease);
+}
+
+/* Tactile press feedback: a subtle 3% squeeze on every button, released
+   immediately. Layout-safe — transform never affects siblings. The
+   transition rides on this (0,3,0) rule so it wins over antd's runtime
+   styles regardless of injection order. */
+.ant-btn:not(:disabled):active {
+	transform: scale(0.97);
+	transition-property: transform, color, background, border-color, box-shadow;
+	transition-duration: var(--fw-dur-fast);
+	transition-timing-function: var(--fw-ease);
 }
 
 .ant-btn-default,
@@ -66,6 +110,10 @@ body {
 	border-color: var(--fw-divider) !important;
 	border-radius: 8px !important;
 	box-shadow: none !important;
+	transition:
+		border-color var(--fw-dur-fast) var(--fw-ease),
+		box-shadow var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease);
 }
 
 .ant-input,
@@ -83,7 +131,7 @@ body {
 .ant-input-number:hover,
 .ant-select:hover .ant-select-selector,
 .ant-radio-button-wrapper:hover {
-	border-color: #d9d9d9 !important;
+	border-color: #d4ccbe !important;
 }
 
 .ant-input:focus,
@@ -117,6 +165,7 @@ body {
 
 .ant-tabs .ant-tabs-tab {
 	padding-bottom: 10px;
+	transition: color var(--fw-dur) var(--fw-ease);
 }
 
 .ant-tabs .ant-tabs-tab:hover,
@@ -154,6 +203,8 @@ body {
 	border-bottom-color: var(--fw-divider) !important;
 }
 
+/* ---------- shared tool chrome ---------- */
+
 .fw-tool-stack {
 	display: flex;
 	flex-direction: column;
@@ -189,6 +240,10 @@ body {
 	height: 32px;
 	padding: 0;
 	border-radius: 8px;
+	transition:
+		transform var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .fw-tool-editorShell {
@@ -255,13 +310,26 @@ body {
 	background: var(--fw-panel-muted);
 	border-left: 1px solid var(--fw-divider);
 	border-right: 1px solid var(--fw-divider);
+	transition: background var(--fw-dur) var(--fw-ease);
+}
+
+.fw-tool-divider:hover {
+	background: var(--fw-panel-subtle);
 }
 
 .fw-tool-dividerGrip {
 	width: 2px;
 	height: 32px;
 	border-radius: 999px;
-	background: #d0d5dd;
+	background: #cfc8ba;
+	transition:
+		background var(--fw-dur) var(--fw-ease),
+		height var(--fw-dur) var(--fw-ease);
+}
+
+.fw-tool-divider:hover .fw-tool-dividerGrip {
+	background: var(--fw-accent);
+	height: 40px;
 }
 
 .fw-tool-statusHint {

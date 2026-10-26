@@ -38,6 +38,7 @@ const en = {
     clear: 'Clear',
     copy: 'Copy',
     copied: 'Copied',
+    copyFailed: 'Copy failed. Please check clipboard permissions.',
     cut: 'Cut',
     paste: 'Paste',
     selectAll: 'Select All',

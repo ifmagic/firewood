@@ -61,14 +61,14 @@ const WRITING_THEME = EditorView.theme({
   '.cm-gutters': {
     backgroundColor: 'transparent',
     borderRight: '1px solid var(--fw-divider, #eeeeee)',
-    color: '#94A3B8',
+    color: '#94886F',
   },
   '.cm-placeholder': {
-    color: '#94A3B8',
+    color: '#94886F',
     fontStyle: 'italic',
   },
   '.cm-selectionBackground': {
-    backgroundColor: '#CBD5E199 !important',
+    backgroundColor: '#EBDCC899 !important',
   },
 });
 
@@ -91,17 +91,19 @@ const CODE_FONT = IS_TAURI_MAC ? TAURI_MAC_CODE_FONT_FAMILY : CODE_FONT_FAMILY;
 // as the single source of truth for the native and the decorated artifacts alike.
 // The caret follows the app accent (same as the writing variant) — a hardcoded color here
 // would drift from the brand the moment the accent token changes.
-const CODE_SELECTION_BG = '#CBD5E199';
-const CODE_CARET_COLOR = 'var(--fw-accent, #ff7a45)';
+// Selection is a warm sand tint (ember family, soft enough to read text through).
+const CODE_SELECTION_BG = '#EBDCC899';
+const CODE_CARET_COLOR = 'var(--fw-accent, #e8590c)';
 
-// Code theme ports the former Monaco `firewood-contrast-light` theme one-to-one. lineHeight 1.6
-// matches the WKWebView-safe multiplier the Monaco layer required.
+// Code theme — warm workshop palette: parchment editor surface, warm ink text,
+// ember keyword, amber numbers, emerald strings. lineHeight 1.6 matches the
+// WKWebView-safe multiplier the Monaco layer required.
 const CODE_THEME = EditorView.theme({
   '&': {
     fontFamily: CODE_FONT,
     height: '100%',
-    backgroundColor: '#FBFBFC',
-    color: '#0F172A',
+    backgroundColor: '#FDFCF9',
+    color: '#221C15',
   },
   '.cm-content': {
     fontFamily: CODE_FONT,
@@ -110,11 +112,11 @@ const CODE_THEME = EditorView.theme({
   },
   '&.cm-focused': { outline: 'none' },
   '.cm-gutters': {
-    backgroundColor: '#FBFBFC',
-    color: '#94A3B8',
+    backgroundColor: '#FAF8F2',
+    color: '#94886F',
   },
-  '.cm-activeLineGutter': { color: '#334155' },
-  '.cm-activeLine': { backgroundColor: '#F5F6F8' },
+  '.cm-activeLineGutter': { color: '#6E6154' },
+  '.cm-activeLine': { backgroundColor: '#F7F3EA' },
   // drawSelection() is not used here, so there is no .cm-selectionBackground layer: the primary
   // range is painted by the browser's own ::selection. Style it to match .cm-multiselection —
   // otherwise the primary range of a column selection keeps the system highlight color while the
@@ -135,9 +137,9 @@ const CODE_THEME = EditorView.theme({
     verticalAlign: 'text-bottom',
     pointerEvents: 'none',
   },
-  '.cm-matchingBracket': { backgroundColor: '#E2E8F0' },
+  '.cm-matchingBracket': { backgroundColor: '#F1E4CF' },
   '.cm-placeholder': {
-    color: '#94A3B8',
+    color: '#94886F',
     fontStyle: 'italic',
   },
   // CM's lint squiggle is a 6x3px SVG at background-position "left bottom".
@@ -150,10 +152,12 @@ const CODE_THEME = EditorView.theme({
   },
 });
 
-// Token colors port the Monaco firewood-contrast-light rules.
+// Token colors — warm workshop scheme. Keywords carry the ember accent
+// (~4.9:1), numbers amber, strings emerald, types keep one cool blue as the
+// single counterpoint in the warm field; comments are warm gray italics.
 const CODE_HIGHLIGHT_STYLE = HighlightStyle.define([
-  { tag: t.comment, color: '#6B7280', fontStyle: 'italic' },
-  { tag: t.keyword, color: '#7C3AED' },
+  { tag: t.comment, color: '#75695B', fontStyle: 'italic' },
+  { tag: t.keyword, color: '#C2410C' },
   { tag: t.number, color: '#B45309' },
   { tag: t.string, color: '#047857' },
   { tag: t.regexp, color: '#0369A1' },
