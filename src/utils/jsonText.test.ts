@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatJsonText, unescapeJsonText } from './jsonText';
+import { formatJsonText, minifyJsonText, unescapeJsonText } from './jsonText';
 
 describe('formatJsonText', () => {
   it('formats valid json with 2-space indent', () => {
@@ -38,6 +38,34 @@ describe('formatJsonText', () => {
 
   it('formats each document of an ndjson payload', () => {
     expect(formatJsonText('{"a":1}\n{"b":2}')).toBe('{\n  "a": 1\n}\n{\n  "b": 2\n}');
+  });
+});
+
+describe('minifyJsonText', () => {
+  it('minifies valid json onto one line', () => {
+    expect(minifyJsonText('{\n  "a": [\n    1,\n    2\n  ]\n}')).toBe('{"a":[1,2]}');
+  });
+
+  it('accepts jsonc trailing commas and drops them', () => {
+    expect(minifyJsonText('{\n  "a": 1,\n}')).toBe('{"a":1}');
+  });
+
+  it('accepts jsonc comments and strips them', () => {
+    expect(minifyJsonText('{\n  // note\n  "a": 1\n}')).toBe('{"a":1}');
+  });
+
+  it('throws for invalid json with the first error code and its line/column', () => {
+    expect(() => minifyJsonText('{\n  "a": 1\n  "b": 2\n}')).toThrow('CommaExpected (line 3, column 3)');
+    expect(() => minifyJsonText('{"a":')).toThrow(/ValueExpected/);
+  });
+
+  it('throws for ndjson instead of silently dropping documents', () => {
+    expect(() => minifyJsonText('{"a":1}\n{"b":2}')).toThrow(/EndOfFileExpected/);
+  });
+
+  it('throws for empty or non-json text', () => {
+    expect(() => minifyJsonText('')).toThrow();
+    expect(() => minifyJsonText('hello world')).toThrow();
   });
 });
 

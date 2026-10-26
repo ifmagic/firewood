@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Empty, Tooltip } from 'antd';
+import { Button, Empty, Tooltip, message } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
@@ -10,10 +10,10 @@ import ToolLayout from '../../components/ToolLayout';
 import { useCodemirror } from '../../hooks/useCodemirror';
 import { useEditorFontSize } from '../../hooks/useEditorFontSize';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import { formatJsonText, unescapeJsonText } from '../../utils/jsonText';
+import { formatJsonText, minifyJsonText, unescapeJsonText } from '../../utils/jsonText';
 import JumpDebugger from './JumpDebugger';
 import { jumpDebuggerExtension } from './jumpDebuggerExtension';
-import { jsoncLinter } from './jsoncLinter';
+import { jsoncDiagnostics, jsoncLinter } from './jsoncLinter';
 
 export default function JsonFormatter() {
   const { t } = useTranslation();
@@ -77,7 +77,13 @@ export default function JsonFormatter() {
     };
   }, [viewportResetVersion, viewRef]);
 
-  const applyTransform = (transform: (text: string) => string) => {
+  /**
+   * Apply a text transform, surfacing failures instead of failing silently:
+   * an antd error toast names the reason, and `selectFirstError` additionally
+   * focuses the editor and moves the cursor onto the first JSONC parse error
+   * (the same position the linter squiggle marks).
+   */
+  const applyTransform = (transform: (text: string) => string, failureKey: string, selectFirstError = false) => {
     if (!content.trim()) {
       return;
     }
@@ -88,24 +94,33 @@ export default function JsonFormatter() {
         setContent(nextContent);
         requestViewportReset();
       }
-    } catch {
-      return;
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      message.error(t(failureKey, { error: detail }));
+      if (selectFirstError) {
+        const [first] = jsoncDiagnostics(content);
+        const view = viewRef.current;
+        if (first && view) {
+          view.focus();
+          view.dispatch({
+            selection: { anchor: first.from, head: first.to },
+            effects: EditorView.scrollIntoView(first.from, { y: 'center' }),
+          });
+        }
+      }
     }
   };
 
   const format = () => {
-    applyTransform(formatJsonText);
+    applyTransform(formatJsonText, 'jsonFormatter.formatFailed');
   };
 
   const minify = () => {
-    applyTransform((text) => {
-      const parsed = JSON.parse(text);
-      return JSON.stringify(parsed);
-    });
+    applyTransform(minifyJsonText, 'jsonFormatter.minifyFailed', true);
   };
 
   const unescape = () => {
-    applyTransform(unescapeJsonText);
+    applyTransform(unescapeJsonText, 'jsonFormatter.unescapeFailed');
   };
 
   const clear = () => {

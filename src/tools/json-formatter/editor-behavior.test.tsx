@@ -1,12 +1,26 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorView, keymap } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import JsonFormatter from './index';
-import '../../i18n';
+import i18n from '../../i18n';
+
+vi.mock('antd', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('antd')>();
+  return { ...actual, message: { ...actual.message, error: vi.fn() } };
+});
+
+const messageError = vi.mocked((await import('antd')).message.error);
+
+// jsdom's navigator language is en, so the mounted UI may not be zh-CN; find
+// toolbar buttons through the live i18n instance instead of hardcoded text.
+function findToolbarButton(key: string): HTMLButtonElement | undefined {
+  const label = i18n.t(key);
+  return Array.from(container?.querySelectorAll('button') ?? []).find((button) => button.textContent?.includes(label));
+}
 
 // React 19 requires this flag for act(); without it act still works but warns on every call.
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -173,5 +187,43 @@ describe('JsonFormatter editor (CodeMirror regression tests)', () => {
     expect(view.state.doc.toString()).toBe('first-second');
     const stored = localStorage.getItem('tool:json-formatter:input');
     expect(stored).toBe(JSON.stringify('first-second'));
+  });
+
+  it('json-formatter: minify on invalid json shows an error toast instead of staying silent', async () => {
+    await mount();
+    const view = getToolView()!;
+    act(() => {
+      view.dispatch({ changes: { from: 0, to: 0, insert: '{\n  "a": 1\n  "b": 2\n}' } });
+    });
+    await flush(80);
+
+    const minifyButton = findToolbarButton('action.minify');
+    expect(minifyButton).toBeTruthy();
+    await act(async () => {
+      minifyButton!.click();
+    });
+
+    expect(messageError).toHaveBeenCalledTimes(1);
+    expect(String(messageError.mock.calls[0][0])).toMatch(/CommaExpected \(line 3, column 3\)/);
+    // The cursor jumps onto the first parse error (same position the linter marks).
+    expect(view.state.selection.main.head).toBeGreaterThan(0);
+  });
+
+  it('json-formatter: minify accepts jsonc trailing commas', async () => {
+    await mount();
+    const view = getToolView()!;
+    act(() => {
+      view.dispatch({ changes: { from: 0, to: 0, insert: '{\n  "a": 1,\n}' } });
+    });
+    await flush(80);
+
+    const minifyButton = findToolbarButton('action.minify');
+    await act(async () => {
+      minifyButton!.click();
+    });
+
+    expect(messageError).not.toHaveBeenCalled();
+    await flush(80);
+    expect(view.state.doc.toString()).toBe('{"a":1}');
   });
 });

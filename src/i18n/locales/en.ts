@@ -121,6 +121,9 @@ const en = {
   // JSON
   jsonFormatter: {
     emptyHint: 'Paste JSON or escaped text, then format, minify, or unescape it here',
+    formatFailed: 'Invalid JSON, cannot format: {{error}}',
+    minifyFailed: 'Invalid JSON, cannot minify: {{error}}',
+    unescapeFailed: 'Cannot unescape: the text is not escaped JSON: {{error}}',
   },
 
   // Text diff

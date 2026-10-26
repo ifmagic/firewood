@@ -121,6 +121,9 @@ const zhCN = {
   // JSON
   jsonFormatter: {
     emptyHint: '粘贴 JSON 或转义文本，然后执行格式化、压缩或去除转义',
+    formatFailed: 'JSON 无效，无法格式化：{{error}}',
+    minifyFailed: 'JSON 无效，无法压缩：{{error}}',
+    unescapeFailed: '无法去除转义，内容不是转义的 JSON 文本：{{error}}',
   },
 
   // Text diff
