@@ -23,6 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .playwright-mcp/
+.agent/
+.log*/
 
 # Tauri
 src-tauri/target/
