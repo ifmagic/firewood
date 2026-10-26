@@ -191,8 +191,11 @@ export function useTsHistory() {
   return useMemo(() => ({ records: tsRecords, add: addTs, clear: clearTs }), [tsRecords, addTs, clearTs]);
 }
 
-interface RecordTag {
-  color: string;
+export interface RecordTag {
+  /** Semantic chip variant, mapped to a warm chip style by the renderers
+   *  (antd preset colors are deliberately avoided — they sit outside the
+   *  app's ember & timber palette). */
+  variant: 'calc' | 'ts' | 'date';
   label: string;
 }
 
@@ -201,11 +204,11 @@ type TFunc = (key: string, opts?: Record<string, unknown>) => string;
 export function recordTag(rec: NumboxHistoryRecord, t: TFunc): RecordTag {
   switch (rec.kind) {
     case 'calc':
-      return { color: 'blue', label: t('numbox.tagCalc') };
+      return { variant: 'calc', label: t('numbox.tagCalc') };
     case 'ts-to-date':
-      return { color: 'geekblue', label: t('numbox.tagTsToDate') };
+      return { variant: 'ts', label: t('numbox.tagTsToDate') };
     case 'date-to-ts':
-      return { color: 'green', label: t('numbox.tagDateToTs') };
+      return { variant: 'date', label: t('numbox.tagDateToTs') };
   }
 }
 

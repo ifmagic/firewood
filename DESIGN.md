@@ -15,7 +15,7 @@
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Terminal       | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
 | JSON Formatter | CodeMirror 6 editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content                                              |
-| Abacus         | Calculator and timestamp workspace with mathjs expression evaluation, unix timestamp/date conversion, seconds/milliseconds toggle, and persisted history          |
+| Numbox         | Calculator and timestamp workspace with mathjs expression evaluation, unix timestamp/date conversion, seconds/milliseconds toggle, and persisted history          |
 | Diffchecker    | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs               |
 | Notepad        | Multi-tab local notes and file editing with CodeMirror 6, local open/save, JSON formatting, and persisted tab state                                               |
 | Image to PDF   | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration                    |

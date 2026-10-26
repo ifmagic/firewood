@@ -46,7 +46,7 @@ import {
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
-import { type CalcRecord, formatRecordForCopy, useCalcHistory } from './history';
+import { type CalcRecord, formatRecordForCopy, recordTag, useCalcHistory } from './history';
 import HistorySection from './HistorySection';
 import styles from './Numbox.module.css';
 
@@ -105,6 +105,8 @@ interface KeyDef {
   append?: string;
   action?: 'clear' | 'equals';
   aria?: string;
+  /** Span two grid columns (the wide 0 key, iOS-calculator style). */
+  span?: boolean;
 }
 
 function formatBase(r: number, base: 'hex' | 'bin'): string {
@@ -126,6 +128,13 @@ function keyClass(kind: KeyKind): string {
       return styles.keyEq;
   }
 }
+
+/** History chip variant → CSS class (recordTag returns semantic variants). */
+const tagVariantClass = {
+  calc: styles.tagCalc,
+  ts: styles.tagTs,
+  date: styles.tagDate,
+} as const;
 
 export default function CalculatorPanel() {
   const { t } = useTranslation();
@@ -261,6 +270,11 @@ export default function CalculatorPanel() {
     message.success(t('calculator.copiedWith', { value: mainResult }), 1.5);
   };
 
+  const copyBase = (value: string) => {
+    navigator.clipboard.writeText(value);
+    message.success(t('calculator.copiedWith', { value }), 1);
+  };
+
   const append = useCallback((text: string) => setExpr((e) => e + text), [setExpr]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -332,133 +346,174 @@ export default function CalculatorPanel() {
     setClearConfirming(false);
   };
 
-  const renderCalcRow = (rec: CalcRecord) => (
-    <>
-      <Tag color="blue" className={styles.histTag}>
-        {t('numbox.tagCalc')}
-      </Tag>
-      <button
-        type="button"
-        className={styles.histMain}
-        onClick={() => {
-          setExpr(rec.expr);
-          setBrowseIdx(-1);
-          exprInputRef.current?.focus();
-        }}
-        title={t('numbox.refillHint')}
-        aria-label={`${t('numbox.refillHint')}: ${rec.expr}`}
-      >
-        <span className={styles.histTextLeft}>{rec.expr}</span>
-        <span className={styles.histArrow}>→</span>
-        <span className={styles.histTextRight}>{rec.result}</span>
-      </button>
-      <span className={styles.histTime}>{dayjs(rec.at).format('HH:mm:ss')}</span>
-      <Tooltip title={t('numbox.copyDetails')}>
-        <Button
-          type="text"
-          size="small"
-          icon={<CopyOutlined />}
-          className={styles.histCopyBtn}
+  const renderCalcRow = (rec: CalcRecord) => {
+    const tag = recordTag(rec, t);
+    return (
+      <>
+        <Tag className={`${styles.histTag} ${tagVariantClass[tag.variant]}`}>{tag.label}</Tag>
+        <button
+          type="button"
+          className={styles.histMain}
           onClick={() => {
-            navigator.clipboard.writeText(formatRecordForCopy(rec, t));
-            message.success(t('action.copied'));
+            setExpr(rec.expr);
+            setBrowseIdx(-1);
+            exprInputRef.current?.focus();
           }}
-        />
-      </Tooltip>
-    </>
-  );
+          title={t('numbox.refillHint')}
+          aria-label={`${t('numbox.refillHint')}: ${rec.expr}`}
+        >
+          <span className={styles.histTextLeft}>{rec.expr}</span>
+          <span className={styles.histArrow}>→</span>
+          <span className={styles.histTextRight}>{rec.result}</span>
+        </button>
+        <span className={styles.histTime}>{dayjs(rec.at).format('HH:mm:ss')}</span>
+        <Tooltip title={t('numbox.copyDetails')}>
+          <Button
+            type="text"
+            size="small"
+            icon={<CopyOutlined />}
+            className={styles.histCopyBtn}
+            onClick={() => {
+              navigator.clipboard.writeText(formatRecordForCopy(rec, t));
+              message.success(t('action.copied'));
+            }}
+          />
+        </Tooltip>
+      </>
+    );
+  };
 
-  const keyDefs: KeyDef[] = [
+  // Function bar: scientific keys live above the main keypad as slim keys,
+  // so the digit grid stays a clean 4-column calculator layout.
+  const fnDefs: KeyDef[] = [
+    { label: '√', kind: 'sci', append: 'sqrt(', aria: t('calculator.ariaSqrt') },
+    { label: 'x²', kind: 'sci', append: '^2', aria: t('calculator.ariaSquare') },
+    { label: 'xʸ', kind: 'sci', append: '^', aria: t('calculator.ariaPower') },
+    { label: 'π', kind: 'sci', append: 'pi', aria: t('calculator.ariaPi') },
+    { label: 'e', kind: 'sci', append: 'e', aria: t('calculator.ariaE') },
+    { label: '%', kind: 'sci', append: '%', aria: t('calculator.ariaMod') },
+  ];
+
+  // Main keypad: classic 4-column layout — digit block with a trailing
+  // operator column, wide 0, solid ember equals bottom-right.
+  const gridDefs: KeyDef[] = [
     { label: 'C', kind: 'fn', action: 'clear', aria: t('calculator.ariaClear') },
     { label: '(', kind: 'fn', append: '(', aria: t('calculator.ariaOpenParen') },
     { label: ')', kind: 'fn', append: ')', aria: t('calculator.ariaCloseParen') },
-    { label: '%', kind: 'fn', append: '%', aria: t('calculator.ariaMod') },
     { label: '÷', kind: 'op', append: '/', aria: t('calculator.ariaDivide') },
     { label: '7', kind: 'num' },
     { label: '8', kind: 'num' },
     { label: '9', kind: 'num' },
     { label: '×', kind: 'op', append: '*', aria: t('calculator.ariaMultiply') },
-    { label: '√', kind: 'sci', append: 'sqrt(', aria: t('calculator.ariaSqrt') },
     { label: '4', kind: 'num' },
     { label: '5', kind: 'num' },
     { label: '6', kind: 'num' },
     { label: '−', kind: 'op', append: '-', aria: t('calculator.ariaMinus') },
-    { label: 'x²', kind: 'sci', append: '^2', aria: t('calculator.ariaSquare') },
     { label: '1', kind: 'num' },
     { label: '2', kind: 'num' },
     { label: '3', kind: 'num' },
     { label: '+', kind: 'op', append: '+', aria: t('calculator.ariaPlus') },
-    { label: 'xʸ', kind: 'sci', append: '^', aria: t('calculator.ariaPower') },
-    { label: '0', kind: 'num' },
+    { label: '0', kind: 'num', span: true },
     { label: '.', kind: 'num' },
-    { label: 'π', kind: 'sci', append: 'pi', aria: t('calculator.ariaPi') },
-    { label: 'e', kind: 'sci', append: 'e', aria: t('calculator.ariaE') },
     { label: '=', kind: 'eq', action: 'equals', aria: t('calculator.ariaEquals') },
   ];
 
   return (
     <div className={styles.calcLayout}>
       <div className={styles.calcCard}>
-        {/* Expression input: a single always-editable field, like macOS Calculator */}
-        <div className={styles.exprArea}>
-          <Input
-            ref={exprInputRef}
-            value={expr}
-            onChange={(e) => {
-              setExpr(e.target.value);
-              setBrowseIdx(-1);
-            }}
-            onKeyDown={onKeyDown}
-            placeholder={t('calculator.placeholder')}
-            className={styles.exprInput}
-            aria-label={t('calculator.expression')}
-          />
-          <button
-            type="button"
-            className={styles.backspaceBtn}
-            aria-label={t('calculator.ariaBackspace')}
-            onMouseDown={(e) => e.preventDefault()}
-            onPointerDown={startHold}
-            onPointerUp={stopHold}
-            onPointerLeave={stopHold}
-            onPointerCancel={stopHold}
-          >
-            ⌫
-          </button>
-        </div>
-
-        {/* Result display: large, right-aligned, click to copy */}
-        <div className={styles.resultArea} key={numResult == null ? 'none' : String(numResult)}>
-          <div className={styles.resultMain}>
-            <span className={styles.resultEquals}>=</span>
-            <span
-              className={`${styles.resultValue}${resultClickable ? ` ${styles.resultFlash} ${styles.resultValueClickable}` : ''}`}
-              onClick={resultClickable ? copyResult : undefined}
-              title={resultClickable ? t('action.copy') : undefined}
+        {/* Instrument display: dark charcoal panel with amber digits (VFD-style),
+            like the display glass of a physical calculator. */}
+        <div className={styles.display}>
+          {/* Expression input: a single always-editable field, like macOS Calculator */}
+          <div className={styles.exprArea}>
+            <Input
+              ref={exprInputRef}
+              value={expr}
+              onChange={(e) => {
+                setExpr(e.target.value);
+                setBrowseIdx(-1);
+              }}
+              onKeyDown={onKeyDown}
+              placeholder={t('calculator.placeholder')}
+              className={styles.exprInput}
+              aria-label={t('calculator.expression')}
+            />
+            <button
+              type="button"
+              className={styles.backspaceBtn}
+              aria-label={t('calculator.ariaBackspace')}
+              onMouseDown={(e) => e.preventDefault()}
+              onPointerDown={startHold}
+              onPointerUp={stopHold}
+              onPointerLeave={stopHold}
+              onPointerCancel={stopHold}
             >
-              {hasError ? (
-                <span className={styles.resultError}>{t('calculator.invalidExpression')}</span>
-              ) : mainResult ? (
-                mainResult
-              ) : expr.trim() ? (
-                <span className={styles.resultEllipsis}>…</span>
-              ) : null}
-            </span>
+              ⌫
+            </button>
           </div>
-          {isInteger && (
-            <div className={styles.resultBases}>
-              {formatBase(numResult as number, 'hex')} · {formatBase(numResult as number, 'bin')}
+
+          {/* Result display: large amber readout, click to copy */}
+          <div className={styles.resultArea} key={numResult == null ? 'none' : String(numResult)}>
+            <div className={styles.resultMain}>
+              <span className={styles.resultEquals}>=</span>
+              <span
+                className={`${styles.resultValue}${resultClickable ? ` ${styles.resultFlash} ${styles.resultValueClickable}` : ''}`}
+                onClick={resultClickable ? copyResult : undefined}
+                title={resultClickable ? t('action.copy') : undefined}
+              >
+                {hasError ? (
+                  <span className={styles.resultError}>{t('calculator.invalidExpression')}</span>
+                ) : mainResult ? (
+                  mainResult
+                ) : expr.trim() ? (
+                  <span className={styles.resultEllipsis}>…</span>
+                ) : null}
+              </span>
             </div>
-          )}
+            {isInteger && (
+              <div className={styles.resultBases}>
+                {(['hex', 'bin'] as const).map((base) => {
+                  const value = formatBase(numResult as number, base);
+                  return (
+                    <button
+                      key={base}
+                      type="button"
+                      className={styles.baseChip}
+                      onClick={() => copyBase(value)}
+                      title={t('action.copy')}
+                      aria-label={`${t('action.copy')} ${value}`}
+                    >
+                      {value}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Keypad: flexible grid filling the remaining space */}
-        <div className={styles.keypad} onMouseDown={(e) => e.preventDefault()}>
-          {keyDefs.map((def) => (
+        {/* Function bar: slim scientific keys above the main keypad */}
+        <div className={styles.fnBar} onMouseDown={(e) => e.preventDefault()}>
+          {fnDefs.map((def) => (
             <button
               key={def.label}
               type="button"
-              className={`${styles.keyBtn} ${keyClass(def.kind)}${
+              className={`${styles.keyBtn} ${keyClass(def.kind)} ${styles.fnKey}`}
+              onClick={() => handleKeyClick(def)}
+              aria-label={def.aria ?? t('calculator.ariaDigit', { digit: def.label })}
+            >
+              {def.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Keypad: classic 4-column grid filling the remaining space */}
+        <div className={styles.keypad} onMouseDown={(e) => e.preventDefault()}>
+          {gridDefs.map((def) => (
+            <button
+              key={def.label}
+              type="button"
+              className={`${styles.keyBtn} ${keyClass(def.kind)}${def.span ? ` ${styles.keyZero}` : ''}${
                 def.kind === 'eq' && equalsPulsing ? ` ${styles.keyEqPulse}` : ''
               }`}
               onClick={() => handleKeyClick(def)}

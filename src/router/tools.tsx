@@ -7,7 +7,7 @@ import {
   NodeIndexOutlined,
   BookOutlined,
 } from '@ant-design/icons';
-import AbacusIcon from '../tools/numbox/AbacusIcon';
+import NumboxIcon from '../tools/numbox/NumboxIcon';
 import type { ToolMeta } from '../types/tool';
 
 const tools: ToolMeta[] = [
@@ -25,8 +25,8 @@ const tools: ToolMeta[] = [
   },
   {
     id: 'numbox',
-    name: 'Abacus',
-    icon: <AbacusIcon />,
+    name: 'Numbox',
+    icon: <NumboxIcon />,
     component: lazy(() => import('../tools/numbox/index.tsx')),
   },
   {

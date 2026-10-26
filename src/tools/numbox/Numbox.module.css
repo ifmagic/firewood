@@ -1,3 +1,10 @@
+/* Numbox — "instrument panel" design. The display areas (calculator readout,
+   live clock) are dark charcoal panels with amber VFD-style digits — the same
+   charcoal family as the terminal — while keypads, converters and history
+   stay on warm paper surfaces. Local constants:
+   --inst chars: #221d18 bg / #3b342b line; amber: #f5b36b bright, #c98a4b
+   deep, #a89d8d muted text. */
+
 .container {
 	display: flex;
 	flex-direction: column;
@@ -41,6 +48,7 @@
 	from {
 		opacity: 0;
 	}
+
 	to {
 		opacity: 1;
 	}
@@ -76,35 +84,44 @@
 	flex-direction: column;
 }
 
+/* ---------- Instrument display (dark, amber digits) ---------- */
+
+.display {
+	background: #221d18;
+	border-bottom: 1px solid #3b342b;
+	flex-shrink: 0;
+}
+
 .exprArea {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	background: var(--fw-panel-muted);
-	padding: 8px 12px;
+	padding: 10px 12px;
 	min-height: 56px;
-	border-bottom: 1px solid var(--fw-divider);
+	border-bottom: 1px solid #3b342b;
 	flex-shrink: 0;
 }
 
-.exprInput {
+.exprInput,
+.exprInput:global(.ant-input) {
 	flex: 1;
 	min-width: 0;
-	font-size: 18px;
+	font-size: 16px;
 	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'JetBrains Mono', monospace;
 	letter-spacing: 0.3px;
 	background: transparent !important;
 	border: none !important;
 	box-shadow: none !important;
 	padding: 0;
-	color: var(--fw-text-strong);
+	color: #ded5c6 !important;
+	caret-color: var(--fw-accent);
 }
 
 .exprInput::placeholder {
-	font-size: 14px;
+	font-size: 13px;
 	font-family: 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 	letter-spacing: 0;
-	color: var(--fw-text-tertiary);
+	color: #857a6a;
 }
 
 .backspaceBtn {
@@ -117,32 +134,32 @@
 	padding: 0;
 	font-size: 18px;
 	line-height: 1;
-	color: var(--fw-text-tertiary);
-	background: var(--fw-surface);
-	border: 1px solid var(--fw-divider);
+	color: #a89d8d;
+	background: transparent;
+	border: 1px solid #3b342b;
 	border-radius: 8px;
 	cursor: pointer;
 	transition:
-		transform 0.1s ease,
-		color 0.15s ease,
-		background 0.15s ease,
-		border-color 0.15s ease;
+		transform var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease);
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
 }
 
 .backspaceBtn:hover {
-	color: var(--fw-text-strong);
-	background: var(--fw-hover-light);
-	border-color: #d4ccbe;
+	color: #ded5c6;
+	background: rgba(250, 245, 236, 0.06);
+	border-color: #574e41;
 }
 
 .backspaceBtn:active {
-	transform: scale(0.95);
+	transform: scale(0.93);
 }
 
 .backspaceBtn:focus-visible {
-	outline: 2px solid var(--fw-accent);
+	outline: 1px solid #f5b36b;
 	outline-offset: 1px;
 }
 
@@ -152,9 +169,8 @@
 	align-items: flex-end;
 	justify-content: center;
 	gap: 4px;
-	min-height: 84px;
-	padding: 12px 16px;
-	border-bottom: 1px solid var(--fw-divider);
+	min-height: 92px;
+	padding: 12px 16px 16px;
 	flex-shrink: 0;
 }
 
@@ -168,16 +184,16 @@
 
 .resultEquals {
 	flex-shrink: 0;
-	font-size: 20px;
-	color: var(--fw-text-tertiary);
+	font-size: 22px;
+	color: #857a6a;
 	user-select: none;
 }
 
 .resultValue {
 	font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace;
-	font-size: 30px;
+	font-size: 32px;
 	font-weight: 600;
-	color: var(--fw-text-strong);
+	color: #f5b36b;
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
 	overflow: hidden;
@@ -188,45 +204,108 @@
 	cursor: pointer;
 }
 
+.resultValueClickable:hover {
+	color: #ffcf96;
+}
+
+/* Preview confirmation: a soft ember wash on the dark glass (was a green
+   flash — a foreign hue in the warm palette). */
 .resultFlash {
 	border-radius: 6px;
-	animation: fwResultFlash 0.15s ease;
+	animation: fwResultFlash 0.18s var(--fw-ease);
 }
 
 @keyframes fwResultFlash {
 	from {
-		background: rgba(82, 196, 26, 0.25);
+		background: rgba(232, 89, 12, 0.18);
 	}
+
 	to {
 		background: transparent;
 	}
 }
 
 .resultBases {
+	display: flex;
+	justify-content: flex-end;
+	gap: 6px;
+	margin-top: 2px;
+}
+
+/* Hex/bin readout as clickable copy chips, echoing the amber display. */
+.baseChip {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 10px;
 	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
 	font-size: 12px;
-	color: var(--fw-text-tertiary);
+	color: #c98a4b;
+	background: rgba(232, 89, 12, 0.1);
+	border: 1px solid rgba(232, 89, 12, 0.28);
+	border-radius: 999px;
+	cursor: pointer;
 	font-variant-numeric: tabular-nums;
+	transition:
+		transform var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease);
+	user-select: none;
+}
+
+.baseChip:hover {
+	color: #f5b36b;
+	background: rgba(232, 89, 12, 0.16);
+	border-color: rgba(232, 89, 12, 0.5);
+}
+
+.baseChip:active {
+	transform: scale(0.95);
+}
+
+.baseChip:focus-visible {
+	outline: 1px solid #f5b36b;
+	outline-offset: 1px;
 }
 
 .resultEllipsis {
-	font-size: 24px;
+	font-size: 26px;
 	font-weight: 400;
-	color: var(--fw-text-tertiary);
+	color: #857a6a;
 }
 
 .resultError {
 	font-size: 13px;
 	font-weight: 400;
-	color: var(--fw-danger);
+	color: #ff9d85;
 }
+
+/* ---------- Function bar (slim scientific keys) ---------- */
+
+.fnBar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 12px 12px 0;
+	flex-shrink: 0;
+}
+
+.fnKey {
+	flex: 1;
+	min-height: 32px !important;
+	height: 32px;
+	font-size: 13px;
+	border-radius: 8px;
+}
+
+/* ---------- Main keypad (classic 4-column grid) ---------- */
 
 .keypad {
 	flex: 1;
-	min-height: 260px;
+	min-height: 240px;
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
-	grid-template-rows: repeat(5, 1fr);
+	grid-template-columns: repeat(4, 1fr);
+	grid-auto-rows: 1fr;
 	gap: 8px;
 	padding: 12px;
 }
@@ -234,24 +313,23 @@
 .keyBtn {
 	min-height: 48px;
 	height: 100%;
-	border-radius: 8px;
+	border-radius: 10px;
 	border: 1px solid transparent;
 	font-size: 18px;
 	font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace;
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		transform 0.1s ease,
-		background 0.15s ease,
-		color 0.15s ease,
-		border-color 0.15s ease,
-		filter 0.15s ease;
+		transform var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease);
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
 }
 
 .keyBtn:active {
-	transform: scale(0.95);
+	transform: scale(0.94);
 }
 
 .keyBtn:focus-visible {
@@ -260,7 +338,7 @@
 }
 
 .keyNum {
-	background: var(--fw-surface);
+	background: #fffefb;
 	color: var(--fw-text-strong);
 	border-color: var(--fw-divider);
 }
@@ -269,6 +347,7 @@
 	background: var(--fw-hover-light);
 }
 
+/* Operator column: the ember-tinted right edge guides the eye down the grid. */
 .keyOp {
 	background: var(--fw-accent-soft);
 	color: var(--fw-accent-ink);
@@ -278,8 +357,12 @@
 	background: var(--fw-accent-soft-hover);
 }
 
+.keyOp:active {
+	background: var(--fw-accent-soft-hover);
+}
+
 .keyFn {
-	background: var(--fw-panel-muted);
+	background: var(--fw-panel-subtle);
 	color: var(--fw-text-body);
 }
 
@@ -287,41 +370,53 @@
 	background: var(--fw-hover-light);
 }
 
-/* Scientific keys: a parchment tint that stays inside the app's warm neutral
-   + ember system (same family as the editor's paper surfaces) instead of the
-   Material blue that used to sit here as a foreign second brand hue. */
+/* Scientific keys (function bar): a parchment tint that stays inside the
+   app's warm neutral + ember system. */
 .keySci {
-	background: #f6f1e7;
-	color: #7a6234;
+	background: var(--fw-panel-muted);
+	color: var(--fw-text-body);
 }
 
 .keySci:hover {
-	background: #efe8d8;
+	background: var(--fw-accent-soft);
+	color: var(--fw-accent-ink);
 }
 
+/* Equals: the one solid ember key — the commit action. */
 .keyEq {
-	background: var(--fw-accent);
+	background: #c2410c;
 	color: #ffffff;
 }
 
 .keyEq:hover {
-	background: color-mix(in srgb, var(--fw-accent) 86%, #000000);
+	background: #d4551a;
+}
+
+.keyEq:active {
+	background: #a63a10;
 }
 
 .keyEqPulse {
-	animation: fwEqualsPulse 0.2s ease;
+	animation: fwEqualsPulse 0.2s var(--fw-ease);
 }
 
 @keyframes fwEqualsPulse {
 	0% {
 		transform: scale(1);
 	}
+
 	40% {
 		transform: scale(1.05);
 	}
+
 	100% {
 		transform: scale(1);
 	}
+}
+
+/* Wide 0 key (iOS-calculator convention). */
+.keyZero {
+	grid-column: span 2;
 }
 
 /* ---------- Inline history ---------- */
@@ -384,9 +479,9 @@
 	border-radius: 999px;
 	cursor: pointer;
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease,
-		background 0.15s ease;
+		color var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease);
 	user-select: none;
 }
 
@@ -440,7 +535,7 @@
 	gap: 8px;
 	padding: 8px 14px;
 	border-bottom: 1px solid var(--fw-divider);
-	transition: background 0.15s;
+	transition: background var(--fw-dur-fast) var(--fw-ease);
 }
 
 .histItem:last-child {
@@ -478,10 +573,35 @@ button.histMain:focus-visible {
 	border-radius: 4px;
 }
 
+/* History chips: warm tints only (antd preset blues/greens removed — they
+   sat outside the palette). One tint per record kind. */
 .histTag {
-	flex-shrink: 0;
 	margin: 0 !important;
-	font-size: 11px;
+	padding: 0 8px !important;
+	font-size: 11px !important;
+	line-height: 18px !important;
+	border-radius: 999px !important;
+	border: 1px solid transparent !important;
+	background: transparent !important;
+	white-space: nowrap;
+}
+
+.tagCalc {
+	background: #fdeee2 !important;
+	color: #b54708 !important;
+	border-color: #f6d8c0 !important;
+}
+
+.tagTs {
+	background: #f6f1e7 !important;
+	color: #7a6234 !important;
+	border-color: #e9dfc7 !important;
+}
+
+.tagDate {
+	background: #eef0e4 !important;
+	color: #5d6b45 !important;
+	border-color: #d9dec7 !important;
 }
 
 .histTextLeft,
@@ -542,6 +662,14 @@ button.histMain:focus-visible {
 	gap: 16px;
 }
 
+/* Live clock hero: the same dark instrument panel as the calculator display. */
+.nowHero {
+	background: #221d18;
+	border: 1px solid #3b342b;
+	border-radius: 12px;
+	flex-shrink: 0;
+}
+
 .nowHeader {
 	padding: 16px;
 	display: flex;
@@ -555,25 +683,61 @@ button.histMain:focus-visible {
 	gap: 10px;
 }
 
+/* LIVE breathing dot. Decorative only — the adjacent label carries the
+   meaning, so the pulse stays aria-hidden. */
+.liveDot {
+	flex-shrink: 0;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--fw-accent);
+	animation: fwLivePulse 2s var(--fw-ease) infinite;
+}
+
+@keyframes fwLivePulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(232, 89, 12, 0.55);
+	}
+
+	70% {
+		box-shadow: 0 0 0 7px rgba(232, 89, 12, 0);
+	}
+
+	100% {
+		box-shadow: 0 0 0 0 rgba(232, 89, 12, 0);
+	}
+}
+
 .nowLabel {
-	font-size: 12px;
+	font-size: 11px;
 	font-weight: 600;
-	color: var(--fw-text-tertiary);
-	letter-spacing: 0.02em;
+	color: #c98a4b;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	white-space: nowrap;
 }
 
 .nowSeconds {
 	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-	font-size: 28px;
+	font-size: 30px;
 	font-weight: 600;
-	color: var(--fw-text-strong);
+	color: #f5b36b;
 	font-variant-numeric: tabular-nums;
 	letter-spacing: 0.5px;
 }
 
 .nowCopy {
 	margin-left: 2px;
-	color: var(--fw-text-tertiary);
+	color: #a89d8d !important;
+}
+
+.nowCopy:hover {
+	color: #f5b36b !important;
+}
+
+.nowCopy:focus-visible {
+	outline: 1px solid #f5b36b;
+	outline-offset: 1px;
 }
 
 .nowMeta {
@@ -581,7 +745,7 @@ button.histMain:focus-visible {
 	gap: 16px;
 	flex-wrap: wrap;
 	font-size: 12px;
-	color: var(--fw-text-tertiary);
+	color: #a89d8d;
 	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
 	font-variant-numeric: tabular-nums;
 }
@@ -620,7 +784,7 @@ button.histMain:focus-visible {
 	gap: 10px;
 	padding: 10px 16px;
 	border-bottom: 1px solid var(--fw-divider);
-	transition: background 0.15s;
+	transition: background var(--fw-dur-fast) var(--fw-ease);
 }
 
 .tsOutput:last-child {
@@ -685,10 +849,10 @@ button.histMain:focus-visible {
 	border-radius: 999px;
 	cursor: pointer;
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease,
-		background 0.15s ease,
-		transform 0.08s ease;
+		color var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		transform 0.08s var(--fw-ease);
 	user-select: none;
 }
 
@@ -726,8 +890,8 @@ button.histMain:focus-visible {
 .tsColumn > .section {
 	flex: 1;
 	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color var(--fw-dur-fast) var(--fw-ease),
+		box-shadow var(--fw-dur-fast) var(--fw-ease);
 }
 
 .tsColumn > .section:hover {
@@ -743,10 +907,10 @@ button.histMain:focus-visible {
 
 .container :global(.ant-btn) {
 	transition:
-		transform 0.08s ease,
-		color 0.15s ease,
-		background 0.15s ease,
-		border-color 0.15s ease;
+		transform var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease);
 }
 
 /* ---------- Responsive ---------- */
@@ -759,7 +923,7 @@ button.histMain:focus-visible {
 
 	.calcCard {
 		flex: none;
-		min-height: 520px;
+		min-height: 500px;
 	}
 
 	.calcHistory {
@@ -784,6 +948,10 @@ button.histMain:focus-visible {
 	}
 
 	.resultArea {
-		min-height: 76px;
+		min-height: 84px;
+	}
+
+	.resultValue {
+		font-size: 28px;
 	}
 }

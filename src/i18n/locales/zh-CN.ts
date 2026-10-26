@@ -26,7 +26,7 @@ const zhCN = {
     notepad: '记事本',
     'img-to-pdf': '图片排版',
     moxia: '墨匣',
-    numbox: '算盘',
+    numbox: '数盒',
     terminal: '终端',
   },
 

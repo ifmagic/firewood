@@ -26,7 +26,7 @@ const en = {
     notepad: 'Notepad',
     'img-to-pdf': 'Image to PDF',
     moxia: 'Moxia',
-    numbox: 'Abacus',
+    numbox: 'Numbox',
     terminal: 'Terminal',
   },
 

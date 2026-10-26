@@ -17,6 +17,13 @@ import styles from './Numbox.module.css';
 
 type TsUnit = 's' | 'ms';
 
+/** History chip variant → CSS class (recordTag returns semantic variants). */
+const tagVariantClass = {
+  calc: styles.tagCalc,
+  ts: styles.tagTs,
+  date: styles.tagDate,
+} as const;
+
 type TFunc = (key: string, opts?: Record<string, unknown>) => string;
 
 function pad(n: number) {
@@ -163,9 +170,7 @@ export default function TimestampPanel() {
     const tag = recordTag(rec, t);
     return (
       <>
-        <Tag color={tag.color} className={styles.histTag}>
-          {tag.label}
-        </Tag>
+        <Tag className={`${styles.histTag} ${tagVariantClass[tag.variant]}`}>{tag.label}</Tag>
         <div className={styles.histMain}>
           <span className={styles.histTextLeft}>{rec.left}</span>
           <span className={styles.histArrow}>→</span>
@@ -192,10 +197,13 @@ export default function TimestampPanel() {
   return (
     <div className={styles.panel}>
       <div className={styles.tsContent}>
-        {/* Live current timestamp */}
-        <div className={styles.section}>
+        {/* Live current timestamp — dark instrument display with a breathing
+            LIVE dot; the ticking digits stay visual-only (no aria-live: a
+            1s ticker would flood screen readers). */}
+        <div className={styles.nowHero}>
           <div className={styles.nowHeader}>
             <div className={styles.nowMain}>
+              <span className={styles.liveDot} aria-hidden="true" />
               <span className={styles.nowLabel}>{t('timestamp.currentTs')}</span>
               <span className={styles.nowSeconds}>{nowSec}</span>
               <Tooltip title={t('action.copy')}>
