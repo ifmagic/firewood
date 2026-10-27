@@ -5,8 +5,8 @@ interface Props {
   className?: string;
 }
 
-/** Numbox icon: a hash mark in a box — "numbers in a box", pairing with Moxia's
- *  ink-box glyph in the same outline family (1.8 stroke, rounded caps). */
+/** Numbox icon: a hash mark in a box — "numbers in a box"
+ *  (1.8 stroke, rounded caps). */
 export default function NumboxIcon({ style, className }: Props) {
   return (
     <svg

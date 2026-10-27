@@ -1,12 +1,5 @@
 import { lazy } from 'react';
-import {
-  CodeOutlined,
-  DiffOutlined,
-  FileTextOutlined,
-  FilePdfOutlined,
-  NodeIndexOutlined,
-  BookOutlined,
-} from '@ant-design/icons';
+import { CodeOutlined, DiffOutlined, FileTextOutlined, FilePdfOutlined, NodeIndexOutlined } from '@ant-design/icons';
 import NumboxIcon from '../tools/numbox/NumboxIcon';
 import type { ToolMeta } from '../types/tool';
 
@@ -46,12 +39,6 @@ const tools: ToolMeta[] = [
     name: 'Image to PDF',
     icon: <FilePdfOutlined />,
     component: lazy(() => import('../tools/img-to-pdf/index.tsx')),
-  },
-  {
-    id: 'moxia',
-    name: 'Moxia',
-    icon: <BookOutlined />,
-    component: lazy(() => import('../tools/moxia/index.tsx')),
   },
 ];
 

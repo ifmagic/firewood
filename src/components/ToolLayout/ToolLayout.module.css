@@ -7,8 +7,8 @@
 	background: var(--fw-surface);
 }
 
-/* When a tool supplies a full-width custom header (e.g. moxia's menu bar),
-   the wrapper padding is removed so the header can span edge-to-edge. */
+/* When a tool supplies a full-width custom header, the wrapper padding is
+   removed so the header can span edge-to-edge. */
 .wrapperCustomHeader {
 	padding: 0;
 }

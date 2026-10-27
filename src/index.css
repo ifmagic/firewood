@@ -146,7 +146,7 @@ body {
 	}
 }
 
-/* CodeMirror host container (shared by notepad / json-formatter; mirrors moxia's .cmHost)
+/* CodeMirror host container (shared by notepad / json-formatter)
    NO overflow:hidden here: CM mounts tooltips (lint hover, autocomplete) inside the
    editor DOM, and any overflow:hidden ancestor clips them — e.g. a lint tooltip for an
    error on line 1 renders above the editor top and would be cut off. Scrolling is

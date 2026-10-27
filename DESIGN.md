@@ -19,7 +19,6 @@
 | Diffchecker    | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs               |
 | Notepad        | Multi-tab local notes and file editing with CodeMirror 6, local open/save, JSON formatting, and persisted tab state                                               |
 | Image to PDF   | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration                    |
-| Moxia          | SQLite-backed novel writing workspace with books, chapters, characters, worldbuilding, word counts, and persisted per-book settings                               |
 
 ## 3. Tech Stack
 
@@ -53,8 +52,7 @@
 | --------------------------------------------------------- | ------------------------------------------ |
 | `font-kit`                                                | System font discovery                      |
 | `libc`                                                    | PTY and process integration                |
-| `parking_lot`                                             | PTY and Moxia manager synchronization      |
-| `rusqlite` (bundled)                                      | SQLite storage for Moxia books             |
+| `parking_lot`                                             | PTY manager synchronization                |
 | `rand`                                                    | PTY session ID generation                  |
 | `tauri-plugin-updater`                                    | App updates                                |
 | `tauri-plugin-single-instance`                            | Single-instance behavior in release builds |
@@ -84,7 +82,6 @@
 
 - `src-tauri/src/main.rs` registers commands, tray behavior, updater integration, and macOS menu wiring
 - `src-tauri/src/pty.rs` manages terminal session lifecycle, IO, and resizing
-- `src-tauri/src/moxia/` manages SQLite-backed book storage, migrations, and Moxia commands
 
 ### 4.4 Release-note flow
 
@@ -104,11 +101,6 @@ firewood/
 │   ├── tauri.conf.json
 │   └── src/
 │       ├── main.rs
-│       ├── moxia/
-│       │   ├── commands.rs
-│       │   ├── dto.rs
-│       │   ├── migration.rs
-│       │   └── mod.rs
 │       └── pty.rs
 ├── src/
 │   ├── App.tsx
@@ -129,8 +121,6 @@ firewood/
 │   │   ├── useAlwaysOnTop.ts
 │   │   ├── useCodemirror.ts
 │   │   ├── useEditorFontSize.ts
-│   │   ├── useMoxiaFontSize.ts
-│   │   ├── useMoxiaSettings.ts
 │   │   ├── usePersistentState.ts
 │   │   ├── useResizablePanels.ts
 │   │   ├── useSidebarCollapsed.ts
@@ -144,7 +134,6 @@ firewood/
 │   ├── tools/
 │   │   ├── img-to-pdf/
 │   │   ├── json-formatter/
-│   │   ├── moxia/
 │   │   ├── notepad/
 │   │   ├── numbox/
 │   │   ├── terminal/

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import styles from './ToolLayout.module.css';
 
 interface Props {
-  /** Custom header slot (e.g. moxia's menu bar). When absent, the content fills the whole area. */
+  /** Custom header slot. When absent, the content fills the whole area. */
   header?: ReactNode;
   children: ReactNode;
 }

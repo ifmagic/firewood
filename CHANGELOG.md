@@ -106,23 +106,6 @@
 - Replace the standalone Timestamp tool with Abacus, a unified calculator and Unix timestamp conversion workspace.
 - Add scientific expression controls, automatic seconds/milliseconds detection, quick timestamp presets, and persistent calculation and conversion history.
 
-## v0.7.8
-
-### ✨ Features
-
-- Add the new Moxia novel-writing workspace with local book, chapter, and character management.
-- Add a command palette to speed up Moxia navigation and actions.
-- Refresh Moxia detail panels with reusable section cards and missing-book detection.
-
-### 🐛 Bug Fixes
-
-- Restore editor focus handoff across Moxia editing flows.
-- Correct relation name direction handling and improve character card prompt context generation.
-
-### 🔧 Chore / Updates
-
-- Restructure the Moxia layout for better accessibility and a more consistent workspace UI.
-
 ## v0.7.7
 
 ### ✨ Features
