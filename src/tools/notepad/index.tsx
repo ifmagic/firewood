@@ -35,7 +35,7 @@ interface EditorStats {
 
 const STORAGE_TABS_KEY = 'tool:notepad:tabs';
 const STORAGE_ACTIVE_KEY = 'tool:notepad:active';
-const MAX_TABS = 8;
+const MAX_TABS = 20;
 const PERSIST_DEBOUNCE_MS = 250;
 const LOCAL_TEXT_EXTENSIONS = [
   'txt',
