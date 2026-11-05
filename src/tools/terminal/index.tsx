@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import i18n from '../../i18n';
 import ToolLayout from '../../components/ToolLayout';
+import { charcoal } from '../../utils/charcoal';
 import { isMacPlatform } from '../../utils/platform';
 import {
   appendBufferedOutput,
@@ -88,29 +89,32 @@ const DEFAULT_FONT_FAMILY =
 // Warm charred-timber theme (matches .firewood-terminal in terminal.css).
 // ANSI chromatic colors stay VS Code Dark+ — familiar and readable on the
 // warm base; only the neutrals (bg/fg/black/white) carry the timber tint.
+// Those neutrals live once in the shared charcoal module (see
+// src/utils/charcoal.ts), so the xterm theme and the terminal chrome stay in
+// sync instead of drifting apart.
 const THEME = {
-  background: '#221D18',
-  foreground: '#DED5C6',
+  background: charcoal.bg,
+  foreground: charcoal.text,
   cursor: '#E8925F',
-  cursorAccent: '#221D18',
+  cursorAccent: charcoal.bg,
   selectionBackground: '#5C3A20',
   selectionForeground: '#FFFFFF',
-  black: '#221D18',
+  black: charcoal.bg,
   red: '#f44747',
   green: '#6a9955',
   yellow: '#dcdcaa',
   blue: '#569cd6',
   magenta: '#c586c0',
   cyan: '#4ec9b0',
-  white: '#DED5C6',
-  brightBlack: '#857A6A',
+  white: charcoal.text,
+  brightBlack: charcoal.lighter,
   brightRed: '#f44747',
   brightGreen: '#6a9955',
   brightYellow: '#dcdcaa',
   brightBlue: '#569cd6',
   brightMagenta: '#c586c0',
   brightCyan: '#4ec9b0',
-  brightWhite: '#FDFBF7',
+  brightWhite: charcoal.ink,
 };
 
 let _fontsReady: Promise<void> | null = null;

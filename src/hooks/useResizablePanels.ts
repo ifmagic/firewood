@@ -33,5 +33,28 @@ export function useResizablePanels(initialLeftPercent = 50, min = 20, max = 80) 
     [min, max],
   );
 
-  return { leftPercent, containerRef, onDividerMouseDown };
+  // Keyboard alternative: arrow keys nudge the split (shift = 5% step). Exposed
+  // on the divider so users who cannot use the mouse can still resize panes.
+  const onDividerKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      const step = e.shiftKey ? 5 : 1;
+      const dir = e.key === 'ArrowRight' ? 1 : -1;
+
+      setLeftPercent((prev) => Math.min(max, Math.max(min, prev + dir * step)));
+    },
+    [min, max],
+  );
+
+  return {
+    leftPercent,
+    min,
+    max,
+    containerRef,
+    onDividerMouseDown,
+    onDividerKeyDown,
+  };
 }

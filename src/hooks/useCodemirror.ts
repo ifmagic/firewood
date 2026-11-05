@@ -61,10 +61,10 @@ const WRITING_THEME = EditorView.theme({
   '.cm-gutters': {
     backgroundColor: 'transparent',
     borderRight: '1px solid var(--fw-divider, #eeeeee)',
-    color: '#94886F',
+    color: 'var(--fw-text-tertiary)',
   },
   '.cm-placeholder': {
-    color: '#94886F',
+    color: 'var(--fw-text-tertiary)',
     fontStyle: 'italic',
   },
   '.cm-selectionBackground': {
@@ -102,8 +102,8 @@ const CODE_THEME = EditorView.theme({
   '&': {
     fontFamily: CODE_FONT,
     height: '100%',
-    backgroundColor: '#FDFCF9',
-    color: '#221C15',
+    backgroundColor: 'var(--fw-editor-bg)',
+    color: 'var(--fw-text-strong)',
   },
   '.cm-content': {
     fontFamily: CODE_FONT,
@@ -112,11 +112,11 @@ const CODE_THEME = EditorView.theme({
   },
   '&.cm-focused': { outline: 'none' },
   '.cm-gutters': {
-    backgroundColor: '#FAF8F2',
-    color: '#94886F',
+    backgroundColor: 'var(--fw-panel-subtle)',
+    color: 'var(--fw-text-tertiary)',
   },
-  '.cm-activeLineGutter': { color: '#6E6154' },
-  '.cm-activeLine': { backgroundColor: '#F7F3EA' },
+  '.cm-activeLineGutter': { color: 'var(--fw-text-tertiary)' },
+  '.cm-activeLine': { backgroundColor: 'var(--fw-panel-muted)' },
   // drawSelection() is not used here, so there is no .cm-selectionBackground layer: the primary
   // range is painted by the browser's own ::selection. Style it to match .cm-multiselection —
   // otherwise the primary range of a column selection keeps the system highlight color while the
@@ -139,7 +139,7 @@ const CODE_THEME = EditorView.theme({
   },
   '.cm-matchingBracket': { backgroundColor: '#F1E4CF' },
   '.cm-placeholder': {
-    color: '#94886F',
+    color: 'var(--fw-text-tertiary)',
     fontStyle: 'italic',
   },
   // CM's lint squiggle is a 6x3px SVG at background-position "left bottom".

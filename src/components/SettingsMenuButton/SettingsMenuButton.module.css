@@ -92,8 +92,15 @@
 	text-align: left;
 	cursor: pointer;
 	transition:
-		background-color 0.15s ease,
-		color 0.15s ease;
+		background-color var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease);
+}
+
+.infoItemButton:hover,
+.infoItemButton:focus-visible {
+	border-color: var(--fw-accent);
+	background: var(--fw-accent-soft);
+	color: var(--fw-text-strong);
 }
 
 .menuItem:hover {
@@ -116,7 +123,7 @@
 .menuArrow {
 	color: var(--fw-text-secondary);
 	font-size: 11px;
-	transition: transform 0.15s ease;
+	transition: transform var(--fw-dur-fast) var(--fw-ease);
 }
 
 .menuArrowOpen {
@@ -152,7 +159,7 @@
 	gap: 8px;
 	text-align: left;
 	cursor: pointer;
-	transition: background-color 0.15s ease;
+	transition: background-color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .submenuItem:hover {

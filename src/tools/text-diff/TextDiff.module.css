@@ -105,9 +105,9 @@
 	font: inherit;
 	cursor: pointer;
 	transition:
-		border-color 0.2s ease,
-		background 0.2s ease,
-		color 0.2s ease;
+		border-color var(--fw-dur) var(--fw-ease),
+		background var(--fw-dur) var(--fw-ease),
+		color var(--fw-dur) var(--fw-ease);
 }
 
 .hunkBtn {

@@ -7,7 +7,7 @@
 	flex-direction: column;
 	height: 100%;
 	min-height: 0;
-	background: #221d18;
+	background: var(--fw-charcoal-bg);
 	border-radius: 8px;
 	overflow: hidden;
 }
@@ -17,8 +17,8 @@
 	align-items: stretch;
 	justify-content: space-between;
 	gap: 8px;
-	background: #2a241d;
-	border-bottom: 1px solid #3b342b;
+	background: var(--fw-charcoal-header);
+	border-bottom: 1px solid var(--fw-charcoal-line);
 	flex-shrink: 0;
 	min-height: 38px;
 }
@@ -47,21 +47,21 @@
 	max-width: 220px;
 	height: 37px;
 	background: transparent;
-	border-right: 1px solid #2f2921;
-	color: #a89d8d;
+	border-right: 1px solid var(--fw-charcoal-line);
+	color: var(--fw-charcoal-lighter);
 	transition:
-		background var(--fw-dur-fast, 0.12s) ease,
-		color var(--fw-dur-fast, 0.12s) ease;
+		background var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .firewood-terminal-tab:hover {
-	background: #2f2921;
-	color: #cec4b4;
+	background: var(--fw-charcoal-hover);
+	color: var(--fw-charcoal-bright);
 }
 
 .firewood-terminal-tab.is-active {
-	background: #221d18;
-	color: #fdfbf7;
+	background: var(--fw-charcoal-bg);
+	color: var(--fw-charcoal-ink);
 }
 
 .firewood-terminal-tabButton {
@@ -86,7 +86,7 @@
 .firewood-terminal-menu-stepper:focus-visible,
 .firewood-terminal-menu-input:focus-visible,
 .firewood-terminal-menu-select:focus-visible {
-	outline: 1px solid #c2410c;
+	outline: 1px solid var(--fw-charcoal-action);
 	outline-offset: -1px;
 }
 
@@ -97,31 +97,31 @@
 	background: rgba(222, 213, 198, 0.28);
 	flex-shrink: 0;
 	transition:
-		background var(--fw-dur-fast, 0.12s) ease,
-		box-shadow var(--fw-dur-fast, 0.12s) ease;
+		background var(--fw-dur-fast) var(--fw-ease),
+		box-shadow var(--fw-dur-fast) var(--fw-ease);
 }
 
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus {
-	background: #73c991;
-	box-shadow: 0 0 0 3px rgba(115, 201, 145, 0.18);
+	background: var(--fw-charcoal-success);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-charcoal-success) 18%, transparent);
 }
 
 .firewood-terminal-tabStatus-loading,
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus-loading {
-	background: #c2410c;
-	box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.2);
+	background: var(--fw-charcoal-action);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-charcoal-action) 20%, transparent);
 }
 
 .firewood-terminal-tabStatus-error,
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus-error {
-	background: #f48771;
-	box-shadow: 0 0 0 3px rgba(244, 135, 113, 0.14);
+	background: var(--fw-charcoal-error);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-charcoal-error) 14%, transparent);
 }
 
 .firewood-terminal-tabStatus-exited,
 .firewood-terminal-tab.is-active .firewood-terminal-tabStatus-exited {
-	background: #857a6a;
-	box-shadow: 0 0 0 3px rgba(133, 122, 106, 0.14);
+	background: var(--fw-charcoal-lighter);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-charcoal-muted) 14%, transparent);
 }
 
 .firewood-terminal-tabTitle {
@@ -146,10 +146,10 @@
 	width: 100%;
 	min-width: 0;
 	height: 24px;
-	border: 1px solid #c2410c;
-	background: #221d18;
+	border: 1px solid var(--fw-charcoal-action);
+	background: var(--fw-charcoal-bg);
 	border-radius: 4px;
-	color: #fdfbf7;
+	color: var(--fw-charcoal-ink);
 	font-size: 12px;
 	padding: 0 6px;
 	outline: none;
@@ -170,9 +170,9 @@
 	opacity: 0;
 	pointer-events: none;
 	transition:
-		opacity var(--fw-dur-fast, 0.12s) ease,
-		background var(--fw-dur-fast, 0.12s) ease,
-		color var(--fw-dur-fast, 0.12s) ease;
+		opacity var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease);
 	flex-shrink: 0;
 }
 
@@ -186,7 +186,7 @@
 }
 
 .firewood-terminal-tabLock.is-locked {
-	color: #e8c273;
+	color: var(--fw-charcoal-lock);
 }
 
 .firewood-terminal-tabClose {
@@ -204,8 +204,8 @@
 	opacity: 0;
 	pointer-events: none;
 	transition:
-		opacity var(--fw-dur-fast, 0.12s) ease,
-		background var(--fw-dur-fast, 0.12s) ease;
+		opacity var(--fw-dur-fast) var(--fw-ease),
+		background var(--fw-dur-fast) var(--fw-ease);
 	flex-shrink: 0;
 }
 
@@ -259,26 +259,26 @@
 	border: none;
 	background: transparent;
 	border-radius: 4px;
-	color: #857a6a;
+	color: var(--fw-charcoal-muted);
 	cursor: pointer;
 	font-size: 13px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	transition:
-		background var(--fw-dur-fast, 0.12s) ease,
-		color var(--fw-dur-fast, 0.12s) ease,
-		transform var(--fw-dur-fast, 0.12s) ease;
+		background var(--fw-dur-fast) var(--fw-ease),
+		color var(--fw-dur-fast) var(--fw-ease),
+		transform var(--fw-dur-fast) var(--fw-ease);
 	flex-shrink: 0;
 }
 
 .firewood-terminal-btn:hover {
-	background: #3b342b;
-	color: #cec4b4;
+	background: var(--fw-charcoal-hover);
+	color: var(--fw-charcoal-bright);
 }
 
 .firewood-terminal-btn:active {
-	background: #4d453a;
+	background: var(--fw-charcoal-active);
 	transform: scale(0.94);
 }
 
@@ -339,31 +339,31 @@
 
 .firewood-terminal-emptyState {
 	background: linear-gradient(180deg, rgba(34, 29, 24, 0.92), rgba(34, 29, 24, 0.98));
-	color: #b0a595;
-	animation: firewood-terminal-fade-in var(--fw-dur-slow, 0.28s) ease-out;
+	color: var(--fw-charcoal-pale);
+	animation: firewood-terminal-fade-in var(--fw-dur-slow) var(--fw-ease-out);
 }
 
 .firewood-terminal-emptyTitle {
 	font-size: 14px;
-	color: #ded5c6;
+	color: var(--fw-charcoal-bright);
 }
 
 .firewood-terminal-emptyAction {
 	padding: 8px 18px;
-	border: 1px solid #3b342b;
-	background: #2a241d;
+	border: 1px solid var(--fw-charcoal-line);
+	background: var(--fw-charcoal-header);
 	border-radius: 6px;
-	color: #fdfbf7;
+	color: var(--fw-charcoal-ink);
 	cursor: pointer;
 	transition:
-		background var(--fw-dur-fast, 0.12s) ease,
-		border-color var(--fw-dur-fast, 0.12s) ease,
-		transform var(--fw-dur-fast, 0.12s) ease;
+		background var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease),
+		transform var(--fw-dur-fast) var(--fw-ease);
 }
 
 .firewood-terminal-emptyAction:hover {
-	background: #342d24;
-	border-color: #4d453a;
+	background: var(--fw-charcoal-hover);
+	border-color: var(--fw-charcoal-active);
 }
 
 .firewood-terminal-emptyAction:active {
@@ -372,17 +372,17 @@
 
 .firewood-terminal-overlay {
 	background: rgba(34, 29, 24, 0.9);
-	color: #cec4b4;
+	color: var(--fw-charcoal-bright);
 	font-size: 14px;
 }
 
 .firewood-terminal-spinner {
 	width: 32px;
 	height: 32px;
-	border: 3px solid #3b342b;
-	border-top-color: #c2410c;
+	border: 3px solid var(--fw-charcoal-line);
+	border-top-color: var(--fw-charcoal-action);
 	border-radius: 50%;
-	animation: firewood-terminal-spin 0.8s linear infinite;
+	animation: firewood-terminal-spin var(--fw-dur-slow) linear infinite;
 }
 
 @keyframes firewood-terminal-spin {
@@ -403,14 +403,14 @@
 
 .firewood-terminal-error-overlay {
 	background: rgba(34, 29, 24, 0.95);
-	color: #f48771;
+	color: var(--fw-charcoal-error);
 	font-size: 14px;
 }
 
 .firewood-terminal-error-icon {
 	width: 48px;
 	height: 48px;
-	border: 2px solid #f48771;
+	border: 2px solid var(--fw-charcoal-error);
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
@@ -422,23 +422,23 @@
 .firewood-terminal-retry-btn {
 	margin-top: 8px;
 	padding: 8px 24px;
-	background: #c2410c;
+	background: var(--fw-charcoal-action);
 	border: none;
 	border-radius: 4px;
 	color: #ffffff;
 	font-size: 13px;
 	cursor: pointer;
 	transition:
-		background var(--fw-dur-fast, 0.12s) ease,
-		transform var(--fw-dur-fast, 0.12s) ease;
+		background var(--fw-dur-fast) var(--fw-ease),
+		transform var(--fw-dur-fast) var(--fw-ease);
 }
 
 .firewood-terminal-retry-btn:hover {
-	background: #d4551a;
+	background: var(--fw-charcoal-action-hover);
 }
 
 .firewood-terminal-retry-btn:active {
-	background: #a63a10;
+	background: var(--fw-charcoal-action-pressed);
 	transform: scale(0.97);
 }
 
@@ -458,9 +458,9 @@
 	gap: 12px;
 	padding: 10px 16px;
 	background: rgba(34, 29, 24, 0.92);
-	border: 1px solid #3b342b;
+	border: 1px solid var(--fw-charcoal-line);
 	border-radius: 8px;
-	color: #cec4b4;
+	color: var(--fw-charcoal-bright);
 	font-size: 13px;
 	pointer-events: auto;
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -475,26 +475,26 @@
 	align-items: center;
 	justify-content: flex-end;
 	padding: 4px 12px;
-	background: #2a241d;
-	border-top: 1px solid #3b342b;
+	background: var(--fw-charcoal-header);
+	border-top: 1px solid var(--fw-charcoal-line);
 	flex-shrink: 0;
 }
 
 .firewood-terminal-hint {
 	font-size: 11px;
-	color: #6e6455;
+	color: var(--fw-charcoal-soft);
 }
 
 .firewood-terminal-menu-panel {
 	position: fixed;
 	min-width: 280px;
-	background: #2f2921;
+	background: var(--fw-charcoal-hover);
 	border: 1px solid #453d32;
 	border-radius: 8px;
 	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 	z-index: 9999;
 	padding: 8px 0;
-	animation: firewood-menu-in var(--fw-dur, 0.18s) ease-out;
+	animation: firewood-menu-in var(--fw-dur) var(--fw-ease-out);
 }
 
 @keyframes firewood-menu-in {
@@ -516,7 +516,7 @@
 .firewood-terminal-menu-label {
 	font-size: 11px;
 	font-weight: 600;
-	color: #857a6a;
+	color: var(--fw-charcoal-muted);
 	text-transform: uppercase;
 	letter-spacing: 0.6px;
 	padding: 6px 14px 4px;
@@ -524,7 +524,7 @@
 
 .firewood-terminal-menu-divider {
 	height: 1px;
-	background: #3b342b;
+	background: var(--fw-charcoal-line);
 	margin: 4px 10px;
 }
 
@@ -544,23 +544,23 @@
 .firewood-terminal-menu-stepper {
 	width: 26px;
 	height: 26px;
-	border: 1px solid #3b342b;
-	background: #2a241d;
+	border: 1px solid var(--fw-charcoal-line);
+	background: var(--fw-charcoal-header);
 	border-radius: 4px;
-	color: #cec4b4;
+	color: var(--fw-charcoal-bright);
 	cursor: pointer;
 	font-size: 14px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	transition:
-		background var(--fw-dur-fast, 0.1s) ease,
-		border-color var(--fw-dur-fast, 0.1s) ease;
+		background var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .firewood-terminal-menu-stepper:hover:not(:disabled) {
-	background: #3b342b;
-	border-color: #574e41;
+	background: var(--fw-charcoal-hover);
+	border-color: var(--fw-charcoal-active);
 }
 
 .firewood-terminal-menu-stepper:disabled {
@@ -571,10 +571,10 @@
 .firewood-terminal-menu-input {
 	width: 40px;
 	height: 26px;
-	border: 1px solid #3b342b;
-	background: #221d18;
+	border: 1px solid var(--fw-charcoal-line);
+	background: var(--fw-charcoal-bg);
 	border-radius: 4px;
-	color: #cec4b4;
+	color: var(--fw-charcoal-bright);
 	font-size: 12px;
 	text-align: center;
 	outline: none;
@@ -582,16 +582,16 @@
 }
 
 .firewood-terminal-menu-input:focus {
-	border-color: #c2410c;
+	border-color: var(--fw-charcoal-action);
 }
 
 .firewood-terminal-menu-select {
 	flex: 1;
 	height: 28px;
-	border: 1px solid #3b342b;
-	background: #221d18;
+	border: 1px solid var(--fw-charcoal-line);
+	background: var(--fw-charcoal-bg);
 	border-radius: 4px;
-	color: #cec4b4;
+	color: var(--fw-charcoal-bright);
 	font-size: 12px;
 	padding: 0 6px;
 	outline: none;
@@ -605,7 +605,7 @@
 }
 
 .firewood-terminal-menu-select:focus {
-	border-color: #c2410c;
+	border-color: var(--fw-charcoal-action);
 }
 
 .firewood-terminal-menu-select:disabled {
@@ -614,8 +614,8 @@
 }
 
 .firewood-terminal-menu-select option {
-	background: #221d18;
-	color: #cec4b4;
+	background: var(--fw-charcoal-bg);
+	color: var(--fw-charcoal-bright);
 }
 
 .firewood-terminal-menu-browse {
@@ -625,14 +625,14 @@
 
 .firewood-terminal-menu-unit {
 	font-size: 11px;
-	color: #6e6455;
+	color: var(--fw-charcoal-soft);
 	margin-left: 2px;
 }
 
 .firewood-terminal-menu-hint {
 	font-size: 11px;
 	line-height: 1.5;
-	color: #6e6455;
+	color: var(--fw-charcoal-soft);
 	padding: 6px 14px 8px;
 }
 

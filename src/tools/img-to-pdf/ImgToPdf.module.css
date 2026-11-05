@@ -27,11 +27,11 @@
 	max-height: 108px;
 	border-radius: 12px;
 	border-style: dashed;
-	border-color: #d4ccbe;
+	border-color: var(--fw-border-hover);
 	background: var(--fw-panel-subtle);
 	transition:
-		border-color 0.2s,
-		background 0.2s;
+		border-color var(--fw-dur) var(--fw-ease),
+		background var(--fw-dur) var(--fw-ease);
 }
 
 .uploadArea :global(.ant-upload.ant-upload-drag:hover) {
@@ -106,13 +106,13 @@
 	user-select: none;
 	touch-action: none;
 	transition:
-		transform 120ms ease,
-		opacity 120ms ease,
-		border-color 120ms ease;
+		transform var(--fw-dur-fast) var(--fw-ease),
+		opacity var(--fw-dur-fast) var(--fw-ease),
+		border-color var(--fw-dur-fast) var(--fw-ease);
 }
 
 .thumbCard:hover {
-	border-color: #d4ccbe;
+	border-color: var(--fw-border-hover);
 }
 
 .thumbCard:hover .thumbRemove {
@@ -158,7 +158,7 @@
 	align-items: center;
 	justify-content: center;
 	opacity: 0;
-	transition: opacity 0.15s;
+	transition: opacity var(--fw-dur-fast) var(--fw-ease);
 }
 
 /* Settings area */

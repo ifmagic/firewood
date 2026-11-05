@@ -10,6 +10,7 @@ import type { ToolMeta } from './types/tool';
 import { useToolVisibility } from './hooks/useToolVisibility';
 import { useToolOrder } from './hooks/useToolOrder';
 import { useSidebarCollapsed } from './hooks/useSidebarCollapsed';
+import { charcoal } from './utils/charcoal';
 import './App.css';
 
 const { Content } = Layout;
@@ -29,15 +30,15 @@ function App() {
     <ConfigProvider
       theme={{
         token: {
-          // Warm ember & timber palette (see src/index.css tokens). #c2410c is
-          // the action tone (~4.6:1 with white text); the brighter --fw-accent
-          // (#e8590c) stays a display/border tone only.
-          colorPrimary: '#c2410c',
-          colorInfo: '#c2410c',
+          // Warm ember & timber palette (see src/index.css tokens). charcoal.action
+          // (#c2410c) is the action tone (~4.6:1 with white text); the brighter
+          // --fw-accent (#e8590c) stays a display/border tone only.
+          colorPrimary: charcoal.action,
+          colorInfo: charcoal.action,
           // Links are small text on white: the vivid accent only reaches ~3.5:1,
           // so link text uses the darker accent ink (see --fw-accent-ink).
           colorLink: '#b54708',
-          colorLinkHover: '#c2410c',
+          colorLinkHover: charcoal.action,
           borderRadius: 8,
           fontSize: 14,
           lineWidth: 1,

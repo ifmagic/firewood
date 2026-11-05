@@ -23,6 +23,8 @@
 	--fw-editor-bg: #fdfcf9;
 	--fw-status-bg: #f4f1ea;
 	--fw-divider: #e9e4da;
+	/* Light hover step for inputs / chips, brighter than --fw-divider. */
+	--fw-border-hover: #d4ccbe;
 
 	/* --- dark chrome (charred timber: sidebar, popovers) --- */
 	--fw-sidebar-bg: #211c17;
@@ -30,6 +32,32 @@
 	--fw-popover-bg: #2b2620;
 	--fw-hover: rgba(250, 245, 236, 0.07);
 	--fw-hover-strong: rgba(250, 245, 236, 0.11);
+
+	/* --- charcoal chrome (terminal + numbox + terminal widget theme) ---
+	   The dark surfaces of the terminal and numbox share this one scale; the
+	   xterm theme in src/tools/terminal/index.tsx and the CodeMirror code
+	   theme in src/hooks/useCodemirror.ts reference the same values. */
+	--fw-charcoal-bg: #221d18;
+	--fw-charcoal-header: #2a241d;
+	--fw-charcoal-line: #3b342b;
+	--fw-charcoal-hover: #2f2921;
+	--fw-charcoal-active: #4d453a;
+	--fw-charcoal-muted: #857a6a;
+	--fw-charcoal-soft: #6e6455;
+	--fw-charcoal-lighter: #a89d8d;
+	--fw-charcoal-pale: #b0a595;
+	--fw-charcoal-bright: #cec4b4;
+	/* Light ink on charcoal surfaces (tabs, rename inputs, empty actions). */
+	--fw-charcoal-ink: #fdfbf7;
+	--fw-charcoal-text: #ded5c6;
+	--fw-charcoal-amber: #f5b36b;
+	--fw-charcoal-amber-deep: #c98a4b;
+	--fw-charcoal-error: #ff9d85;
+	--fw-charcoal-success: #73c991;
+	--fw-charcoal-lock: #e8c273;
+	--fw-charcoal-action: #c2410c;
+	--fw-charcoal-action-hover: #d4551a;
+	--fw-charcoal-action-pressed: #a63a10;
 
 	/* --- light-surface hovers --- */
 	--fw-hover-light: #f1eee6;

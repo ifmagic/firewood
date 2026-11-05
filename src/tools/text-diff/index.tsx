@@ -151,7 +151,7 @@ export default function TextDiff() {
   const [compared, setCompared] = usePersistentState('tool:text-diff:compared', false);
   const [expanded, setExpanded] = useState<string[]>([]);
   const { fontSize, increase, decrease } = useEditorFontSize();
-  const { leftPercent, containerRef, onDividerMouseDown } = useResizablePanels();
+  const { leftPercent, min, max, containerRef, onDividerMouseDown, onDividerKeyDown } = useResizablePanels();
 
   const model = useMemo(
     () => (compared ? buildModel(original, modified) : EMPTY_MODEL),
@@ -242,7 +242,17 @@ export default function TextDiff() {
                     fontSize={fontSize}
                   />
                 </div>
-                <div className="fw-tool-divider" onMouseDown={onDividerMouseDown}>
+                <div
+                  className="fw-tool-divider"
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-valuenow={Math.round(leftPercent)}
+                  aria-valuemin={min}
+                  aria-valuemax={max}
+                  tabIndex={0}
+                  onMouseDown={onDividerMouseDown}
+                  onKeyDown={onDividerKeyDown}
+                >
                   <div className="fw-tool-dividerGrip" />
                 </div>
                 <div className="fw-tool-pane" style={{ flex: 1 }}>

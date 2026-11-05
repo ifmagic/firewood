@@ -110,9 +110,9 @@
 	margin-inline-start: 0 !important;
 	color: var(--fw-text-tertiary);
 	transition:
-		opacity 0.15s ease,
-		width 0.15s ease,
-		margin 0.15s ease;
+		opacity var(--fw-dur-fast) var(--fw-ease),
+		width var(--fw-dur-fast) var(--fw-ease),
+		margin var(--fw-dur-fast) var(--fw-ease);
 }
 
 .firewood-notepad-tabs .ant-tabs-tab:hover .ant-tabs-tab-remove,

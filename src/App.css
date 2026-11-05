@@ -131,7 +131,7 @@ body {
 .ant-input-number:hover,
 .ant-select:hover .ant-select-selector,
 .ant-radio-button-wrapper:hover {
-	border-color: #d4ccbe !important;
+	border-color: var(--fw-border-hover) !important;
 }
 
 .ant-input:focus,
