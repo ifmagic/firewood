@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppstoreOutlined, CodeOutlined, RocketOutlined } from '@ant-design/icons';
 import { listen } from '@tauri-apps/api/event';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
-import { Modal, Tag, Typography } from 'antd';
+import { Modal, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { getLocalReleaseNotes } from '../../utils/updateNotes';
 import MarkdownBody from '../MarkdownBody';
@@ -19,8 +19,6 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
   const [version, setVersion] = useState('');
   const [notesOpen, setNotesOpen] = useState(false);
   const [notesBody, setNotesBody] = useState('');
-
-  const metaTags = useMemo(() => ['Tauri', 'React', 'TypeScript'], []);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -102,14 +100,6 @@ export default function AboutDialog({ open: externalOpen, onClose }: { open?: bo
               <AppstoreOutlined />
               <span>{t('about.github')}</span>
             </button>
-          </div>
-
-          <div className={styles.tags}>
-            {metaTags.map((tag) => (
-              <Tag key={tag} className={styles.tag}>
-                {tag}
-              </Tag>
-            ))}
           </div>
         </div>
       </Modal>

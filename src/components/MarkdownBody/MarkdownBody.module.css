@@ -2,6 +2,26 @@
 	overflow-y: auto;
 	font-size: 13px;
 	line-height: 1.6;
+	color: var(--fw-text-body);
+}
+
+.body a {
+	color: var(--fw-accent-ink);
+	text-decoration-color: color-mix(in srgb, var(--fw-accent) 45%, transparent);
+	text-underline-offset: 2px;
+}
+
+.body a:hover {
+	text-decoration-color: var(--fw-accent);
+}
+
+.body code {
+	font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+	font-size: 12px;
+	padding: 1px 5px;
+	border-radius: var(--fw-radius-sm);
+	background: var(--fw-panel-subtle);
+	border: 1px solid var(--fw-divider);
 }
 
 .h2 {
@@ -20,7 +40,7 @@
 	font-size: 12px;
 	margin-top: 8px;
 	margin-bottom: 2px;
-	color: #555;
+	color: var(--fw-text-tertiary);
 }
 
 .ul {

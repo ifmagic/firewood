@@ -2,15 +2,15 @@
    brand accent only as a single soft glow + badge/chip accents. (It used to
    carry its own cream/gold/blue palette, which read as a different product.) */
 .modal :global(.ant-modal-content) {
-	border-radius: 16px;
+	border-radius: var(--fw-radius-xl);
 	overflow: hidden;
 	border: 1px solid var(--fw-divider);
-	box-shadow: 0 14px 36px rgba(46, 36, 25, 0.18);
+	box-shadow: var(--fw-panel-shadow);
 }
 
 .card {
-	padding: 26px;
-	background: radial-gradient(circle at 0% 0%, var(--fw-accent-soft) 0%, rgba(253, 238, 226, 0) 45%), var(--fw-surface);
+	padding: 24px;
+	background: radial-gradient(circle at 0% 0%, var(--fw-accent-soft) 0%, transparent 45%), var(--fw-surface);
 }
 
 .header {
@@ -34,9 +34,9 @@
 
 .title {
 	margin: 0 !important;
-	font-size: 26px !important;
-	line-height: 1.1 !important;
-	letter-spacing: 0.2px;
+	font-size: 20px !important;
+	line-height: 1.2 !important;
+	letter-spacing: 0.1px;
 	color: var(--fw-text-strong);
 }
 
@@ -62,7 +62,7 @@
 	color: var(--fw-text-body);
 	font-size: 13px;
 	padding: 9px 11px;
-	border-radius: 10px;
+	border-radius: var(--fw-radius-md);
 	background: var(--fw-panel-subtle);
 	border: 1px solid var(--fw-divider);
 }
@@ -90,29 +90,13 @@
 	color: var(--fw-text-tertiary);
 }
 
-.tags {
-	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
-	margin-top: 16px;
-}
-
-.tag {
-	margin-inline-end: 0;
-	border-radius: 999px;
-	border: 1px solid var(--fw-divider);
-	background: var(--fw-panel-subtle);
-	color: var(--fw-text-body);
-	padding: 3px 10px;
-}
-
 @media (max-width: 640px) {
 	.card {
 		padding: 20px;
 	}
 
 	.title {
-		font-size: 24px !important;
+		font-size: 18px !important;
 	}
 
 	.infoRow {

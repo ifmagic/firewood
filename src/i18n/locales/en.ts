@@ -86,6 +86,7 @@ const en = {
 
   // Terminal
   terminal: {
+    tabsAria: 'Terminal tabs',
     tabTitle: 'Terminal {{n}}',
     defaultShellName: 'Shell',
     exitedMessage: 'Shell exited',
@@ -229,6 +230,7 @@ const en = {
   notepad: {
     untitled: 'Untitled',
     newTab: 'New Tab',
+    newTabHint: 'Create a tab to start writing',
     deleteTab: 'Delete Tab',
     confirmDelete: 'Are you sure you want to delete "{{name}}"? This cannot be undone.',
     maxTabs: 'Maximum {{count}} tabs allowed',
@@ -280,6 +282,9 @@ const en = {
     pdfFilter: 'PDF File',
     previewTip: 'Preview and export use the same scale and margin settings',
     remove: 'Remove',
+    previousPage: 'Previous page',
+    nextPage: 'Next page',
+    imageAlt: 'Image {{index}}',
     readFailed: '{{count}} image(s) failed to read',
   },
 

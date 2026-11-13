@@ -4,20 +4,23 @@
 	height: 100%;
 	min-height: 0;
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	background: var(--fw-surface);
 	overflow: hidden;
 }
 
+/* Same 44px header model as .fw-tool-toolbar (App.css). */
 .firewood-notepad-toolbar {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	padding: 8px 12px;
+	min-height: 44px;
+	padding: 6px 12px;
 	border-bottom: 1px solid var(--fw-divider);
-	background: var(--fw-surface);
+	background: var(--fw-panel-subtle);
 	flex-wrap: wrap;
+	flex-shrink: 0;
 }
 
 .firewood-notepad-toolbarActions {
@@ -29,13 +32,14 @@
 	box-shadow: none;
 	background: transparent;
 	color: var(--fw-text-body);
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	height: 32px;
 	padding: 0 10px;
 }
 
 .firewood-notepad-ghostButton.ant-btn:disabled {
-	color: #c9c1b3;
+	color: var(--fw-text-tertiary);
+	opacity: 0.6;
 	background: transparent;
 }
 

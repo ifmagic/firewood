@@ -425,12 +425,19 @@ export default function ImgToPdf() {
                       opacity: draggingIdx === idx ? 0.45 : undefined,
                     }}
                   >
-                    <img src={item.dataUrl} alt={`img-${idx + 1}`} draggable={false} className={styles.thumbImg} />
+                    <img
+                      src={item.dataUrl}
+                      alt={t('imgToPdf.imageAlt', { index: idx + 1 })}
+                      draggable={false}
+                      className={styles.thumbImg}
+                    />
                     <span className={styles.thumbIdx}>{idx + 1}</span>
                     <button
+                      type="button"
                       className={styles.thumbRemove}
                       onClick={() => handleRemove(item.id)}
                       title={t('imgToPdf.remove')}
+                      aria-label={t('imgToPdf.remove')}
                     >
                       ×
                     </button>
@@ -614,6 +621,7 @@ export default function ImgToPdf() {
                   size="small"
                   type="text"
                   icon={<LeftOutlined />}
+                  aria-label={t('imgToPdf.previousPage')}
                   onClick={() => setPreviewPage((p) => Math.max(1, Math.min(pageCount, p) - 1))}
                   disabled={effectivePreviewPage <= 1}
                 />
@@ -624,6 +632,7 @@ export default function ImgToPdf() {
                   size="small"
                   type="text"
                   icon={<RightOutlined />}
+                  aria-label={t('imgToPdf.nextPage')}
                   onClick={() => setPreviewPage((p) => Math.min(pageCount, Math.min(pageCount, p) + 1))}
                   disabled={effectivePreviewPage >= pageCount}
                 />

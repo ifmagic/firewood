@@ -1,9 +1,10 @@
-import { Button, Empty, Space, Tag } from 'antd';
+import { Button, Space, Tag } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ViewUpdate } from '@codemirror/view';
 import EditorContextMenu from '../../components/EditorContextMenu';
+import EmptyState from '../../components/EmptyState';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import ToolLayout from '../../components/ToolLayout';
@@ -191,45 +192,45 @@ export default function TextDiff() {
   return (
     <ToolLayout>
       <div className="fw-tool-stack">
-        <div className="fw-tool-toolbar">
-          <div className="fw-tool-toolbarMain">
-            <Button type="primary" onClick={compare}>
-              {t('textDiff.compare')}
-            </Button>
-            <Button onClick={restore} disabled={!compared}>
-              {t('textDiff.editView')}
-            </Button>
-            {compared && hasFolds && (
-              <>
-                <Button onClick={() => setExpanded(foldIds)} disabled={allExpanded}>
-                  {t('textDiff.expandAll')}
-                </Button>
-                <Button onClick={() => setExpanded([])} disabled={expanded.length === 0}>
-                  {t('textDiff.collapseAll')}
-                </Button>
-              </>
-            )}
-          </div>
-          <Space size={8}>
-            {compared && model.hasChanges && (
-              <>
-                <Tag color="green">{t('textDiff.added', { count: model.added })}</Tag>
-                <Tag color="red">{t('textDiff.deleted', { count: model.removed })}</Tag>
-              </>
-            )}
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              className="fw-tool-iconDangerButton"
-              title={t('action.clear')}
-              aria-label={t('action.clear')}
-              onClick={clear}
-            />
-          </Space>
-        </div>
-
         <div className="fw-tool-editorShell">
+          <div className="fw-tool-toolbar">
+            <div className="fw-tool-toolbarMain">
+              <Button type="primary" onClick={compare}>
+                {t('textDiff.compare')}
+              </Button>
+              <Button onClick={restore} disabled={!compared}>
+                {t('textDiff.editView')}
+              </Button>
+              {compared && hasFolds && (
+                <>
+                  <Button onClick={() => setExpanded(foldIds)} disabled={allExpanded}>
+                    {t('textDiff.expandAll')}
+                  </Button>
+                  <Button onClick={() => setExpanded([])} disabled={expanded.length === 0}>
+                    {t('textDiff.collapseAll')}
+                  </Button>
+                </>
+              )}
+            </div>
+            <Space size={8}>
+              {compared && model.hasChanges && (
+                <>
+                  <Tag className={styles.tagAdd}>{t('textDiff.added', { count: model.added })}</Tag>
+                  <Tag className={styles.tagDel}>{t('textDiff.deleted', { count: model.removed })}</Tag>
+                </>
+              )}
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                className="fw-tool-iconDangerButton"
+                title={t('action.clear')}
+                aria-label={t('action.clear')}
+                onClick={clear}
+              />
+            </Space>
+          </div>
+
           <div ref={containerRef} className="fw-tool-split">
             {!compared ? (
               <>
@@ -294,7 +295,7 @@ export default function TextDiff() {
                     })
                   ) : (
                     <div className={styles.empty}>
-                      <Empty description={t('textDiff.noDifferences')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                      <EmptyState title={t('textDiff.noDifferences')} />
                     </div>
                   )}
                 </div>

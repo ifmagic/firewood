@@ -34,12 +34,26 @@ export default function FontSizeControl({ fontSize, onIncrease, onDecrease }: Pr
   }, []);
 
   return (
-    <div ref={ref} className={styles.control} tabIndex={0}>
-      <button className={styles.btn} onClick={onDecrease} title={t('fontSizeControl.decrease')}>
+    <div ref={ref} className={styles.control}>
+      <button
+        type="button"
+        className={styles.btn}
+        onClick={onDecrease}
+        title={t('fontSizeControl.decrease')}
+        aria-label={t('fontSizeControl.decrease')}
+      >
         −
       </button>
-      <span className={styles.size}>{fontSize}px</span>
-      <button className={styles.btn} onClick={onIncrease} title={t('fontSizeControl.increase')}>
+      <span className={styles.size} aria-live="polite">
+        {fontSize}px
+      </span>
+      <button
+        type="button"
+        className={styles.btn}
+        onClick={onIncrease}
+        title={t('fontSizeControl.increase')}
+        aria-label={t('fontSizeControl.increase')}
+      >
         +
       </button>
     </div>

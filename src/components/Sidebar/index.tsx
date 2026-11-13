@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Layout, Button, Dropdown, Checkbox, Tooltip } from 'antd';
+import { Layout, Button, Dropdown, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FireOutlined, MenuOutlined, HolderOutlined } from '@ant-design/icons';
+import { CheckOutlined, FireOutlined, MenuOutlined, HolderOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { MenuProps } from 'antd';
 import type { ToolMeta } from '../../types/tool';
@@ -50,21 +50,20 @@ export default function Sidebar({
 
   // View menu
   const viewMenuItems: MenuProps['items'] = [
-    ...tools.map((tool) => ({
-      key: tool.id,
-      label: (
-        <div
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          <Checkbox checked={visibility[tool.id] ?? true} onChange={() => onToggleToolVisibility(tool.id)} />
-          {tool.icon}
-          <span>{getToolLabel(tool)}</span>
-        </div>
-      ),
-    })),
+    ...tools.map((tool) => {
+      const visible = visibility[tool.id] ?? true;
+      return {
+        key: tool.id,
+        label: (
+          <span className={styles.viewMenuLabel}>
+            <span className={styles.viewMenuIcon}>{tool.icon}</span>
+            <span>{getToolLabel(tool)}</span>
+            {visible && <CheckOutlined className={styles.viewMenuCheck} />}
+          </span>
+        ),
+        onClick: () => onToggleToolVisibility(tool.id),
+      };
+    }),
     {
       type: 'divider' as const,
     },
@@ -202,7 +201,12 @@ export default function Sidebar({
           {!collapsed && <span className={styles.logoText}>Firewood</span>}
         </button>
         {!collapsed && (
-          <Dropdown menu={{ items: viewMenuItems }} placement="bottomRight" trigger={['click']}>
+          <Dropdown
+            menu={{ items: viewMenuItems }}
+            placement="bottomRight"
+            trigger={['click']}
+            overlayClassName="fw-sidebar-popover"
+          >
             <Button
               type="text"
               size="small"

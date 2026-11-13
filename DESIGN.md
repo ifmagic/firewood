@@ -200,3 +200,88 @@ English and Simplified Chinese are built in. The initial language is auto-detect
 ### Single-instance release behavior
 
 In non-debug builds, re-launching the app focuses the existing window instead of opening a second instance.
+
+## 8. Visual Design System
+
+The UI is one warm, workshop-grade system called **Ember & Timber**: paper-toned
+content surfaces, charred-timber "workbench" surfaces for instruments (terminal,
+calculator display, diff output), warm ink text, and a single ember accent. The
+design thesis is a dark instrument set into a light workbench; the signature
+element is the ember rail / amber readout, not decoration.
+
+### 8.1 Appearance
+
+- The app follows the system appearance via `prefers-color-scheme` (CSS) and
+  `useSystemAppearance()` + Ant Design's `darkAlgorithm` (JS). **There is no
+  in-app appearance switch** — Dark Mode guidance says apps should respect the
+  systemwide choice.
+- All colors live in `src/index.css` (CSS) and `src/theme/palette.ts` (Ant
+  Design). A component must never introduce a literal hex outside those files.
+- Charcoal workbench tokens are intentionally identical in both appearances:
+  instruments stay dark. Content surfaces flip from `#faf9f6` to `#1d1915`.
+
+### 8.2 Color roles
+
+| Role           | Light                 | Dark      | Notes                         |
+| -------------- | --------------------- | --------- | ----------------------------- |
+| canvas         | `#faf9f6`             | `#1d1915` | app/content background        |
+| raised         | `#fffefb`             | `#26211b` | inputs, default buttons       |
+| subtle         | `#f6f4ee`             | `#26211b` | toolbars, cards               |
+| sunken         | `#f3f0e9`             | `#17130f` | status bars, table heads      |
+| strong text    | `#2a241e`             | `#f5f0e8` | 14.5:1+                       |
+| body text      | `#5f574d`             | `#d6cdbf` | 6.7:1+                        |
+| tertiary text  | `#6f6557`             | `#9c9181` | ≥4.5:1 — safe for 11px labels |
+| accent (icons) | `#e8590c`             | `#e8590c` | never for small text          |
+| accent ink     | `#b54708`             | `#f5b36b` | links, chips, small text      |
+| action         | `#c2410c`             | `#c2410c` | white text is 5.18:1          |
+| success        | `#4f5d3a`             | `#9fce9a` | history date chips            |
+| diff add / del | `#7fce9a` / `#ff9d85` | same      | charcoal workbench only       |
+
+`src/theme/palette.test.ts` locks these contrast guarantees in CI.
+
+### 8.3 Type
+
+System sans (SF Pro Text / PingFang SC) and one mono stack. No display face.
+
+| Step    | Size / line-height | Use                                  |
+| ------- | ------------------ | ------------------------------------ |
+| display | 32 / 1.1 mono 600  | calculator result                    |
+| title   | 16 / 1.3 600       | tool titles, dialog titles           |
+| body    | 14 / 1.5           | prose, buttons, menus                |
+| label   | 13 / 1.4           | headers, form labels                 |
+| caption | 12 / 1.4           | status bars, hints                   |
+| micro   | 11 / 1.3 600       | dense metadata only, must pass 4.5:1 |
+
+Weights are 400 / 500 / 600 only. Numeric UI uses `tabular-nums`.
+
+### 8.4 Layout, shape, elevation
+
+- Spacing: 4 / 8 / 12 / 16 / 24 / 32. Tool pages use 16px top and 24px side
+  padding.
+- Radii: 8px controls, 12px panels/tool frames, 16px dialogs, 999px pills.
+- One elevation token for floating layers (menus, modals, popovers). Content
+  cards are separated by a 1px divider, never a shadow.
+- Every tool uses the same 44px header bar attached to its work area; it is not
+  a floating card. Terminal/Notepad tab strips occupy the same slot.
+
+### 8.5 Interaction and accessibility
+
+- Desktop minimum hit target is 28×28px; visual glyphs may be smaller, the
+  button box may not.
+- Focus is always a 2px ember outline with 2px offset (or the antd input halo).
+  Never remove it without an equivalent.
+- Icon-only controls need `aria-label`; menus use Ant Design's Dropdown so Esc,
+  arrow keys, and focus return are not reimplemented.
+- Empty states use the shared `EmptyState` (one quiet ember mark + instruction),
+  not Ant Design's default illustration.
+- Every animation must survive `prefers-reduced-motion` (global guard in
+  `src/index.css`).
+
+### 8.6 Do not
+
+- Do not introduce a second accent hue (the old diff surface used GitHub blue,
+  which read as a different product).
+- Do not apply glassmorphism or Liquid Glass to content; those materials are for
+  the floating functional layer only.
+- Do not hard-code colors, radii, font sizes, or motion durations in a tool.
+- Do not add an app-specific light/dark toggle.

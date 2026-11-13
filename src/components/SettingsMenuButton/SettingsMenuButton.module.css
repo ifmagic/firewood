@@ -1,3 +1,6 @@
+/* The settings trigger lives in the sidebar footer. Its menu is an Ant Design
+   Dropdown styled by the shared `fw-sidebar-popover` class (see App.css), so
+   keyboard and focus behavior come from the menu primitive. */
 .settingsButton {
 	width: 32px;
 	height: 32px;
@@ -8,14 +11,11 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	cursor: pointer;
 	transition:
 		color var(--fw-dur-fast) var(--fw-ease),
-		background var(--fw-dur-fast) var(--fw-ease),
-		transform var(--fw-dur-fast) var(--fw-ease);
-	position: relative;
-	z-index: 1402;
+		background var(--fw-dur-fast) var(--fw-ease);
 }
 
 .settingsButton:hover {
@@ -23,153 +23,15 @@
 	background: var(--fw-hover);
 }
 
-.settingsButtonActive {
-	color: var(--fw-text-primary);
-	background: var(--fw-hover-strong);
+.settingsButton:focus-visible {
+	outline: 2px solid var(--fw-accent);
+	outline-offset: 2px;
 }
 
 .settingsButton:active {
 	background: var(--fw-hover-strong);
-	transform: scale(0.94);
 }
 
-.overlay {
-	position: fixed;
-	inset: 0;
-	z-index: 1400;
-}
-
-.menuPanel {
-	position: fixed;
-	left: 16px;
-	bottom: 60px;
-	z-index: 1401;
-	min-width: 238px;
-	padding: 8px;
-	border-radius: 10px;
-	background: var(--fw-popover-bg);
-	border: 1px solid var(--fw-border);
-	box-shadow:
-		0 12px 28px rgba(0, 0, 0, 0.45),
-		0 2px 8px rgba(0, 0, 0, 0.35);
-	transform-origin: bottom left;
-	animation: fwSettingsMenuIn var(--fw-dur) var(--fw-ease-out);
-}
-
-@keyframes fwSettingsMenuIn {
-	from {
-		opacity: 0;
-		transform: translateY(5px) scale(0.98);
-	}
-
-	to {
-		opacity: 1;
-		transform: none;
-	}
-}
-
-.menuDivider {
-	height: 1px;
-	margin: 6px 4px;
-	background: var(--fw-border);
-}
-
-.menuItemWrap {
-	position: relative;
-}
-
-.menuItem {
-	width: 100%;
-	height: 36px;
-	border: none;
-	border-radius: 7px;
-	background: transparent;
-	color: var(--fw-text-primary);
-	padding: 0 10px;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	text-align: left;
-	cursor: pointer;
-	transition:
-		background-color var(--fw-dur-fast) var(--fw-ease),
-		color var(--fw-dur-fast) var(--fw-ease);
-}
-
-.infoItemButton:hover,
-.infoItemButton:focus-visible {
-	border-color: var(--fw-accent);
-	background: var(--fw-accent-soft);
-	color: var(--fw-text-strong);
-}
-
-.menuItem:hover {
-	background: var(--fw-hover-strong);
-}
-
-.menuIcon {
-	width: 16px;
-	color: var(--fw-text-secondary);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.menuLabel {
-	flex: 1;
-	font-size: 13px;
-}
-
-.menuArrow {
-	color: var(--fw-text-secondary);
-	font-size: 11px;
-	transition: transform var(--fw-dur-fast) var(--fw-ease);
-}
-
-.menuArrowOpen {
-	transform: rotate(90deg);
-}
-
-.submenuPanel {
-	position: absolute;
-	left: calc(100% + 8px);
-	bottom: 0;
-	min-width: 164px;
-	padding: 8px;
-	border-radius: 10px;
-	background: var(--fw-popover-bg);
-	border: 1px solid var(--fw-border);
-	box-shadow:
-		0 12px 28px rgba(0, 0, 0, 0.45),
-		0 2px 8px rgba(0, 0, 0, 0.35);
-	transform-origin: bottom left;
-	animation: fwSettingsMenuIn var(--fw-dur) var(--fw-ease-out);
-}
-
-.submenuItem {
-	width: 100%;
-	height: 34px;
-	border: none;
-	border-radius: 7px;
-	background: transparent;
-	color: var(--fw-text-primary);
-	padding: 0 10px;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	text-align: left;
-	cursor: pointer;
-	transition: background-color var(--fw-dur-fast) var(--fw-ease);
-}
-
-.submenuItem:hover {
-	background: var(--fw-hover-strong);
-}
-
-.checkIcon {
-	width: 14px;
+.languageCheck {
 	color: var(--fw-accent);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
 }

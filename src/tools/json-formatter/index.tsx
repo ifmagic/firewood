@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Empty, Tooltip, message } from 'antd';
+import { Button, Tooltip, message } from 'antd';
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
 import EditorContextMenu from '../../components/EditorContextMenu';
+import EmptyState from '../../components/EmptyState';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import ToolLayout from '../../components/ToolLayout';
@@ -131,46 +132,46 @@ export default function JsonFormatter() {
   return (
     <ToolLayout>
       <div className="fw-tool-stack">
-        <div className="fw-tool-toolbar">
-          <div className="fw-tool-toolbarMain">
-            <Button type="primary" onClick={format}>
-              {t('action.format')}
-            </Button>
-            <Button onClick={minify}>{t('action.minify')}</Button>
-            <Button onClick={unescape}>{t('action.unescape')}</Button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {/* No native title here: it would double up with the Tooltip. */}
-            <Tooltip title={t('action.copy')}>
+        <div className="fw-tool-editorShell">
+          <div className="fw-tool-toolbar">
+            <div className="fw-tool-toolbarMain">
+              <Button type="primary" onClick={format}>
+                {t('action.format')}
+              </Button>
+              <Button onClick={minify}>{t('action.minify')}</Button>
+              <Button onClick={unescape}>{t('action.unescape')}</Button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {/* No native title here: it would double up with the Tooltip. */}
+              <Tooltip title={t('action.copy')}>
+                <Button
+                  type="text"
+                  icon={<CopyOutlined />}
+                  className="fw-tool-iconDangerButton"
+                  aria-label={t('action.copy')}
+                  disabled={!content}
+                  onClick={() => {
+                    // Acknowledge the copy: without feedback a user cannot tell
+                    // an empty clipboard from a successful one.
+                    navigator.clipboard.writeText(content).then(
+                      () => message.success(t('action.copied')),
+                      () => message.error(t('action.copyFailed')),
+                    );
+                  }}
+                />
+              </Tooltip>
               <Button
                 type="text"
-                icon={<CopyOutlined />}
+                danger
+                icon={<DeleteOutlined />}
                 className="fw-tool-iconDangerButton"
-                aria-label={t('action.copy')}
-                disabled={!content}
-                onClick={() => {
-                  // Acknowledge the copy: without feedback a user cannot tell
-                  // an empty clipboard from a successful one.
-                  navigator.clipboard.writeText(content).then(
-                    () => message.success(t('action.copied')),
-                    () => message.error(t('action.copyFailed')),
-                  );
-                }}
+                title={t('action.clear')}
+                aria-label={t('action.clear')}
+                onClick={clear}
               />
-            </Tooltip>
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              className="fw-tool-iconDangerButton"
-              title={t('action.clear')}
-              aria-label={t('action.clear')}
-              onClick={clear}
-            />
+            </div>
           </div>
-        </div>
 
-        <div className="fw-tool-editorShell">
           <div className="fw-tool-pane" style={{ flex: 1 }}>
             <div className="fw-tool-paneBody">
               {!content && (
@@ -185,7 +186,7 @@ export default function JsonFormatter() {
                     zIndex: 1,
                   }}
                 >
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('jsonFormatter.emptyHint')} />
+                  <EmptyState title={t('jsonFormatter.emptyHint')} />
                 </div>
               )}
               <EditorContextMenu viewRef={viewRef} hasSelection={hasSelection}>

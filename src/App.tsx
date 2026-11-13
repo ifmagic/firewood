@@ -1,6 +1,6 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { ConfigProvider, Layout, Spin } from 'antd';
+import { ConfigProvider, Layout, Spin, theme as antdTheme } from 'antd';
 import Sidebar from './components/Sidebar';
 import TitleBar from './components/TitleBar';
 import AboutDialog from './components/AboutDialog';
@@ -10,7 +10,8 @@ import type { ToolMeta } from './types/tool';
 import { useToolVisibility } from './hooks/useToolVisibility';
 import { useToolOrder } from './hooks/useToolOrder';
 import { useSidebarCollapsed } from './hooks/useSidebarCollapsed';
-import { charcoal } from './utils/charcoal';
+import { useSystemAppearance } from './hooks/useSystemAppearance';
+import { antdThemeFor } from './theme/palette';
 import './App.css';
 
 const { Content } = Layout;
@@ -26,37 +27,17 @@ function App() {
   const toolMap = new Map(tools.map((t) => [t.id, t]));
   const orderedTools = orderedIds.map((id) => toolMap.get(id)!).filter(Boolean);
 
+  // Follow the system appearance. All CSS surfaces use the matching media
+  // query in src/index.css; Ant Design needs concrete tokens and derives
+  // hover/active steps in JS, hence the shared palette module.
+  const appearance = useSystemAppearance();
+  const themeConfig = useMemo(
+    () => antdThemeFor(appearance, appearance === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm),
+    [appearance],
+  );
+
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          // Warm ember & timber palette (see src/index.css tokens). charcoal.action
-          // (#c2410c) is the action tone (~4.6:1 with white text); the brighter
-          // --fw-accent (#e8590c) stays a display/border tone only.
-          colorPrimary: charcoal.action,
-          colorInfo: charcoal.action,
-          // Links are small text on white: the vivid accent only reaches ~3.5:1,
-          // so link text uses the darker accent ink (see --fw-accent-ink).
-          colorLink: '#b54708',
-          colorLinkHover: charcoal.action,
-          borderRadius: 8,
-          fontSize: 14,
-          lineWidth: 1,
-          colorText: '#2a241e',
-          colorTextSecondary: '#5f574d',
-          colorBorder: '#d9d2c5',
-          colorBorderSecondary: '#e9e4da',
-          colorBgContainer: '#fffefb',
-          colorBgElevated: '#fffefb',
-          colorFillAlter: '#f6f4ee',
-          colorFillSecondary: '#f1eee6',
-          controlItemBgActive: '#fdeee2',
-          controlItemBgActiveHover: '#fadcc6',
-          controlOutline: 'rgba(232, 89, 12, 0.18)',
-          boxShadowSecondary: '0 12px 32px rgba(46, 36, 25, 0.1)',
-        },
-      }}
-    >
+    <ConfigProvider theme={themeConfig}>
       <BrowserRouter>
         <Updater />
         <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} />

@@ -1,13 +1,6 @@
-import { useState } from 'react';
-import { Tooltip } from 'antd';
-import {
-  CheckOutlined,
-  GlobalOutlined,
-  InfoCircleOutlined,
-  RightOutlined,
-  SettingOutlined,
-  SyncOutlined,
-} from '@ant-design/icons';
+import { Dropdown, Tooltip } from 'antd';
+import type { MenuProps } from 'antd';
+import { CheckOutlined, GlobalOutlined, InfoCircleOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { setStoredLanguage } from '../../i18n';
 import { emit } from '@tauri-apps/api/event';
@@ -22,10 +15,17 @@ const LANGUAGE_OPTIONS = [
   { value: 'zh-CN', label: '简体中文' },
 ] as const;
 
+/**
+ * App settings menu.
+ *
+ * This deliberately uses Ant Design's Dropdown — the same primitive as the
+ * sidebar view menu — instead of a hand-rolled fixed-position panel: menus get
+ * Esc/arrow-key handling, focus return to the trigger and correct menu
+ * semantics for free. The visual treatment stays on the dark sidebar popover
+ * through `fw-sidebar-popover` (see App.css).
+ */
 export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonProps) {
   const { t, i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
 
   const handleLanguageChange = async (lang: string) => {
     await i18n.changeLanguage(lang);
@@ -38,7 +38,6 @@ export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonPr
   };
 
   const handleCheckForUpdates = async () => {
-    setOpen(false);
     try {
       await emit('app://check-for-updates', {});
     } catch {
@@ -46,95 +45,58 @@ export default function SettingsMenuButton({ onOpenAbout }: SettingsMenuButtonPr
     }
   };
 
-  const handleOpenAbout = () => {
-    setOpen(false);
-    onOpenAbout?.();
+  const items: MenuProps['items'] = [
+    {
+      key: 'language',
+      icon: <GlobalOutlined />,
+      label: t('settings.language'),
+      children: LANGUAGE_OPTIONS.map((option) => ({
+        key: `language:${option.value}`,
+        label: option.label,
+        icon: i18n.language === option.value ? <CheckOutlined className={styles.languageCheck} /> : undefined,
+      })),
+    },
+    { type: 'divider' },
+    {
+      key: 'updates',
+      icon: <SyncOutlined />,
+      label: t('settings.checkForUpdates'),
+    },
+    {
+      key: 'about',
+      icon: <InfoCircleOutlined />,
+      label: t('settings.aboutApp'),
+    },
+  ];
+
+  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key.startsWith('language:')) {
+      void handleLanguageChange(key.slice('language:'.length));
+      return;
+    }
+
+    if (key === 'updates') {
+      void handleCheckForUpdates();
+      return;
+    }
+
+    if (key === 'about') {
+      onOpenAbout?.();
+    }
   };
 
   return (
-    <>
-      {open && (
-        <div
-          className={styles.overlay}
-          onClick={() => {
-            setOpen(false);
-            setLanguageOpen(false);
-          }}
-        />
-      )}
-      <Tooltip title={t('label.settings')} placement="right">
-        <button
-          type="button"
-          className={`${styles.settingsButton} ${open ? styles.settingsButtonActive : ''}`}
-          aria-label={t('label.settings')}
-          onClick={() => {
-            setOpen((prev) => {
-              const next = !prev;
-              if (!next) setLanguageOpen(false);
-              return next;
-            });
-          }}
-        >
+    <Tooltip title={t('label.settings')} placement="right">
+      <Dropdown
+        menu={{ items, onClick: handleMenuClick }}
+        placement="topLeft"
+        trigger={['click']}
+        overlayClassName="fw-sidebar-popover"
+      >
+        <button type="button" className={styles.settingsButton} aria-label={t('label.settings')}>
           <SettingOutlined />
         </button>
-      </Tooltip>
-
-      {open && (
-        <div className={styles.menuPanel}>
-          <div className={styles.menuItemWrap}>
-            <button type="button" className={styles.menuItem} onClick={() => setLanguageOpen((prev) => !prev)}>
-              <span className={styles.menuIcon}>
-                <GlobalOutlined />
-              </span>
-              <span className={styles.menuLabel}>{t('settings.language')}</span>
-              <span className={`${styles.menuArrow} ${languageOpen ? styles.menuArrowOpen : ''}`}>
-                <RightOutlined />
-              </span>
-            </button>
-
-            {languageOpen && (
-              <div className={styles.submenuPanel}>
-                {LANGUAGE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={styles.submenuItem}
-                    onClick={() => {
-                      setLanguageOpen(false);
-                      void handleLanguageChange(opt.value);
-                    }}
-                  >
-                    <span className={styles.checkIcon}>{i18n.language === opt.value ? <CheckOutlined /> : null}</span>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className={styles.menuDivider} />
-
-          <button
-            type="button"
-            className={styles.menuItem}
-            onClick={() => {
-              void handleCheckForUpdates();
-            }}
-          >
-            <span className={styles.menuIcon}>
-              <SyncOutlined />
-            </span>
-            <span className={styles.menuLabel}>{t('settings.checkForUpdates')}</span>
-          </button>
-
-          <button type="button" className={styles.menuItem} onClick={handleOpenAbout}>
-            <span className={styles.menuIcon}>
-              <InfoCircleOutlined />
-            </span>
-            <span className={styles.menuLabel}>{t('settings.aboutApp')}</span>
-          </button>
-        </div>
-      )}
-    </>
+      </Dropdown>
+    </Tooltip>
   );
 }

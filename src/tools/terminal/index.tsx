@@ -1057,7 +1057,7 @@ export default function TerminalPage() {
       <div className="firewood-terminal">
         <div className="firewood-terminal-header">
           <div className="firewood-terminal-tabStrip">
-            <div className="firewood-terminal-tabs" role="tablist" aria-label="Terminal tabs">
+            <div className="firewood-terminal-tabs" role="tablist" aria-label={t('terminal.tabsAria')}>
               {tabs.map((tab) => {
                 const isActive = tab.id === activeTabId;
                 const isEditing = editingTabId === tab.id;

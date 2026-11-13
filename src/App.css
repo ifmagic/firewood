@@ -46,7 +46,7 @@ body {
 /* ---------- antd overrides ---------- */
 
 .ant-btn {
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	box-shadow: none;
 	font-weight: 500;
 	transition:
@@ -72,7 +72,7 @@ body {
 .ant-btn-dashed {
 	border-color: var(--fw-divider);
 	color: var(--fw-text-body);
-	background: var(--fw-surface);
+	background: var(--fw-panel-raised);
 }
 
 .ant-btn-default:hover,
@@ -142,7 +142,7 @@ body {
 .ant-select-focused .ant-select-selector,
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
 	border-color: var(--fw-accent) !important;
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--fw-accent) 12%, transparent) !important;
+	box-shadow: 0 0 0 3px var(--fw-selected-bg) !important;
 }
 
 .ant-radio-button-wrapper {
@@ -153,6 +153,7 @@ body {
 .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
 	background: var(--fw-accent-soft);
 	color: var(--fw-accent-ink);
+	border-color: var(--fw-accent) !important;
 }
 
 .ant-tabs-top > .ant-tabs-nav {
@@ -178,7 +179,7 @@ body {
 }
 
 .ant-alert {
-	border-radius: 10px;
+	border-radius: var(--fw-radius-lg);
 }
 
 .ant-tag {
@@ -187,7 +188,7 @@ body {
 
 .ant-table-wrapper .ant-table-container {
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	overflow: hidden;
 }
 
@@ -213,16 +214,22 @@ body {
 	min-height: 0;
 }
 
+/* One header model for every tool: a 44px bar attached to the top of the
+   work area, separated by a single hairline. It is never a floating card —
+   that made JSON/Diff start 16px lower than Notepad. */
 .fw-tool-toolbar {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
 	flex-wrap: wrap;
-	padding: 8px 12px;
-	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	min-height: 44px;
+	padding: 6px 12px;
+	border: none;
+	border-bottom: 1px solid var(--fw-divider);
+	border-radius: 0;
 	background: var(--fw-panel-subtle);
+	flex-shrink: 0;
 }
 
 .fw-tool-toolbarMain {
@@ -252,7 +259,7 @@ body {
 	flex: 1;
 	min-height: 0;
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	/* No overflow:hidden: it would clip editor tooltips (lint/autocomplete)
 	   that render past the shell edge (e.g. above line 1). Rounded corners are
 	   kept by the editors' own border-radius (see .fw-cm-host / .cmHost). */
@@ -264,18 +271,18 @@ body {
    1px border cut off at the corners. Re-apply the (inner) radius on whichever
    children paint the very top and bottom edges instead. */
 .fw-tool-editorShell > :first-child {
-	border-top-left-radius: 11px;
-	border-top-right-radius: 11px;
+	border-top-left-radius: calc(var(--fw-radius-lg) - 1px);
+	border-top-right-radius: calc(var(--fw-radius-lg) - 1px);
 }
 
 .fw-tool-editorShell > :last-child {
-	border-bottom-left-radius: 11px;
-	border-bottom-right-radius: 11px;
+	border-bottom-left-radius: calc(var(--fw-radius-lg) - 1px);
+	border-bottom-right-radius: calc(var(--fw-radius-lg) - 1px);
 }
 
 .fw-tool-editorShell .cm-editor {
-	border-top-left-radius: 11px;
-	border-top-right-radius: 11px;
+	border-top-left-radius: calc(var(--fw-radius-lg) - 1px);
+	border-top-right-radius: calc(var(--fw-radius-lg) - 1px);
 }
 
 .fw-tool-split {
@@ -321,7 +328,7 @@ body {
 	width: 2px;
 	height: 32px;
 	border-radius: 999px;
-	background: #cfc8ba;
+	background: var(--fw-border-hover);
 	transition:
 		background var(--fw-dur) var(--fw-ease),
 		height var(--fw-dur) var(--fw-ease);
@@ -341,6 +348,95 @@ body {
 
 @media (max-width: 768px) {
 	.fw-tool-toolbar {
-		padding: 8px;
+		padding: 6px 8px;
 	}
+}
+
+/* ---------- sidebar popovers (view menu, settings) ----------
+   Both sidebars menus float over the dark charred-timber chrome, so they use
+   the dark popover tokens in either appearance. Using one class keeps the two
+   menus identical and lets Ant Design own keyboard/ARIA behavior. */
+.fw-sidebar-popover .ant-dropdown-menu {
+	background: var(--fw-popover-bg) !important;
+	border: 1px solid var(--fw-border);
+	border-radius: var(--fw-radius-lg);
+	padding: 6px;
+	box-shadow: var(--fw-popover-shadow);
+}
+
+.fw-sidebar-popover .ant-dropdown-menu-item,
+.fw-sidebar-popover .ant-dropdown-menu-submenu-title {
+	min-height: 32px;
+	padding: 7px 10px;
+	border-radius: var(--fw-radius-sm);
+	color: var(--fw-text-primary);
+}
+
+.fw-sidebar-popover .anticon,
+.ant-dropdown-menu-submenu-popup .anticon {
+	/* Ant Design paints menu icons with a light-theme description color through
+	   a higher-specificity CSS-in-JS rule; menu icons must stay visible on the
+	   dark popover in both appearances. */
+	color: var(--fw-text-secondary) !important;
+}
+
+/* The current-language check is the one accent icon in the menu. */
+.ant-dropdown .anticon[aria-label='check'] {
+	color: var(--fw-accent) !important;
+}
+
+/* Ant Design sets the item color inside a high-specificity CSS-in-JS rule
+   (`:where(...) .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item`).
+   Coloring the title-content directly wins by inheritance instead of fighting
+   selectivity — without this, labels stayed near-black on the dark popover. */
+.fw-sidebar-popover .ant-dropdown-menu-title-content,
+.ant-dropdown-menu-submenu-popup .ant-dropdown-menu-title-content {
+	color: var(--fw-text-primary);
+}
+
+.fw-sidebar-popover .ant-dropdown-menu-item:hover,
+.fw-sidebar-popover .ant-dropdown-menu-submenu-title:hover {
+	background: var(--fw-hover-strong) !important;
+	color: var(--fw-text-primary);
+}
+
+.fw-sidebar-popover .ant-dropdown-menu-item-active,
+.fw-sidebar-popover .ant-dropdown-menu-item-selected {
+	background: var(--fw-selected-bg) !important;
+	color: var(--fw-text-primary);
+}
+
+.fw-sidebar-popover .ant-dropdown-menu-item-divider {
+	background: var(--fw-border) !important;
+}
+
+/* Submenus render in a sibling popup, so they need the same surface. */
+.ant-dropdown-menu-submenu-popup .ant-dropdown-menu {
+	background: var(--fw-popover-bg) !important;
+	border: 1px solid var(--fw-border);
+	border-radius: var(--fw-radius-lg);
+	padding: 6px;
+	box-shadow: var(--fw-popover-shadow);
+}
+
+.ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item {
+	color: var(--fw-text-primary);
+	border-radius: var(--fw-radius-sm);
+}
+
+.ant-dropdown-menu-submenu-popup .ant-dropdown-menu-item:hover {
+	background: var(--fw-hover-strong) !important;
+}
+
+/* Keyboard focus floor: any native button gets a visible ember ring unless a
+   component deliberately provides its own. Inputs keep the antd halo. */
+button:focus-visible {
+	outline: 2px solid var(--fw-accent);
+	outline-offset: 2px;
+}
+
+.ant-tabs .ant-tabs-tab-btn:focus-visible {
+	outline: 2px solid var(--fw-accent);
+	outline-offset: 2px;
+	border-radius: var(--fw-radius-sm);
 }

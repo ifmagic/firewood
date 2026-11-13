@@ -8,7 +8,7 @@
 	height: 100%;
 	min-height: 0;
 	background: var(--fw-charcoal-bg);
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	overflow: hidden;
 }
 
@@ -148,7 +148,7 @@
 	height: 24px;
 	border: 1px solid var(--fw-charcoal-action);
 	background: var(--fw-charcoal-bg);
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: var(--fw-charcoal-ink);
 	font-size: 12px;
 	padding: 0 6px;
@@ -156,12 +156,12 @@
 }
 
 .firewood-terminal-tabLock {
-	width: 24px;
-	height: 24px;
+	width: 28px;
+	height: 28px;
 	margin-right: 4px;
 	border: none;
 	background: transparent;
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: inherit;
 	display: flex;
 	align-items: center;
@@ -182,7 +182,7 @@
 }
 
 .firewood-terminal-tabLock:hover {
-	background: rgba(250, 245, 236, 0.08);
+	background: var(--fw-hover);
 }
 
 .firewood-terminal-tabLock.is-locked {
@@ -190,12 +190,12 @@
 }
 
 .firewood-terminal-tabClose {
-	width: 24px;
-	height: 24px;
+	width: 28px;
+	height: 28px;
 	margin-right: 6px;
 	border: none;
 	background: transparent;
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: inherit;
 	display: flex;
 	align-items: center;
@@ -242,7 +242,7 @@
 }
 
 .firewood-terminal-tabClose:hover {
-	background: rgba(250, 245, 236, 0.08);
+	background: var(--fw-hover);
 }
 
 .firewood-terminal-actions {
@@ -258,7 +258,7 @@
 	height: 28px;
 	border: none;
 	background: transparent;
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: var(--fw-charcoal-muted);
 	cursor: pointer;
 	font-size: 13px;
@@ -338,7 +338,7 @@
 }
 
 .firewood-terminal-emptyState {
-	background: linear-gradient(180deg, rgba(34, 29, 24, 0.92), rgba(34, 29, 24, 0.98));
+	background: var(--fw-charcoal-bg);
 	color: var(--fw-charcoal-pale);
 	animation: firewood-terminal-fade-in var(--fw-dur-slow) var(--fw-ease-out);
 }
@@ -371,7 +371,7 @@
 }
 
 .firewood-terminal-overlay {
-	background: rgba(34, 29, 24, 0.9);
+	background: var(--fw-charcoal-header);
 	color: var(--fw-charcoal-bright);
 	font-size: 14px;
 }
@@ -402,7 +402,7 @@
 }
 
 .firewood-terminal-error-overlay {
-	background: rgba(34, 29, 24, 0.95);
+	background: var(--fw-charcoal-header);
 	color: var(--fw-charcoal-error);
 	font-size: 14px;
 }
@@ -424,7 +424,7 @@
 	padding: 8px 24px;
 	background: var(--fw-charcoal-action);
 	border: none;
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: #ffffff;
 	font-size: 13px;
 	cursor: pointer;
@@ -457,9 +457,9 @@
 	align-items: center;
 	gap: 12px;
 	padding: 10px 16px;
-	background: rgba(34, 29, 24, 0.92);
+	background: var(--fw-charcoal-bg);
 	border: 1px solid var(--fw-charcoal-line);
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	color: var(--fw-charcoal-bright);
 	font-size: 13px;
 	pointer-events: auto;
@@ -489,9 +489,9 @@
 	position: fixed;
 	min-width: 280px;
 	background: var(--fw-charcoal-hover);
-	border: 1px solid #453d32;
-	border-radius: 8px;
-	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+	border: 1px solid var(--fw-charcoal-active);
+	border-radius: var(--fw-radius-md);
+	box-shadow: var(--fw-popover-shadow);
 	z-index: 9999;
 	padding: 8px 0;
 	animation: firewood-menu-in var(--fw-dur) var(--fw-ease-out);
@@ -516,7 +516,7 @@
 .firewood-terminal-menu-label {
 	font-size: 11px;
 	font-weight: 600;
-	color: var(--fw-charcoal-muted);
+	color: var(--fw-charcoal-soft);
 	text-transform: uppercase;
 	letter-spacing: 0.6px;
 	padding: 6px 14px 4px;
@@ -542,11 +542,11 @@
 }
 
 .firewood-terminal-menu-stepper {
-	width: 26px;
-	height: 26px;
+	width: 28px;
+	height: 28px;
 	border: 1px solid var(--fw-charcoal-line);
 	background: var(--fw-charcoal-header);
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: var(--fw-charcoal-bright);
 	cursor: pointer;
 	font-size: 14px;
@@ -570,10 +570,10 @@
 
 .firewood-terminal-menu-input {
 	width: 40px;
-	height: 26px;
+	height: 28px;
 	border: 1px solid var(--fw-charcoal-line);
 	background: var(--fw-charcoal-bg);
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: var(--fw-charcoal-bright);
 	font-size: 12px;
 	text-align: center;
@@ -590,7 +590,7 @@
 	height: 28px;
 	border: 1px solid var(--fw-charcoal-line);
 	background: var(--fw-charcoal-bg);
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 	color: var(--fw-charcoal-bright);
 	font-size: 12px;
 	padding: 0 6px;
@@ -598,7 +598,7 @@
 	cursor: pointer;
 	-webkit-appearance: none;
 	appearance: none;
-	background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23857a6a'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238f8577'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 8px center;
 	padding-right: 24px;

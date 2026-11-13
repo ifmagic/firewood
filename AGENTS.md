@@ -80,3 +80,15 @@ New commands follow the pattern in `pty.rs` (stateful resource pool):
 - Stateful resources: wrap in `Arc<Manager>` + `parking_lot::Mutex` (not `std::sync::Mutex`), inject state via `Builder::default().manage(...)` in `main.rs`, retrieve with `State<'_, Arc<YourManager>>` in command signatures.
 - All commands return `Result<T, String>`; propagate errors with `.map_err(|e| format!("...: {}", e))?`.
 - Exit cleanup: call `close_all()` in the `RunEvent::ExitRequested` callback.
+
+### Design System (Ember & Timber)
+
+The visual system is documented in `DESIGN.md` §8. Keep these invariants when touching UI:
+
+- Colors live only in `src/index.css` (CSS custom properties, light + `prefers-color-scheme: dark`) and `src/theme/palette.ts` (concrete antd tokens — antd derives hover/active steps in JS, so it cannot read CSS variables). Never add a literal hex to a tool/component stylesheet.
+- Appearance follows the system. There is deliberately no in-app light/dark toggle (`useSystemAppearance` + antd `darkAlgorithm`); all CSS surfaces use the matching media query.
+- The charcoal "workbench" scale (`--fw-charcoal-*`, mirrored in `src/utils/charcoal.ts` for xterm) is identical in both appearances: terminal, calculator display and diff output are instruments, not content. Do not darken/flip them per appearance.
+- Every tool page uses the 44px attached header model (`.fw-tool-toolbar`, Notepad's shell toolbar). Do not reintroduce the floating bordered toolbar card — it shifted JSON/Diff content down relative to Notepad.
+- Empty states use `src/components/EmptyState`, not antd's default illustrated `Empty`.
+- Icon-only controls need an `aria-label` and a ≥28×28 hit box (glyph may stay 16–18px). Menus use antd `Dropdown` (`fw-sidebar-popover` for the dark sidebar popups) instead of hand-rolled fixed panels so Esc/arrow/focus behavior stays standard.
+- `src/theme/palette.test.ts` enforces the AA contrast floor for body/tertiary text and the action button. Update it if a palette value changes.

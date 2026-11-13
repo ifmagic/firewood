@@ -2,11 +2,15 @@
  * Firewood design tokens — "Ember & Timber".
  *
  * One warm, workshop-grade system instead of cool neutral grays: paper-toned
- * light surfaces, charred-timber dark chrome (sidebar / terminal), warm ink
- * text, and a single ember accent. All text colors are picked for >= 4.5:1 on
- * their intended surface (tertiary ~4.4:1, reserved for hints/labels);
- * --fw-accent (~3.5:1 on light) is for icons/borders/carets only — small text
- * uses --fw-accent-ink (~5.4:1).
+ * light surfaces, charred-timber dark chrome (sidebar / terminal / workbench
+ * displays), warm ink text, and a single ember accent. All text colors are
+ * picked for >= 4.5:1 on their intended surface; the display accent (~3.4:1)
+ * is for icons/borders/carets only — small text uses --fw-accent-ink.
+ *
+ * Appearance follows the system (prefers-color-scheme) and is never an in-app
+ * switch. The dark block below mirrors every semantic token; the charcoal
+ * "workbench" scale is intentionally identical in both appearances because the
+ * terminal, calculator display and diff output are instruments, not content.
  *
  * Motion tokens: three durations and two easings shared by every transition
  * and animation in the app (see also the reduced-motion guard below).
@@ -14,10 +18,11 @@
 :root {
 	font-family: 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 	font-size: 14px;
-	color-scheme: light;
+	color-scheme: light dark;
 
-	/* --- surfaces (light: warm paper) --- */
+	/* --- surfaces (paper) --- */
 	--fw-surface: #faf9f6;
+	--fw-panel-raised: #fffefb;
 	--fw-panel-muted: #f3f0e9;
 	--fw-panel-subtle: #f6f4ee;
 	--fw-editor-bg: #fdfcf9;
@@ -32,18 +37,21 @@
 	--fw-popover-bg: #2b2620;
 	--fw-hover: rgba(250, 245, 236, 0.07);
 	--fw-hover-strong: rgba(250, 245, 236, 0.11);
+	/* Windows caption row hover, on a light/dark strip respectively. */
+	--fw-caption-hover: rgba(0, 0, 0, 0.06);
+	--fw-caption-active: rgba(0, 0, 0, 0.12);
 
-	/* --- charcoal chrome (terminal + numbox + terminal widget theme) ---
-	   The dark surfaces of the terminal and numbox share this one scale; the
-	   xterm theme in src/tools/terminal/index.tsx and the CodeMirror code
-	   theme in src/hooks/useCodemirror.ts reference the same values. */
+	/* --- charcoal chrome (terminal + numbox + diff workbench) ---
+	   The dark surfaces share this one scale; the xterm theme in
+	   src/tools/terminal/index.tsx, the CodeMirror code theme in
+	   src/hooks/useCodemirror.ts and the diff surface reference it. */
 	--fw-charcoal-bg: #221d18;
 	--fw-charcoal-header: #2a241d;
 	--fw-charcoal-line: #3b342b;
 	--fw-charcoal-hover: #2f2921;
 	--fw-charcoal-active: #4d453a;
-	--fw-charcoal-muted: #857a6a;
-	--fw-charcoal-soft: #6e6455;
+	--fw-charcoal-muted: #8f8577;
+	--fw-charcoal-soft: #9c9181;
 	--fw-charcoal-lighter: #a89d8d;
 	--fw-charcoal-pale: #b0a595;
 	--fw-charcoal-bright: #cec4b4;
@@ -52,24 +60,45 @@
 	--fw-charcoal-text: #ded5c6;
 	--fw-charcoal-amber: #f5b36b;
 	--fw-charcoal-amber-deep: #c98a4b;
+	--fw-charcoal-amber-bright: #ffcf96;
 	--fw-charcoal-error: #ff9d85;
-	--fw-charcoal-success: #73c991;
+	--fw-charcoal-success: #7fce9a;
 	--fw-charcoal-lock: #e8c273;
 	--fw-charcoal-action: #c2410c;
 	--fw-charcoal-action-hover: #d4551a;
 	--fw-charcoal-action-pressed: #a63a10;
+
+	/* --- diff workbench semantics (warm, never GitHub blue) --- */
+	--fw-diff-add-text: #7fce9a;
+	--fw-diff-add-bg: rgba(127, 206, 154, 0.14);
+	--fw-diff-add-line: rgba(127, 206, 154, 0.2);
+	--fw-diff-del-text: #ff9d85;
+	--fw-diff-del-bg: rgba(255, 157, 133, 0.13);
+	--fw-diff-del-line: rgba(255, 157, 133, 0.19);
+	--fw-diff-meta: #8f8577;
+	--fw-diff-hover: rgba(232, 89, 12, 0.14);
+
+	/* --- editor syntax --- */
+	--fw-syntax-comment: #75695b;
+	--fw-syntax-keyword: #c2410c;
+	--fw-syntax-number: #b45309;
+	--fw-syntax-string: #047857;
+	--fw-syntax-regexp: #0369a1;
+	--fw-syntax-type: #1d4ed8;
+	--fw-editor-selection: rgba(232, 89, 12, 0.18);
+	--fw-editor-bracket: #f1e4cf;
+	--fw-search-match: rgba(255, 213, 79, 0.5);
+	--fw-search-match-current: rgba(255, 138, 76, 0.55);
 
 	/* --- light-surface hovers --- */
 	--fw-hover-light: #f1eee6;
 
 	/* --- ember accent --- */
 	--fw-accent: #e8590c;
-	/* Accent ink for light surfaces. #e8590c only reaches ~3.5:1 on white —
+	/* Accent ink for light surfaces. #e8590c only reaches ~3.4:1 on white —
 	   fine for icons/borders, too low for small text — so text on light
 	   backgrounds (links, tinted chips) uses this darker ink (~5.4:1). */
 	--fw-accent-ink: #b54708;
-	/* Light accent tints. One token per purpose: soft = resting tint on light
-	   surfaces (hovered/selected chips), soft-hover = its hover step. */
 	--fw-accent-soft: #fdeee2;
 	--fw-accent-soft-hover: #fadcc6;
 	--fw-selected-bg: rgba(232, 89, 12, 0.16);
@@ -79,27 +108,35 @@
 	/* Dark-surface text (sidebar, terminal chrome, popovers). */
 	--fw-text-primary: #f5f0e8;
 	--fw-text-secondary: rgba(245, 240, 232, 0.72);
-	--fw-text-muted: rgba(245, 240, 232, 0.45);
-	/* Light-surface text (warm ink). */
-	--fw-text-tertiary: #7d7365;
+	--fw-text-muted: rgba(245, 240, 232, 0.52);
+	/* Light-surface text (warm ink). Tertiary is 5.43:1 on --fw-surface so it
+	   can carry 11–12px labels; the older #7d7365 was 4.42:1. */
+	--fw-text-tertiary: #6f6557;
 	--fw-text-body: #5f574d;
 	--fw-text-strong: #2a241e;
 	--fw-status-text: #6e6558;
 
 	/* --- danger --- */
 	--fw-danger: #d94243;
-	/* Danger text/background steps (shared by global .ant-btn-dangerous overrides
-	   and the tools' custom danger icon buttons). */
 	--fw-danger-ink: #bb4a45;
 	--fw-danger-ink-hover: #b93830;
 	--fw-danger-soft: #fbeeea;
 
+	/* --- success (history date chips, diff additions share the hue family) --- */
+	--fw-success-soft: #eef0e4;
+	--fw-success-ink: #4f5d3a;
+	--fw-success-border: #d9dec7;
+
 	/* --- shape & depth --- */
-	--fw-radius-sm: 4px;
-	--fw-radius-md: 6px;
-	--fw-radius-lg: 8px;
+	--fw-radius-sm: 6px;
+	--fw-radius-md: 8px;
+	--fw-radius-lg: 12px;
+	--fw-radius-xl: 16px;
 	--fw-panel-shadow: 0 12px 32px rgba(46, 36, 25, 0.1);
-	--fw-focus-ring: 0 0 0 2px color-mix(in srgb, var(--fw-accent) 45%, transparent);
+	--fw-popover-shadow: 0 12px 28px rgba(0, 0, 0, 0.24), 0 2px 8px rgba(0, 0, 0, 0.16);
+	--fw-focus-ring: 0 0 0 2px var(--fw-surface), 0 0 0 4px color-mix(in srgb, var(--fw-accent) 55%, transparent);
+	--fw-scrollbar-thumb: #d6d0c4;
+	--fw-scrollbar-thumb-hover: #b9b1a0;
 
 	/* --- motion --- */
 	--fw-dur-fast: 120ms;
@@ -110,6 +147,72 @@
 
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Charred-timber dark appearance. Not an inversion: paper becomes deep
+   charcoal, ink becomes warm white, and the ember accent brightens only where
+   it carries small text. Radii, spacing and motion are shared. */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--fw-surface: #1d1915;
+		--fw-panel-raised: #26211b;
+		--fw-panel-muted: #17130f;
+		--fw-panel-subtle: #26211b;
+		--fw-editor-bg: #211c17;
+		--fw-status-bg: #17130f;
+		--fw-divider: #3a332b;
+		--fw-border-hover: #4d453a;
+
+		--fw-sidebar-bg: #161310;
+		--fw-border: #4d453a;
+		--fw-popover-bg: #2b251f;
+		--fw-hover: rgba(250, 245, 236, 0.08);
+		--fw-hover-strong: rgba(250, 245, 236, 0.14);
+		--fw-caption-hover: rgba(255, 255, 255, 0.07);
+		--fw-caption-active: rgba(255, 255, 255, 0.12);
+
+		--fw-hover-light: #2a241d;
+
+		--fw-accent: #f08a4b;
+		--fw-accent-ink: #f5b36b;
+		--fw-accent-soft: rgba(232, 89, 12, 0.16);
+		--fw-accent-soft-hover: rgba(232, 89, 12, 0.24);
+		--fw-selected-bg: rgba(232, 89, 12, 0.2);
+		--fw-selected-bg-hover: rgba(232, 89, 12, 0.28);
+
+		--fw-text-primary: #f5f0e8;
+		--fw-text-secondary: rgba(245, 240, 232, 0.74);
+		--fw-text-muted: rgba(245, 240, 232, 0.52);
+		--fw-text-tertiary: #9c9181;
+		--fw-text-body: #d6cdbf;
+		--fw-text-strong: #f5f0e8;
+		--fw-status-text: #9c9181;
+
+		--fw-danger: #ff9d85;
+		--fw-danger-ink: #ff9d85;
+		--fw-danger-ink-hover: #ffb3a0;
+		--fw-danger-soft: rgba(217, 66, 67, 0.16);
+
+		--fw-success-soft: rgba(127, 206, 154, 0.14);
+		--fw-success-ink: #9fce9a;
+		--fw-success-border: rgba(127, 206, 154, 0.26);
+
+		--fw-panel-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+		--fw-focus-ring: 0 0 0 2px var(--fw-surface), 0 0 0 4px color-mix(in srgb, var(--fw-accent) 60%, transparent);
+		--fw-scrollbar-thumb: #3a332b;
+		--fw-scrollbar-thumb-hover: #574e41;
+
+		--fw-syntax-comment: #a89d8d;
+		--fw-syntax-keyword: #ff9a62;
+		--fw-syntax-number: #f5b36b;
+		--fw-syntax-string: #86d3a1;
+		--fw-syntax-regexp: #7cc4e8;
+		--fw-syntax-type: #9bb8f0;
+		--fw-editor-selection: rgba(232, 89, 12, 0.28);
+		--fw-editor-bracket: rgba(232, 89, 12, 0.22);
+		--fw-search-match: rgba(245, 179, 107, 0.3);
+		--fw-search-match-current: rgba(232, 89, 12, 0.42);
+	}
 }
 
 * {
@@ -144,14 +247,14 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #d6d0c4;
+	background: var(--fw-scrollbar-thumb);
 	border: 3px solid transparent;
 	background-clip: padding-box;
 	border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: #b9b1a0;
+	background: var(--fw-scrollbar-thumb-hover);
 	border: 3px solid transparent;
 	background-clip: padding-box;
 }
@@ -160,7 +263,7 @@ body {
 	background: transparent;
 }
 
-/* Reduced motion: collapse every decorative transition/animation to a
+/* Reduced motion: collapse every decorative transition/animation to an
    instant step. Essential spinners freeze too — a static loading state is
    the accepted reduced-motion presentation. */
 @media (prefers-reduced-motion: reduce) {

@@ -6,20 +6,17 @@
 	border-left: 1px solid var(--fw-divider);
 }
 
-.control:focus-visible {
-	outline: none;
-}
-
 .btn {
 	background: transparent;
 	border: none;
 	color: var(--fw-status-text);
 	font-size: 15px;
 	line-height: 1;
-	width: 20px;
-	height: 20px;
+	/* 28x28 desktop hit target; the glyph stays visually small. */
+	width: 28px;
+	height: 28px;
 	cursor: pointer;
-	border-radius: 6px;
+	border-radius: var(--fw-radius-sm);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -41,8 +38,8 @@
 }
 
 .btn:focus-visible {
-	outline: none;
-	box-shadow: var(--fw-focus-ring);
+	outline: 2px solid var(--fw-accent);
+	outline-offset: 1px;
 }
 
 .size {
@@ -52,8 +49,4 @@
 	text-align: center;
 	user-select: none;
 	font-variant-numeric: tabular-nums;
-}
-
-.control:focus {
-	outline: none;
 }

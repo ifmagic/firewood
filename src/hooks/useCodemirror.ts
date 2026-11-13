@@ -51,16 +51,16 @@ const WRITING_THEME = EditorView.theme({
     fontFamily: WRITING_FONT_FAMILY,
     lineHeight: '1.7',
     padding: '16px 20px',
-    caretColor: 'var(--fw-accent, #EF4444)',
+    caretColor: 'var(--fw-accent, #e8590c)',
   },
   '.cm-cursor': {
-    borderLeftColor: 'var(--fw-accent, #EF4444)',
+    borderLeftColor: 'var(--fw-accent, #e8590c)',
     borderLeftWidth: '2px',
   },
   '&.cm-focused': { outline: 'none' },
   '.cm-gutters': {
     backgroundColor: 'transparent',
-    borderRight: '1px solid var(--fw-divider, #eeeeee)',
+    borderRight: '1px solid var(--fw-divider, #e9e4da)',
     color: 'var(--fw-text-tertiary)',
   },
   '.cm-placeholder': {
@@ -68,7 +68,7 @@ const WRITING_THEME = EditorView.theme({
     fontStyle: 'italic',
   },
   '.cm-selectionBackground': {
-    backgroundColor: '#EBDCC899 !important',
+    backgroundColor: 'var(--fw-editor-selection) !important',
   },
 });
 
@@ -92,7 +92,7 @@ const CODE_FONT = IS_TAURI_MAC ? TAURI_MAC_CODE_FONT_FAMILY : CODE_FONT_FAMILY;
 // The caret follows the app accent (same as the writing variant) — a hardcoded color here
 // would drift from the brand the moment the accent token changes.
 // Selection is a warm sand tint (ember family, soft enough to read text through).
-const CODE_SELECTION_BG = '#EBDCC899';
+const CODE_SELECTION_BG = 'var(--fw-editor-selection)';
 const CODE_CARET_COLOR = 'var(--fw-accent, #e8590c)';
 
 // Code theme — warm workshop palette: parchment editor surface, warm ink text,
@@ -137,7 +137,7 @@ const CODE_THEME = EditorView.theme({
     verticalAlign: 'text-bottom',
     pointerEvents: 'none',
   },
-  '.cm-matchingBracket': { backgroundColor: '#F1E4CF' },
+  '.cm-matchingBracket': { backgroundColor: 'var(--fw-editor-bracket)' },
   '.cm-placeholder': {
     color: 'var(--fw-text-tertiary)',
     fontStyle: 'italic',
@@ -156,12 +156,12 @@ const CODE_THEME = EditorView.theme({
 // (~4.9:1), numbers amber, strings emerald, types keep one cool blue as the
 // single counterpoint in the warm field; comments are warm gray italics.
 const CODE_HIGHLIGHT_STYLE = HighlightStyle.define([
-  { tag: t.comment, color: '#75695B', fontStyle: 'italic' },
-  { tag: t.keyword, color: '#C2410C' },
-  { tag: t.number, color: '#B45309' },
-  { tag: t.string, color: '#047857' },
-  { tag: t.regexp, color: '#0369A1' },
-  { tag: [t.typeName, t.className], color: '#1D4ED8' },
+  { tag: t.comment, color: 'var(--fw-syntax-comment)', fontStyle: 'italic' },
+  { tag: t.keyword, color: 'var(--fw-syntax-keyword)' },
+  { tag: t.number, color: 'var(--fw-syntax-number)' },
+  { tag: t.string, color: 'var(--fw-syntax-string)' },
+  { tag: t.regexp, color: 'var(--fw-syntax-regexp)' },
+  { tag: [t.typeName, t.className], color: 'var(--fw-syntax-type)' },
 ]);
 
 /**

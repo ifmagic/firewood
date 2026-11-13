@@ -22,7 +22,7 @@
 
 .section {
 	background: var(--fw-surface);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	border: 1px solid var(--fw-divider);
 	overflow: hidden;
 	flex-shrink: 0;
@@ -71,7 +71,7 @@
 	flex-direction: column;
 	background: var(--fw-surface);
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	overflow: hidden;
 }
 
@@ -136,7 +136,7 @@
 	color: var(--fw-charcoal-lighter);
 	background: transparent;
 	border: 1px solid var(--fw-charcoal-line);
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	cursor: pointer;
 	transition:
 		transform var(--fw-dur-fast) var(--fw-ease),
@@ -150,7 +150,7 @@
 .backspaceBtn:hover {
 	color: var(--fw-charcoal-text);
 	background: rgba(250, 245, 236, 0.06);
-	border-color: #574e41;
+	border-color: var(--fw-charcoal-active);
 }
 
 .backspaceBtn:active {
@@ -204,13 +204,13 @@
 }
 
 .resultValueClickable:hover {
-	color: #ffcf96;
+	color: var(--fw-charcoal-amber-bright);
 }
 
 /* Preview confirmation: a soft ember wash on the dark glass (was a green
    flash — a foreign hue in the warm palette). */
 .resultFlash {
-	border-radius: 6px;
+	border-radius: var(--fw-radius-sm);
 	animation: fwResultFlash var(--fw-dur) var(--fw-ease);
 }
 
@@ -294,7 +294,7 @@
 	min-height: 32px !important;
 	height: 32px;
 	font-size: 13px;
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 }
 
 /* ---------- Main keypad (classic 4-column grid) ---------- */
@@ -312,7 +312,7 @@
 .keyBtn {
 	min-height: 48px;
 	height: 100%;
-	border-radius: 10px;
+	border-radius: var(--fw-radius-md);
 	border: 1px solid transparent;
 	font-size: 18px;
 	font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace;
@@ -337,7 +337,7 @@
 }
 
 .keyNum {
-	background: #fffefb;
+	background: var(--fw-panel-raised);
 	color: var(--fw-text-strong);
 	border-color: var(--fw-divider);
 }
@@ -384,7 +384,7 @@
 /* Equals: the one solid ember key — the commit action. */
 .keyEq {
 	background: var(--fw-charcoal-action);
-	color: #ffffff;
+	color: var(--fw-charcoal-ink);
 }
 
 .keyEq:hover {
@@ -427,7 +427,7 @@
 	flex-direction: column;
 	background: var(--fw-surface);
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	overflow: hidden;
 }
 
@@ -461,7 +461,7 @@
 	line-height: 1;
 	color: var(--fw-text-tertiary);
 	background: var(--fw-hover-light);
-	border-radius: 10px;
+	border-radius: var(--fw-radius-md);
 }
 
 .histHeaderSpacer {
@@ -569,7 +569,7 @@ button.histMain:hover {
 button.histMain:focus-visible {
 	outline: 2px solid var(--fw-text-tertiary);
 	outline-offset: -2px;
-	border-radius: 4px;
+	border-radius: var(--fw-radius-sm);
 }
 
 /* History chips: warm tints only (antd preset blues/greens removed — they
@@ -586,21 +586,21 @@ button.histMain:focus-visible {
 }
 
 .tagCalc {
-	background: #fdeee2 !important;
-	color: #b54708 !important;
-	border-color: #f6d8c0 !important;
+	background: var(--fw-accent-soft) !important;
+	color: var(--fw-accent-ink) !important;
+	border-color: color-mix(in srgb, var(--fw-accent) 30%, transparent) !important;
 }
 
 .tagTs {
-	background: #f6f1e7 !important;
-	color: #7a6234 !important;
-	border-color: #e9dfc7 !important;
+	background: var(--fw-panel-muted) !important;
+	color: var(--fw-text-body) !important;
+	border-color: var(--fw-divider) !important;
 }
 
 .tagDate {
-	background: #eef0e4 !important;
-	color: #5d6b45 !important;
-	border-color: #d9dec7 !important;
+	background: var(--fw-success-soft) !important;
+	color: var(--fw-success-ink) !important;
+	border-color: var(--fw-success-border) !important;
 }
 
 .histTextLeft,
@@ -665,7 +665,7 @@ button.histMain:focus-visible {
 .nowHero {
 	background: var(--fw-charcoal-bg);
 	border: 1px solid var(--fw-charcoal-line);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	flex-shrink: 0;
 }
 
@@ -895,7 +895,7 @@ button.histMain:focus-visible {
 
 .tsColumn > .section:hover {
 	border-color: color-mix(in srgb, var(--fw-accent) 35%, var(--fw-divider));
-	box-shadow: 0 2px 12px rgba(46, 36, 25, 0.06);
+	box-shadow: none;
 }
 
 /* ---------- Button active feedback (scoped to numbox) ---------- */

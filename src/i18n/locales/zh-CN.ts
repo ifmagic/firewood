@@ -86,6 +86,7 @@ const zhCN = {
 
   // Terminal
   terminal: {
+    tabsAria: '终端标签页',
     tabTitle: '终端 {{n}}',
     defaultShellName: 'Shell',
     exitedMessage: 'Shell 已退出',
@@ -229,6 +230,7 @@ const zhCN = {
   notepad: {
     untitled: '未命名',
     newTab: '新建标签',
+    newTabHint: '新建标签后开始记录',
     deleteTab: '删除标签页',
     confirmDelete: '确定要删除「{{name}}」吗？删除后内容无法恢复。',
     maxTabs: '最多只能创建 {{count}} 个标签页',
@@ -280,6 +282,9 @@ const zhCN = {
     pdfFilter: 'PDF 文件',
     previewTip: '预览与导出使用同一套缩放与留白参数',
     remove: '移除',
+    previousPage: '上一页',
+    nextPage: '下一页',
+    imageAlt: '图片 {{index}}',
     readFailed: '有 {{count}} 张图片读取失败',
   },
 

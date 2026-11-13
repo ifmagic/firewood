@@ -18,14 +18,14 @@
 
 /* Upload area */
 .uploadArea {
-	border-radius: 10px;
+	border-radius: var(--fw-radius-md);
 	flex-shrink: 0;
 }
 
 .uploadArea :global(.ant-upload.ant-upload-drag) {
 	min-height: 108px;
 	max-height: 108px;
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	border-style: dashed;
 	border-color: var(--fw-border-hover);
 	background: var(--fw-panel-subtle);
@@ -57,7 +57,7 @@
 
 .uploadIcon {
 	font-size: 22px;
-	color: #b3aa99;
+	color: var(--fw-text-tertiary);
 	margin-bottom: 2px;
 }
 
@@ -79,7 +79,7 @@
 	gap: 6px;
 	padding: 12px;
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	background: var(--fw-surface);
 }
 
@@ -98,7 +98,7 @@
 .thumbCard {
 	position: relative;
 	aspect-ratio: 1;
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	overflow: hidden;
 	border: 1px solid var(--fw-divider);
 	background: var(--fw-panel-subtle);
@@ -133,7 +133,7 @@
 	background: rgba(0, 0, 0, 0.45);
 	border-radius: 3px;
 	padding: 0 4px;
-	font-size: 10px;
+	font-size: 11px;
 	color: #fff;
 	line-height: 16px;
 	user-select: none;
@@ -143,15 +143,15 @@
 	position: absolute;
 	top: 2px;
 	right: 2px;
-	width: 16px;
-	height: 16px;
+	width: 24px;
+	height: 24px;
 	border-radius: 50%;
 	border: none;
-	background: rgba(0, 0, 0, 0.4);
+	background: rgba(0, 0, 0, 0.5);
 	color: #fff;
 	cursor: pointer;
-	font-size: 11px;
-	line-height: 16px;
+	font-size: 14px;
+	line-height: 24px;
 	text-align: center;
 	padding: 0;
 	display: flex;
@@ -168,7 +168,7 @@
 	gap: 8px;
 	padding: 14px;
 	background: var(--fw-panel-subtle);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	border: 1px solid var(--fw-divider);
 }
 
@@ -217,7 +217,7 @@
 
 .exportBtn {
 	flex-shrink: 0;
-	border-radius: 8px;
+	border-radius: var(--fw-radius-md);
 	height: 40px;
 	font-weight: 500;
 }
@@ -237,7 +237,7 @@
 	min-height: 0;
 	padding: 16px;
 	border: 1px solid var(--fw-divider);
-	border-radius: 12px;
+	border-radius: var(--fw-radius-lg);
 	background: var(--fw-panel-subtle);
 }
 
@@ -252,14 +252,14 @@
 
 .previewEmptyIcon {
 	font-size: 48px;
-	color: rgba(0, 0, 0, 0.08);
+	color: var(--fw-text-tertiary);
 }
 
 .previewPaper {
 	width: 100%;
 	max-width: 420px;
 	aspect-ratio: 210 / 297;
-	border-radius: 6px;
+	border-radius: var(--fw-radius-sm);
 	background: #fff;
 	border: 1px solid var(--fw-divider);
 	box-shadow: var(--fw-panel-shadow);

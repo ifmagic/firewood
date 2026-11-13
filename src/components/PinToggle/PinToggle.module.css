@@ -55,11 +55,11 @@
 }
 
 .caption:hover {
-	background: rgba(0, 0, 0, 0.06);
+	background: var(--fw-caption-hover);
 }
 
 .caption:active {
-	background: rgba(0, 0, 0, 0.1);
+	background: var(--fw-caption-active);
 }
 
 .caption:focus-visible {
@@ -81,7 +81,8 @@
 }
 
 .sidebar:focus-visible {
-	box-shadow: var(--fw-focus-ring);
+	outline: 2px solid var(--fw-accent);
+	outline-offset: 2px;
 }
 
 /* Pinned accent. The :hover rule must come AFTER the variant :hover rules

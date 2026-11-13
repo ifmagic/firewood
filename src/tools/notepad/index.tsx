@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DeleteOutlined, FolderOpenOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Empty, Form, Input, Modal, Space, Tabs, message } from 'antd';
+import { Button, Dropdown, Form, Input, Modal, Space, Tabs, message } from 'antd';
 import type { InputRef, MenuProps } from 'antd';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
@@ -8,6 +8,7 @@ import { openUrl as openExternal } from '@tauri-apps/plugin-opener';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import { useTranslation } from 'react-i18next';
 import EditorContextMenu from '../../components/EditorContextMenu';
+import EmptyState from '../../components/EmptyState';
 import FontSizeControl from '../../components/FontSizeControl';
 import StatusBar from '../../components/StatusBar';
 import ToolLayout from '../../components/ToolLayout';
@@ -699,7 +700,7 @@ export default function Notepad() {
             */}
             <div ref={hostRef} className="fw-cm-host" style={activeTabId ? undefined : { display: 'none' }} />
           </EditorContextMenu>
-          {!activeTabId && <Empty description={t('notepad.newTab')} image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+          {!activeTabId && <EmptyState title={t('notepad.newTab')} hint={t('notepad.newTabHint')} />}
         </div>
         <StatusBar
           left={statusMeta}
