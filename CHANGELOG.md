@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.9.0
 
 ### ✨ Features
 
@@ -17,6 +17,7 @@
 ### 🔧 Chore / Updates
 
 - Remove the Moxia novel-writing and Translate tools, and resync the repository documentation.
+- Unify the charcoal palette, motion durations and tool chrome as shared design tokens.
 
 ## v0.8.7
 
