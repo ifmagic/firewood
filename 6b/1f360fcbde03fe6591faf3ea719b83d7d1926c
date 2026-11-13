@@ -1,0 +1,142 @@
+src/components/Sidebar/Sidebar.module.css
+  s_1a5632b4c2ee38::t_3ceddd333cd3c7 273
+  s_1a5632b4c2ee38::t_4258c7fe427aec 44,48-50
+  s_1a5632b4c2ee38::t_1eb8522daeb247 166-167
+  s_1a5632b4c2ee38::t_91d4da211694b3 51,116-139
+  s_1a5632b4c2ee38::t_45bfab07b3c8ca 104
+  s_1a5632b4c2ee38::t_91a740e2f8c50d 156
+  s_1a5632b4c2ee38::t_da53ddd4f09ae4 52
+src/components/AboutDialog/AboutDialog.module.css
+  s_1a5632b4c2ee38::t_8c6dd5d4c68505 99
+  s_1a5632b4c2ee38::t_4dd81300e0728c 5,8,12-13
+  s_1a5632b4c2ee38::t_27dfefe2b13621 37-39
+  s_1a5632b4c2ee38::t_02b55c15e26af9 65
+src/App.tsx
+  s_1a5632b4c2ee38::t_ee2d2558490c0f 1,3,13-14,30-38,40
+src/components/PinToggle/PinToggle.module.css
+  s_1a5632b4c2ee38::t_d06d77dd69944d 84-85
+  s_1a5632b4c2ee38::t_c994ee5cec13d1 58,62
+src/hooks/useSystemAppearance.ts
+  s_1a5632b4c2ee38::t_92f5a12888fd63 1-36
+src/theme/palette.ts
+  s_1a5632b4c2ee38::t_17e58807b92b76 1-121
+src/components/SettingsMenuButton/SettingsMenuButton.module.css
+  s_1a5632b4c2ee38::t_9a2b3878617170 1-3,14,18,26-28,35
+src/components/FontSizeControl/FontSizeControl.module.css
+  s_1a5632b4c2ee38::t_31c67fe7423738 41-42
+  s_1a5632b4c2ee38::t_0a170bd7c8d97b 15-17,19
+src/tools/img-to-pdf/ImgToPdf.module.css
+  s_1a5632b4c2ee38::t_bfa4919cf7e94d 255
+  s_1a5632b4c2ee38::t_2bfde77cee30ba 21,28,60,82,101,136,146-147,150,153-154,171,220,240,262
+src/components/Sidebar/index.tsx
+  s_1a5632b4c2ee38::t_6f1d8500d83b55 204-209
+src/theme/palette.test.ts
+  s_1a5632b4c2ee38::t_52221618a0087e 1-41
+src/tools/text-diff/TextDiff.module.css
+  s_1a5632b4c2ee38::t_bf3a57d7816c73 87,138,232
+  s_1a5632b4c2ee38::t_ac8c403da563df 246-269
+  s_1a5632b4c2ee38::t_b5776d985ba207 63-66,72,85-86,101-102,104,120-122,132,139,144,152,167,172,176,180,185,189,194,199-200,204-205,207,217-219,227
+src/tools/notepad/index.tsx
+  s_1a5632b4c2ee38::t_7bf17e62cff940 3,11,703
+src/components/EmptyState/index.tsx
+  s_1a5632b4c2ee38::t_09d213bd886d79 1-27
+src/components/SettingsMenuButton/index.tsx
+  s_1a5632b4c2ee38::t_86f8e280139417 89-95,99-100
+  s_1a5632b4c2ee38::t_637e4389d08b7e 1-3,18-26,48-85,96
+src/index.css
+  s_1a5632b4c2ee38::t_f43c04c4609bf8 40-42
+  s_1a5632b4c2ee38::t_cee5191909862e 213-214
+  s_1a5632b4c2ee38::t_332eaf8e2a9e44 5-13,21,23,25,44-47,53-54,65,71-89,98,111-114,131-134,136-139,152-170,173-194,199-212,215-217,250,257,266
+  s_1a5632b4c2ee38::t_6c58a7ec55a561 63,125-129,195-198
+  s_1a5632b4c2ee38::t_8a71e30303df36 90-91
+  s_1a5632b4c2ee38::t_79a31d081fc695 171-172
+  s_1a5632b4c2ee38::t_57e945827cc335 92
+src/components/EmptyState/EmptyState.module.css
+  s_1a5632b4c2ee38::t_263ec0954b8efa 17
+  s_1a5632b4c2ee38::t_46fbb76798827c 1-16,18-41
+src/tools/notepad/notepad.css
+  s_1a5632b4c2ee38::t_c8c096a85bdeba 41-42
+  s_1a5632b4c2ee38::t_08d78d99b8e8ae 7,12,18-19,21,23
+  s_1a5632b4c2ee38::t_deae25dc1eb55c 35
+src/utils/charcoal.ts
+  s_1a5632b4c2ee38::t_a16e135cdb8146 14-15,24
+src/tools/terminal/index.tsx
+  s_1a5632b4c2ee38::t_18f0fed9eb36b7 1060
+src/tools/json-formatter/index.tsx
+  s_1a5632b4c2ee38::t_7bf17e62cff940 2,7,189
+  s_1a5632b4c2ee38::t_9fd92e694b44bc 137-162,165-166,168-170,172
+  s_1a5632b4c2ee38::t_4a7a02eac43eed 135-136
+src/tools/text-diff/index.tsx
+  s_1a5632b4c2ee38::t_9fd92e694b44bc 197-217,220-231
+  s_1a5632b4c2ee38::t_7bf17e62cff940 1,7,298
+  s_1a5632b4c2ee38::t_ac8c403da563df 218-219
+  s_1a5632b4c2ee38::t_fa225dae023109 195-196
+src/components/FontSizeControl/index.tsx
+  s_1a5632b4c2ee38::t_f0599d94b23b5b 37-44,47-56
+src/hooks/useCodemirror.ts
+  s_1a5632b4c2ee38::t_d26dd84e843743 54,57,63
+  s_1a5632b4c2ee38::t_51aaa1b0a582b8 71,95,140,159-164
+src/tools/terminal/terminal.css
+  s_1a5632b4c2ee38::t_af6458e470b054 11,151,159-160,164,185,193-194,198,245,261,341,374,405,427,460,462,492-494,519,545-546,549,573,576,593,601
+src/components/AboutDialog/index.tsx
+  s_1a5632b4c2ee38::t_35cb62b898f080 1
+src/i18n/locales/zh-CN.ts
+  s_1a5632b4c2ee38::t_18f0fed9eb36b7 89
+  s_1a5632b4c2ee38::t_eed9fd8659fd79 285-287
+  s_1a5632b4c2ee38::t_e401f3d5a3bc36 233
+DESIGN.md
+  s_1a5632b4c2ee38::t_8eb4bcf0fcfc90 203-224,239-245,254-287
+  s_1a5632b4c2ee38::t_76f66d740efc08 225-238,246-253
+AGENTS.md
+  s_1a5632b4c2ee38::t_1ae4f01cbe82ee 83-94
+src/App.css
+  s_1a5632b4c2ee38::t_263ec0954b8efa 75
+  s_1a5632b4c2ee38::t_d30543b5d31b6e 156
+  s_1a5632b4c2ee38::t_6a0174d8c38c81 354-359,361-374,381-382,397-398,400-404,406-409,411-414,416-427,429
+  s_1a5632b4c2ee38::t_c8c096a85bdeba 331
+  s_1a5632b4c2ee38::t_d1858e099037c3 274-275,279-280,284-285
+  s_1a5632b4c2ee38::t_aba20d6cf6cf8f 384
+  s_1a5632b4c2ee38::t_89bf3ed33b7760 360,415,428
+  s_1a5632b4c2ee38::t_4ee98b1de6ebac 145
+  s_1a5632b4c2ee38::t_89f4745d3b5369 217-219,226-230,232
+  s_1a5632b4c2ee38::t_25e400ac8cb9fe 262
+  s_1a5632b4c2ee38::t_b9d8a177ff3a84 191
+  s_1a5632b4c2ee38::t_8f302bd096c26c 49
+  s_1a5632b4c2ee38::t_464b8b883a310c 182
+  s_1a5632b4c2ee38::t_4e862d9cf51f02 351
+  s_1a5632b4c2ee38::t_5fff9bea8cbcfc 375-380,383,385-387,399,405,410
+  s_1a5632b4c2ee38::t_975a4abc06ec7e 388-396
+  s_1a5632b4c2ee38::t_12299ed9192242 430-442
+src/hooks/cmSearchPanel.ts
+  s_1a5632b4c2ee38::t_3a8d9ed876c8f6 80,90-91,93,105,107-109,122,130-131,134,136,140,142,147-148,157,159-161,168,170-173,180-181,185-186
+src/components/MarkdownBody/MarkdownBody.module.css
+  s_1a5632b4c2ee38::t_12574d20201b44 5-24,43
+src/components/ToolLayout/ToolLayout.module.css
+  s_1a5632b4c2ee38::t_0aca3d2a40ba47 5
+src/components/TitleBar/TitleBar.module.css
+  s_1a5632b4c2ee38::t_24a7242ab99ccd 53,57
+src/tools/numbox/Numbox.module.css
+  s_1a5632b4c2ee38::t_6c58a7ec55a561 25,74,139,153,207,213,297,315,340,387,430,464,572,589-591,595-597,601-603,668,898
+src/i18n/locales/en.ts
+  s_1a5632b4c2ee38::t_eed9fd8659fd79 285-287
+  s_1a5632b4c2ee38::t_18f0fed9eb36b7 89
+  s_1a5632b4c2ee38::t_e401f3d5a3bc36 233
+src/tools/img-to-pdf/index.tsx
+  s_1a5632b4c2ee38::t_eed9fd8659fd79 428-433,436,440,624,635
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b1f360fcbde03fe6591faf3ea719b83d7d1926c",
+  "prompts": {},
+  "sessions": {
+    "s_1a5632b4c2ee38": {
+      "agent_id": {
+        "tool": "logoscode",
+        "id": "ses_e2c1180afffe7ctXwhxgt0WNOD",
+        "model": "DeepSeek-V4.1-Flash-1017"
+      },
+      "human_author": "ifmagic <realtaobo@outlook.com>"
+    }
+  }
+}
