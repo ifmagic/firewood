@@ -47,7 +47,7 @@ agent: 'agent'
    npm run sync:version
    ```
 3. 不要运行 `npm install --package-lock-only` 或 `cargo update`。它们会重新解析依赖，不能用于版本号同步。`npm version` 负责 `package-lock.json` 的根版本；随后运行的 Cargo 验证会在需要时更新 `src-tauri/Cargo.lock` 中的根包版本。
-4. 在 `CHANGELOG.md` 的 `# Changelog` 标题之后新增且仅新增一个精确的 `## v<VERSION>` 小节。CI 以这个精确标题读取 GitHub Release body。
+4. 在 `CHANGELOG.md` 的 `# Changelog` 标题之后新增一个精确的 `## v<VERSION>` 小节。CI 以这个精确标题读取 GitHub Release body。若顶部已有 `## Unreleased` 小节，将其内容并入这个新版本小节后删除 `## Unreleased`，不要留下重复条目。
    - 全部使用英文，并沿用现有标题：`### ✨ Features`、`### 🐛 Bug Fixes`、`### 🔧 Chore / Updates`。
    - 根据 `<PREVIOUS_TAG>..HEAD` 的实际变更归纳用户可感知内容和重要维护改动；合并重复提交，不要逐条转写 commit subject。
    - 忽略 release commit、版本号、lockfile churn 和无意义的内部整理；不得编造未发生的功能或修复。

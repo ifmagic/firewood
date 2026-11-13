@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### ✨ Features
+
+- Rework the interface around the Ember & Timber design system, following the system light/dark appearance without an in-app switch.
+- Redesign Numbox as an instrument-style calculator and rename it from Abacus.
+- Add a VS Code-style find/replace panel to every CodeMirror editor.
+- Add click-to-place cursors in Notepad without interfering with Cmd/Ctrl+click URL opening.
+- Raise the Notepad tab limit from 8 to 20.
+
+### 🐛 Bug Fixes
+
+- Surface invalid JSON errors in the JSON Formatter instead of failing silently.
+
+### 🔧 Chore / Updates
+
+- Remove the Moxia novel-writing and Translate tools, and resync the repository documentation.
+
 ## v0.8.7
 
 ### ✨ Features

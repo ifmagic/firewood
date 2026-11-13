@@ -7,18 +7,18 @@
 - **Desktop-native**: built with Tauri and system WebView, with Rust for native capabilities
 - **Modular**: each tool is registered through a shared `ToolMeta` contract
 - **Stateful**: tool state, ordering, visibility, and preferences are persisted locally
-- **Practical**: combines terminal, text/code utilities, note taking, novel writing, calculation, and image export
+- **Practical**: combines terminal, text/code utilities, note taking, diffing, calculation, and image export
 
 ## 2. Implemented Tools
 
-| Tool           | Current implementation                                                                                                                                            |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Terminal       | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, buffered output, and session continuity across navigation |
-| JSON Formatter | CodeMirror 6 editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content                                              |
-| Numbox         | Calculator and timestamp workspace with mathjs expression evaluation, unix timestamp/date conversion, seconds/milliseconds toggle, and persisted history          |
-| Diffchecker    | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs               |
-| Notepad        | Multi-tab local notes and file editing with CodeMirror 6, local open/save, JSON formatting, and persisted tab state                                               |
-| Image to PDF   | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration                    |
+| Tool           | Current implementation                                                                                                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Terminal       | Multi-tab local shell with Rust PTY backend, shell selection, system font selection, font size control, UTF-8-safe output streaming, and session continuity across navigation                               |
+| JSON Formatter | CodeMirror 6 editor with format, minify, unescape, JSONC-aware formatting, copy/clear actions, and persisted content                                                                                        |
+| Numbox         | Instrument-style calculator and timestamp workspace with mathjs expression evaluation, hex/binary readouts, unix timestamp/date conversion, automatic seconds/milliseconds detection, and persisted history |
+| Diff           | GitHub-style unified review diff with line numbers, inline word highlights, collapsed unchanged sections, expand-all controls, and persisted inputs                                                         |
+| Notepad        | Multi-tab local notes and file editing (up to 20 tabs) with CodeMirror 6, local open/save, JSON formatting, and persisted tab state                                                                         |
+| Image to PDF   | Multi-image A4 export with 1-4 images per page, layout presets, drag reorder, preview paging, optional size limit, and save dialog integration                                                              |
 
 ## 3. Tech Stack
 
@@ -33,39 +33,42 @@
 
 ### 3.2 UI and shared libraries
 
-| Library                     | Purpose                                    |
-| --------------------------- | ------------------------------------------ |
-| Ant Design 6                | Main UI components                         |
-| CSS Modules                 | Component-scoped styling                   |
-| `@codemirror/*`             | Code and note editing (CodeMirror 6)       |
-| `@xterm/xterm` + addons     | Terminal rendering, fit, links, Unicode 11 |
-| `diff`                      | Text diffing                               |
-| `mathjs`                    | Calculator expression evaluation           |
-| `dayjs`                     | Time handling                              |
-| `jspdf`                     | PDF generation                             |
-| `react-markdown`            | Release note rendering                     |
-| `i18next` + `react-i18next` | Internationalization                       |
+| Library                     | Purpose                                     |
+| --------------------------- | ------------------------------------------- |
+| Ant Design 6                | Main UI components                          |
+| CSS Modules                 | Component-scoped styling                    |
+| `@codemirror/*`             | Code and note editing (CodeMirror 6)        |
+| `@xterm/xterm` + addons     | Terminal rendering, fit, links, Unicode 11  |
+| `diff`                      | Text diffing                                |
+| `mathjs`                    | Calculator expression evaluation            |
+| `dayjs`                     | Time handling                               |
+| `jspdf`                     | PDF generation                              |
+| `jsonc-parser`              | JSONC-tolerant parsing, formatting, linting |
+| `react-markdown`            | Release note rendering                      |
+| `i18next` + `react-i18next` | Internationalization                        |
 
 ### 3.3 Rust-side dependencies
 
-| Crate / plugin                                            | Purpose                                    |
-| --------------------------------------------------------- | ------------------------------------------ |
-| `font-kit`                                                | System font discovery                      |
-| `libc`                                                    | PTY and process integration                |
-| `parking_lot`                                             | PTY manager synchronization                |
-| `rand`                                                    | PTY session ID generation                  |
-| `tauri-plugin-updater`                                    | App updates                                |
-| `tauri-plugin-single-instance`                            | Single-instance behavior in release builds |
-| `tauri-plugin-dialog`, `fs`, `opener`, `process`, `shell` | Native file/system integrations            |
+| Crate / plugin                                   | Purpose                                    |
+| ------------------------------------------------ | ------------------------------------------ |
+| `font-kit`                                       | System font discovery                      |
+| `libc`                                           | PTY and process integration                |
+| `parking_lot`                                    | PTY manager synchronization                |
+| `rand`                                           | PTY session ID generation                  |
+| `portable-pty`                                   | ConPTY sessions on Windows (10 1809+)      |
+| `tauri-plugin-updater`                           | App updates                                |
+| `tauri-plugin-single-instance`                   | Single-instance behavior in release builds |
+| `tauri-plugin-dialog`, `fs`, `opener`, `process` | Native file/system integrations            |
 
 ## 4. Architecture
 
 ### 4.1 Frontend shell
 
-- `src/App.tsx` wires the theme, router, sidebar, updater, and about dialog
+- `src/App.tsx` wires the system appearance theme, router, titlebar, sidebar, updater, and about dialog
 - `src/components/Sidebar/` owns navigation, visibility toggles, and drag reorder
 - `src/components/SettingsMenuButton/` exposes language switching, update checks, and About entry
-- `src/components/ToolLayout/`, `StatusBar/`, and `FontSizeControl/` provide shared tool chrome
+- `src/components/TitleBar/` and `PinToggle/` provide per-platform window chrome and the always-on-top control
+- `src/components/ToolLayout/`, `StatusBar/`, `FontSizeControl/`, and `EmptyState/` provide shared tool chrome
 
 ### 4.2 Tool registry and shared state
 
@@ -75,8 +78,12 @@
   - `usePersistentState` for localStorage-backed state
   - `useToolOrder` for persisted tool ordering
   - `useToolVisibility` for sidebar visibility
+  - `useSidebarCollapsed` for the collapsed sidebar rail
+  - `useSystemAppearance` for the system light/dark preference
+  - `useAlwaysOnTop` for the persistent window pin
   - `useResizablePanels` for split-pane tools
   - `useEditorFontSize` for shared editor font controls
+  - `useCodemirror` for the shared CodeMirror 6 editor and its find/replace panel
 
 ### 4.3 Native bridge
 
@@ -85,9 +92,9 @@
 
 ### 4.4 Release-note flow
 
-- `src/components/Updater/` checks for updates, renders changelog snippets, downloads installs, and restarts
-- `src/utils/updateNotes.ts` extracts changelog content from release bodies and caches update notes locally
-- `src/components/AboutDialog/` reads the bundled `.github/workflows/build.yml` release body to show local release notes for the current version
+- `src/components/Updater/` checks for updates, renders changelog snippets, downloads and installs the update, then restarts the app
+- `src/utils/updateNotes.ts` extracts changelog content from release bodies and from the bundled `CHANGELOG.md`
+- `src/components/AboutDialog/` shows the current version and reads the bundled `CHANGELOG.md` section for that version
 
 ## 5. Project Structure
 
@@ -96,18 +103,28 @@ firewood/
 ├── .github/
 │   └── workflows/
 │       └── build.yml
+├── scripts/
+│   └── sync-version.mjs
 ├── src-tauri/
+│   ├── capabilities/
+│   │   └── default.json
 │   ├── Cargo.toml
 │   ├── tauri.conf.json
+│   ├── tauri.dev.conf.json
+│   ├── tauri.macos.conf.json
+│   ├── tauri.windows.conf.json
 │   └── src/
 │       ├── main.rs
 │       └── pty.rs
 ├── src/
 │   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
 │   ├── main.tsx
 │   ├── components/
 │   │   ├── AboutDialog/
 │   │   ├── EditorContextMenu.tsx
+│   │   ├── EmptyState/
 │   │   ├── FontSizeControl/
 │   │   ├── MarkdownBody/
 │   │   ├── PinToggle/
@@ -118,12 +135,14 @@ firewood/
 │   │   ├── ToolLayout/
 │   │   └── Updater/
 │   ├── hooks/
+│   │   ├── cmSearchPanel.ts
 │   │   ├── useAlwaysOnTop.ts
 │   │   ├── useCodemirror.ts
 │   │   ├── useEditorFontSize.ts
 │   │   ├── usePersistentState.ts
 │   │   ├── useResizablePanels.ts
 │   │   ├── useSidebarCollapsed.ts
+│   │   ├── useSystemAppearance.ts
 │   │   ├── useToolOrder.ts
 │   │   └── useToolVisibility.ts
 │   ├── i18n/
@@ -131,6 +150,8 @@ firewood/
 │   │   └── locales/
 │   ├── router/
 │   │   └── tools.tsx
+│   ├── theme/
+│   │   └── palette.ts
 │   ├── tools/
 │   │   ├── img-to-pdf/
 │   │   ├── json-formatter/
@@ -141,11 +162,14 @@ firewood/
 │   ├── types/
 │   │   └── tool.ts
 │   └── utils/
+│       ├── charcoal.ts
 │       ├── detectLanguage.ts
 │       ├── jsonText.ts
 │       ├── platform.ts
 │       ├── updateNotes.ts
 │       └── wkWebViewFocusShim.ts
+├── AGENTS.md
+├── CHANGELOG.md
 ├── DESIGN.md
 └── README.md
 ```
@@ -159,9 +183,7 @@ export interface ToolMeta {
   id: string;
   name: string;
   icon: ReactNode;
-  description: string;
   component: LazyExoticComponent<FC>;
-  visible?: boolean;
 }
 ```
 
@@ -179,7 +201,7 @@ Users can reorder tools and toggle visibility from the sidebar menu. Both order 
 
 ### Persistence
 
-Most tools store working state locally, including note tabs, editor font sizes, diff inputs, calculator and timestamp history, and cached update notes.
+Most tools store working state locally, including note tabs, editor font sizes, diff inputs, and calculator and timestamp history.
 
 ### Updates
 
@@ -215,8 +237,11 @@ element is the ember rail / amber readout, not decoration.
   `useSystemAppearance()` + Ant Design's `darkAlgorithm` (JS). **There is no
   in-app appearance switch** — Dark Mode guidance says apps should respect the
   systemwide choice.
-- All colors live in `src/index.css` (CSS) and `src/theme/palette.ts` (Ant
-  Design). A component must never introduce a literal hex outside those files.
+- Semantic colors live in `src/index.css` (CSS), `src/theme/palette.ts` (Ant
+  Design) and `src/utils/charcoal.ts` (the instrument scale shared with xterm).
+  A component must not introduce a literal semantic color; the only exceptions
+  are pure white on accent/close-red surfaces and the platform-mandated Windows
+  close red.
 - Charcoal workbench tokens are intentionally identical in both appearances:
   instruments stay dark. Content surfaces flip from `#faf9f6` to `#1d1915`.
 
@@ -231,7 +256,7 @@ element is the ember rail / amber readout, not decoration.
 | strong text    | `#2a241e`             | `#f5f0e8` | 14.5:1+                       |
 | body text      | `#5f574d`             | `#d6cdbf` | 6.7:1+                        |
 | tertiary text  | `#6f6557`             | `#9c9181` | ≥4.5:1 — safe for 11px labels |
-| accent (icons) | `#e8590c`             | `#e8590c` | never for small text          |
+| accent (icons) | `#e8590c`             | `#f08a4b` | never for small text          |
 | accent ink     | `#b54708`             | `#f5b36b` | links, chips, small text      |
 | action         | `#c2410c`             | `#c2410c` | white text is 5.18:1          |
 | success        | `#4f5d3a`             | `#9fce9a` | history date chips            |
@@ -279,9 +304,11 @@ Weights are 400 / 500 / 600 only. Numeric UI uses `tabular-nums`.
 
 ### 8.6 Do not
 
-- Do not introduce a second accent hue (the old diff surface used GitHub blue,
-  which read as a different product).
+- Do not introduce a second accent hue (a GitHub-blue diff surface reads as a
+  different product).
 - Do not apply glassmorphism or Liquid Glass to content; those materials are for
   the floating functional layer only.
-- Do not hard-code colors, radii, font sizes, or motion durations in a tool.
+- Do not introduce a hard-coded brand/semantic color or motion duration in a
+  tool — use the shared tokens. Font sizes follow the type scale; structural
+  radii (999px pills, 50% circles, one-off control accents) stay local.
 - Do not add an app-specific light/dark toggle.
