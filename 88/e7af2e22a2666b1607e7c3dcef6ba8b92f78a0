@@ -1,0 +1,29 @@
+package.json
+  s_079e9d7260ccac::t_ff61f140aacedc 4
+src-tauri/tauri.conf.json
+  s_079e9d7260ccac::t_ff61f140aacedc 4
+CHANGELOG.md
+  s_079e9d7260ccac::t_b9b944476585b6 3,20
+src-tauri/Cargo.toml
+  s_079e9d7260ccac::t_ff61f140aacedc 3
+package-lock.json
+  s_079e9d7260ccac::t_2778f835917a3e 3,9
+src-tauri/Cargo.lock
+  s_079e9d7260ccac::t_161b9f9e7035ee 1135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88e7af2e22a2666b1607e7c3dcef6ba8b92f78a0",
+  "prompts": {},
+  "sessions": {
+    "s_079e9d7260ccac": {
+      "agent_id": {
+        "tool": "logoscode",
+        "id": "ses_e2baab2fdffeHuT1AAJOpUlZPh",
+        "model": "DeepSeek-V4.1-Flash-1017"
+      },
+      "human_author": "ifmagic <realtaobo@outlook.com>"
+    }
+  }
+}
