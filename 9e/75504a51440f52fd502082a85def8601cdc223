@@ -1,0 +1,46 @@
+AGENTS.md
+  s_e456f779bcdae9::t_468878ca28f6ab 69
+  s_e456f779bcdae9::t_c926ffdcab4592 60
+  s_e456f779bcdae9::t_37e91e92215680 66
+  s_e456f779bcdae9::t_263aa0da07d88b 88
+  s_e456f779bcdae9::t_54b3291c1d561e 49
+  s_e456f779bcdae9::t_24c5be339201f1 41
+  s_e456f779bcdae9::t_b3d0c542e7205d 39
+  s_e456f779bcdae9::t_60c9656ab80d4c 27
+DESIGN.md
+  s_e456f779bcdae9::t_71a110216e25e8 10
+  s_e456f779bcdae9::t_2854e6e596e1f4 81-83,86
+  s_e456f779bcdae9::t_242ae1c90f9e4e 95-97
+  s_e456f779bcdae9::t_ccc09b12dfde9d 307-308
+  s_e456f779bcdae9::t_42a8e83098a0f4 106-107,109-110,113-115,121-122,127,138,145,153-154,165,171-172
+  s_e456f779bcdae9::t_84ccf5b920b3de 16
+  s_e456f779bcdae9::t_08ba3cfc149d61 36-48
+  s_e456f779bcdae9::t_9b098a2c883aa8 14-15,17-21
+  s_e456f779bcdae9::t_38dfc0e9901cb6 52-61
+  s_e456f779bcdae9::t_12ff67547d42e3 204
+  s_e456f779bcdae9::t_064e384c11e2f8 259
+  s_e456f779bcdae9::t_d93cbcc68dab6c 311-313
+  s_e456f779bcdae9::t_8ec2dbe910c421 240-244
+.github/prompts/release.prompt.md
+  s_e456f779bcdae9::t_038aea677648da 50
+CHANGELOG.md
+  s_e456f779bcdae9::t_a382ebcc237e60 3-20
+README.md
+  s_e456f779bcdae9::t_e30bb9570f5825 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9e75504a51440f52fd502082a85def8601cdc223",
+  "prompts": {},
+  "sessions": {
+    "s_e456f779bcdae9": {
+      "agent_id": {
+        "tool": "logoscode",
+        "id": "ses_e2bc2db7fffe6m3RwH1iIAoC30",
+        "model": "DeepSeek-V4.1-Flash-1017"
+      },
+      "human_author": "ifmagic <realtaobo@outlook.com>"
+    }
+  }
+}
